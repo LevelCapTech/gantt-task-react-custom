@@ -18,6 +18,7 @@ fi
 chmod 600 /home/vscode/.npmrc
 
 if ! npm install; then
-  echo "Error: npm install failed during post-create setup." >&2
-  exit 1
+  status=$?
+  echo "Error: npm install failed during post-create setup (exit code ${status}). Check the npm output above for details." >&2
+  exit "${status}"
 fi
