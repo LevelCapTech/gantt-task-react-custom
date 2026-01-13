@@ -10,4 +10,6 @@ cat > /home/vscode/.npmrc <<EOF
 registry=https://registry.npmjs.org/
 EOF
 
+chmod 600 /home/vscode/.npmrc
+
 npm install
