@@ -16,6 +16,3 @@ WORKDIR /workspace
 USER vscode
 
 ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-
-# Display versions
-RUN node -v && npm -v && yarn -v && pnpm -v
