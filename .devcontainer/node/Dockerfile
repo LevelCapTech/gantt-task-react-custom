@@ -15,8 +15,7 @@ WORKDIR /workspace
 
 USER vscode
 
-# npm configuration for npmjs.com publish
-RUN printf "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}\nregistry=https://registry.npmjs.org/\n" > /home/vscode/.npmrc
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 
 # Display versions
 RUN node -v && npm -v && yarn -v && pnpm -v

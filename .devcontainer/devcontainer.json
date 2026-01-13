@@ -7,7 +7,7 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash",
+        "terminal.integrated.defaultProfile.linux": "bash",
         "editor.formatOnSave": true,
         "npm.publish.enable": true,
         "files.eol": "\n",
@@ -27,7 +27,7 @@
       ]
     }
   },
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
   "remoteEnv": {
     "NPM_TOKEN": "${localEnv:NPM_TOKEN}"
   }
