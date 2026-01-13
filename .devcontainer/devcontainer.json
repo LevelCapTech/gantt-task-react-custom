@@ -1,0 +1,34 @@
+{
+  "name": "Node.js DevContainer (npmjs.com publish ready)",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer-service",
+  "workspaceFolder": "/gantt-task-react-custom",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "editor.formatOnSave": true,
+        "npm.publish.enable": true,
+        "files.eol": "\n",
+        "git.enableSmartCommit": true
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "eamodio.gitlens",
+        "christian-kohler.npm-intellisense",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-docker",
+        "editorconfig.editorconfig",
+        "github.copilot",
+        "github.vscode-pull-request-github",
+        "visualstudioexptteam.vscodeintellicode"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install",
+  "remoteEnv": {
+    "NPM_TOKEN": "${localEnv:NPM_TOKEN}"
+  }
+}

@@ -1,0 +1,13 @@
+version: "3"
+services:
+  devcontainer-service:
+    build:
+      context: ../../
+      dockerfile: .devcontainer/node/Dockerfile
+    image: devcontainer-initial-gantt-task-react-custom:latest
+    command: sleep infinity
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../:/gantt-task-react-custom
+    restart: unless-stopped
