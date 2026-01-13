@@ -3,7 +3,7 @@ set -euo pipefail
 
 token="${NPM_TOKEN:-}"
 if [ -z "${token}" ] || [ "${token}" = "your-npm-token-here" ]; then
-  echo "Warning: NPM_TOKEN is not set; set it in .env before running npm publish or run npm login inside the container." >&2
+  echo "Warning: NPM_TOKEN is not set. The dev container will still start successfully, but npm publish will require either setting NPM_TOKEN in .env or running 'npm login' inside the container." >&2
   token=""
 fi
 

@@ -18,6 +18,10 @@ https://github.com/MaTeMaTuK/gantt-task-react
 npm install gantt-task-react
 ```
 
+## DevContainer (npm publish-ready)
+
+VS Code Dev Containers で npmjs.com への publish を行う環境を用意しています。セットアップと利用方法は [docs/DEVCONTAINER.md](docs/DEVCONTAINER.md) を参照してください。
+
 ## How to use it
 
 ```javascript

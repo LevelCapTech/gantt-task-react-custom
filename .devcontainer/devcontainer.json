@@ -28,8 +28,5 @@
     }
   },
   "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
-  "initializeCommand": "/bin/bash .devcontainer/initialize.sh",
-  "remoteEnv": {
-    "NPM_TOKEN": "${localEnv:NPM_TOKEN}"
-  }
+  "initializeCommand": "/bin/bash .devcontainer/initialize.sh"
 }
