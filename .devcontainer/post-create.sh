@@ -11,6 +11,8 @@ EOF
 
 if [ -n "${NPM_TOKEN:-}" ]; then
   echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> /home/vscode/.npmrc
+else
+  echo "# NPM_TOKEN is not set; npm publish will require authentication." >> /home/vscode/.npmrc
 fi
 
 chmod 600 /home/vscode/.npmrc
