@@ -26,7 +26,6 @@ jobs:
       # ステップ3: ラベルの初期設定
       # 初回コミット（親コミットがない場合）のみラベルの初期設定
       - name: GitHub Labeler
-        if: env.INIT_LABELS == 'true'
         uses: crazy-max/ghaction-github-labeler@v5.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
