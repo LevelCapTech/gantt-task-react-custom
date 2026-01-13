@@ -2,7 +2,7 @@
   "name": "Node.js DevContainer (npmjs.com publish ready)",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer-service",
-  "workspaceFolder": "/gantt-task-react-custom",
+  "workspaceFolder": "/workspace",
   "remoteUser": "vscode",
   "customizations": {
     "vscode": {

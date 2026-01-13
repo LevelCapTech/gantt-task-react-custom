@@ -9,5 +9,5 @@ services:
     env_file:
       - ../.env
     volumes:
-      - ../:/gantt-task-react-custom
+      - ../:/workspace
     restart: unless-stopped
