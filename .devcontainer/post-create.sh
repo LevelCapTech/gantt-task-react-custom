@@ -1,16 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z "${NPM_TOKEN:-}" ]; then
+token="${NPM_TOKEN:-}"
+if [ -z "${token}" ] || [ "${token}" = "your-npm-token-here" ]; then
   echo "Warning: NPM_TOKEN is not set; set it in .env before running npm publish or run npm login inside the container." >&2
+  token=""
 fi
 
 cat > /home/vscode/.npmrc <<EOF
 registry=https://registry.npmjs.org/
 EOF
 
-if [ -n "${NPM_TOKEN:-}" ]; then
-  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> /home/vscode/.npmrc
+if [ -n "${token}" ]; then
+  echo "//registry.npmjs.org/:_authToken=${token}" >> /home/vscode/.npmrc
 else
   echo "# NPM_TOKEN is not set; npm publish will require authentication." >> /home/vscode/.npmrc
 fi

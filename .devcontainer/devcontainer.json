@@ -28,7 +28,7 @@
     }
   },
   "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
-  "initializeCommand": "[ -f .env ] || printf \"# npm publish 用トークンを設定してください\\nNPM_TOKEN=\\n\" > .env",
+  "initializeCommand": "[ -f .env ] || printf \"# npm publish 用トークンを設定してください\\nNPM_TOKEN=your-npm-token-here\\n\" > .env",
   "remoteEnv": {
     "NPM_TOKEN": "${localEnv:NPM_TOKEN}"
   }

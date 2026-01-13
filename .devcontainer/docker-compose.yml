@@ -7,7 +7,7 @@ services:
     image: devcontainer-initial-gantt-task-react-custom:latest
     command: sleep infinity
     env_file:
-      - ../.env
+      - ../.env # initializeCommand creates this file if it is missing
     volumes:
       - ../:/workspace
     restart: unless-stopped
