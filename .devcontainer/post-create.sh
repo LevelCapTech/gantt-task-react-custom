@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ -z "${NPM_TOKEN:-}" ]; then
-  echo "Warning: NPM_TOKEN is not set; npm publish may fail." >&2
+  echo "Warning: NPM_TOKEN is not set; set it in .env before running npm publish or run npm login inside the container." >&2
 fi
 
 cat > /home/vscode/.npmrc <<EOF
@@ -17,4 +17,7 @@ fi
 
 chmod 600 /home/vscode/.npmrc
 
-npm install
+if ! npm install; then
+  echo "Error: npm install failed during post-create setup." >&2
+  exit 1
+fi
