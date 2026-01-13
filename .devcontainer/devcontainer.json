@@ -28,6 +28,7 @@
     }
   },
   "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
+  "initializeCommand": "[ -f .env ] || printf \"NPM_TOKEN=\\n\" > .env",
   "remoteEnv": {
     "NPM_TOKEN": "${localEnv:NPM_TOKEN}"
   }
