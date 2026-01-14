@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 token="${NPM_TOKEN:-}"
@@ -20,11 +20,10 @@ fi
 chmod 600 /home/vscode/.npmrc
 
 if [ -f package.json ]; then
-  npm install || {
+  if ! npm install; then
     status=$?
-    echo "Error: npm install failed during post-create setup (exit code ${status}). Check the npm output above for details." >&2
-    exit "${status}"
-  }
+    echo "Warning: npm install failed during post-create setup (exit code ${status}). The dev container will still start; run 'npm install' manually after fixing the issue. Check the npm output above for details." >&2
+  fi
 else
   echo "Warning: package.json not found in the workspace; skipped npm install." >&2
 fi

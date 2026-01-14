@@ -19,10 +19,11 @@
 ## npm publish（dry-run 推奨）
 コンテナ内で実行します。
 ```bash
-npm publish --dry-run --registry=https://registry.npmjs.org/
+npm publish --dry-run
 ```
 本番公開時は `--dry-run` を外して実行してください。
 
 ## トラブルシュート
 - `.env` がない: `initialize.sh` が自動生成しますが、手動で `.env.sample` からコピーしても構いません。
 - `NPM_TOKEN` 未設定で publish する場合: コンテナ内で `npm login` を実行してから `npm publish` してください。
+ - Windows で bash が使えない場合（WSL2 未使用など）は、`.env.sample` を手動で `.env` にコピーしてからコンテナを起動してください（initializeCommand は bash 前提です）。
