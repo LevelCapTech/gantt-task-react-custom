@@ -7,17 +7,28 @@ if [ -z "${token}" ] || [ "${token}" = "your-npm-token-here" ]; then
   token=""
 fi
 
-cat > /home/vscode/.npmrc <<EOF
+npmrc_path="/home/vscode/.npmrc"
+
+if [ -f "${npmrc_path}" ]; then
+  cp "${npmrc_path}" "${npmrc_path}.bak-$(date +%s)"
+  {
+    echo ""
+    echo "# Added by devcontainer post-create.sh"
+    echo "registry=https://registry.npmjs.org/"
+  } >> "${npmrc_path}"
+else
+  cat > "${npmrc_path}" <<EOF
 registry=https://registry.npmjs.org/
 EOF
-
-if [ -n "${token}" ]; then
-  echo "//registry.npmjs.org/:_authToken=${token}" >> /home/vscode/.npmrc
-else
-  echo "# NPM_TOKEN is not set; npm publish will require authentication." >> /home/vscode/.npmrc
 fi
 
-chmod 600 /home/vscode/.npmrc
+if [ -n "${token}" ]; then
+  echo "//registry.npmjs.org/:_authToken=${token}" >> "${npmrc_path}"
+else
+  echo "# NPM_TOKEN is not set; npm publish will require authentication." >> "${npmrc_path}"
+fi
+
+chmod 600 "${npmrc_path}"
 
 if [ -f package.json ]; then
   if ! npm install; then
