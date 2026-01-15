@@ -9,7 +9,7 @@
 1. `.env.sample` をコピーして `.env` を作成し、`NPM_TOKEN` を設定する  
    ```bash
    cp .env.sample .env
-   # NPM_TOKEN=... を編集
+   # .env を開き、NPM_TOKEN=your-npm-token-here を実際のトークンに置き換える
    ```
    `.env` は `.gitignore` で除外されています。
 2. VS Code でリポジトリを開き、「Reopen in Container」を実行。
@@ -27,4 +27,6 @@ npm publish --dry-run
 - `.env` がない: `initialize.sh` が自動生成しますが、手動で `.env.sample` からコピーしても構いません。
 - `NPM_TOKEN` 未設定で publish する場合: コンテナ内で `npm login` を実行してから `npm publish` してください。
 - Windows で bash が使えない場合（WSL2 未使用など）:
-  - `.env.sample` を手動で `.env` にコピーしてからコンテナを起動してください（initializeCommand は bash 前提です）。
+  - 前提: Docker Desktop for Windows は通常 WSL2 バックエンドを使用しますが、`devcontainer.json` の `initializeCommand` はホスト側（Windows）で実行されます。bash を利用するには Git Bash などを Windows 側にインストールし、PATH に通す必要があります。
+  - Git Bash 等を利用しない場合は、`.env.sample` を手動で `.env` にコピーしてからコンテナを起動してください（この場合、initializeCommand による自動生成は行われません）。
+  - あるいは PowerShell で `.env` を生成するよう `initializeCommand` を置き換えることもできます（例: `Copy-Item .env.sample .env -ErrorAction Ignore`）。他プラットフォームとの互換性に注意してください。

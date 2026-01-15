@@ -31,8 +31,11 @@ fi
 chmod 600 "${npmrc_path}"
 
 if [ -f package.json ]; then
-  if ! npm install; then
-    status=$?
+  set +e
+  npm install
+  status=$?
+  set -e
+  if [ "${status}" -ne 0 ]; then
     echo "Warning: npm install failed during post-create setup (exit code ${status}). The dev container will still start; run 'npm install' manually after fixing the issue. Check the npm output above for details." >&2
   fi
 else
