@@ -9,7 +9,7 @@
 1. `.env.sample` をコピーして `.env` を作成し、`NPM_TOKEN` を設定する  
    ```bash
    cp .env.sample .env
-   # NPM_TOKEN=... を追記
+   # NPM_TOKEN=... を編集
    ```
    `.env` は `.gitignore` で除外されています。
 2. VS Code でリポジトリを開き、「Reopen in Container」を実行。

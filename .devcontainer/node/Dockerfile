@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:latest
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:20-bookworm
 
 USER root
 
