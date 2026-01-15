@@ -1,12 +1,12 @@
 services:
   devcontainer-service:
     build:
-      context: ../
+      context: ../..
       dockerfile: .devcontainer/node/Dockerfile
-    image: devcontainer-gantt-task-react-custom:latest
+    image: devcontainer-initial-gantt-task-react-custom:latest
     command: sleep infinity
     env_file:
-      - ../.env # .env must exist; create manually or via initializeCommand (requires bash/WSL2 on Windows)
+      - ../../.env # .env must exist; create manually or via initializeCommand (requires bash/WSL2 on Windows)
     volumes:
-      - ../:/workspace
+      - ../../:/gantt-task-react-custom
     restart: unless-stopped
