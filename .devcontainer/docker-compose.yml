@@ -6,7 +6,7 @@ services:
     image: devcontainer-initial-gantt-task-react-custom:latest
     command: sleep infinity
     env_file:
-      - ../../.env # .env must exist; create manually or via initializeCommand (requires bash/WSL2 on Windows)
+      - ../../.env # .env が必要（手動作成または initializeCommand 経由。Windows では Git Bash/WSL2 が必要）
     volumes:
       - ../../:/gantt-task-react-custom
     restart: unless-stopped

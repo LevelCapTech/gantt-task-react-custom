@@ -38,7 +38,10 @@ if [ -f package.json ]; then
   status=$?
   set -e
   if [ "${status}" -ne 0 ]; then
-    echo "Warning: npm install failed (exit code ${status}). Run 'npm install' manually after fixing the issue. Check npm output above for details. The dev container will still start." >&2
+    echo "Warning: npm install failed (exit code ${status})." >&2
+    echo "  - Run 'npm install' manually after fixing the issue." >&2
+    echo "  - Check npm output above for details." >&2
+    echo "  - The dev container will still start." >&2
   fi
 else
   echo "Warning: package.json not found in the workspace; skipped npm install." >&2
