@@ -92,12 +92,15 @@ const JapaneseTooltip: React.FC<{
     fontSize,
     fontFamily,
   };
-  const durationDays = Math.trunc(
-    (task.end.getTime() - task.start.getTime()) / (1000 * 60 * 60 * 24)
+  const durationDays = Math.max(
+    1,
+    Math.ceil(
+      (task.end.getTime() - task.start.getTime()) / (1000 * 60 * 60 * 24)
+    )
   );
   return (
     <div className={tooltipStyles.tooltipDefaultContainer} style={style}>
-      <b style={{ fontSize: `calc(${fontSize} + 6px)` }}>{`${task.name}: ${japaneseDateFormatter.format(task.start)} 〜 ${japaneseDateFormatter.format(task.end)}`}</b>
+      <b style={{ fontSize: `calc(${fontSize} + 6px)` }}>{`${task.name}: ${japaneseDateFormatter.format(task.start)} - ${japaneseDateFormatter.format(task.end)}`}</b>
       {task.end.getTime() - task.start.getTime() !== 0 && (
         <p className={tooltipStyles.tooltipDefaultContainerParagraph}>{`期間: ${durationDays}日`}</p>
       )}
