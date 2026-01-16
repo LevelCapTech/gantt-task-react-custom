@@ -2,7 +2,7 @@
   "name": "@levelcaptech/gantt-task-react-custom",
   "version": "0.1.0",
   "description": "Interactive Gantt Chart for React with TypeScript.",
-  "author": "LevelCapTech",
+  "author": "LevelCapTech <levelcaptech@gmail.com>",
   "homepage": "https://github.com/LevelCapTech/gantt-task-react-custom",
   "license": "MIT",
   "private": false,
