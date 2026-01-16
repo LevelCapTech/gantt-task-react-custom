@@ -35,4 +35,16 @@ npm publish --dry-run
 `initializeCommand` はホスト側（Windows）で実行されます。以下のいずれかの対応が必要です:
 - Git Bash を Windows にインストールし PATH に通す
 - `.env.sample` を手動で `.env` にコピーしてから起動
-- PowerShell 用コマンドに置き換え（例: `Copy-Item .env.sample .env -ErrorAction Ignore`）
+- PowerShell 用コマンドに置き換え（例: `Copy-Item .env.sample .env -ErrorAction Ignore`）。`devcontainer.json` に適用する例:
+  ```jsonc
+  {
+    // ...省略
+    "initializeCommand": [
+      "pwsh",
+      "-NoLogo",
+      "-NoProfile",
+      "-Command",
+      "Copy-Item -Path .env.sample -Destination .env -ErrorAction SilentlyContinue"
+    ]
+  }
+  ```
