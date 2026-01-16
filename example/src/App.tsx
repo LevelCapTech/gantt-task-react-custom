@@ -57,7 +57,7 @@ const JapaneseTaskListHeader: React.FC<{
         className={taskListHeaderStyles.ganttTable_HeaderSeparator}
         style={{
           height: headerHeight * 0.5,
-          marginTop: headerHeight * 0.25,
+          marginTop: headerHeight * 0.2,
         }}
       />
       <div
