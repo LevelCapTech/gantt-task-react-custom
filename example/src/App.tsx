@@ -4,7 +4,112 @@ import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "gantt-task-react/dist/index.css";
 
-// Init
+const taskListHeaderStyles = {
+  ganttTable: "_3_ygE",
+  ganttTable_Header: "_1nBOt",
+  ganttTable_HeaderSeparator: "_2eZzQ",
+  ganttTable_HeaderItem: "_WuQ0f",
+};
+
+const JapaneseTaskListHeader: React.FC<{
+  headerHeight: number;
+  rowWidth: string;
+  fontFamily: string;
+  fontSize: string;
+}> = ({ headerHeight, fontFamily, fontSize, rowWidth }) => (
+  <div
+    className={taskListHeaderStyles.ganttTable}
+    style={{
+      fontFamily: fontFamily,
+      fontSize: fontSize,
+    }}
+  >
+    <div
+      className={taskListHeaderStyles.ganttTable_Header}
+      style={{
+        height: headerHeight - 2,
+      }}
+    >
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderItem}
+        style={{
+          minWidth: rowWidth,
+        }}
+      >
+        &nbsp;タスク名
+      </div>
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderSeparator}
+        style={{
+          height: headerHeight * 0.5,
+          marginTop: headerHeight * 0.2,
+        }}
+      />
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderItem}
+        style={{
+          minWidth: rowWidth,
+        }}
+      >
+        &nbsp;開始日
+      </div>
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderSeparator}
+        style={{
+          height: headerHeight * 0.5,
+          marginTop: headerHeight * 0.25,
+        }}
+      />
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderItem}
+        style={{
+          minWidth: rowWidth,
+        }}
+      >
+        &nbsp;終了日
+      </div>
+    </div>
+  </div>
+);
+
+const tooltipStyles = {
+  tooltipDefaultContainer: "_3T42e",
+  tooltipDefaultContainerParagraph: "_29NTg",
+};
+
+const japaneseDateFormatter = new Intl.DateTimeFormat("ja-JP", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const JapaneseTooltip: React.FC<{
+  task: Task;
+  fontSize: string;
+  fontFamily: string;
+}> = ({ task, fontSize, fontFamily }) => {
+  const style = {
+    fontSize,
+    fontFamily,
+  };
+  const durationDays = Math.trunc(
+    (task.end.getTime() - task.start.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return (
+    <div className={tooltipStyles.tooltipDefaultContainer} style={style}>
+      <b style={{ fontSize: `calc(${fontSize} + 6px)` }}>{`${task.name}: ${japaneseDateFormatter.format(task.start)} 〜 ${japaneseDateFormatter.format(task.end)}`}</b>
+      {task.end.getTime() - task.start.getTime() !== 0 && (
+        <p className={tooltipStyles.tooltipDefaultContainerParagraph}>{`期間: ${durationDays}日`}</p>
+      )}
+
+      <p className={tooltipStyles.tooltipDefaultContainerParagraph}>
+        {!!task.progress && `進捗: ${task.progress} %`}
+      </p>
+    </div>
+  );
+};
+
+// 初期化
 const App = () => {
   const [view, setView] = React.useState<ViewMode>(ViewMode.Day);
   const [tasks, setTasks] = React.useState<Task[]>(initTasks());
@@ -87,6 +192,9 @@ const App = () => {
         onExpanderClick={handleExpanderClick}
         listCellWidth={isChecked ? "155px" : ""}
         columnWidth={columnWidth}
+        locale="ja-JP"
+        TaskListHeader={JapaneseTaskListHeader}
+        TooltipContent={JapaneseTooltip}
       />
       <h3>高さ制限ありのガントチャート</h3>
       <Gantt
@@ -102,6 +210,9 @@ const App = () => {
         listCellWidth={isChecked ? "155px" : ""}
         ganttHeight={300}
         columnWidth={columnWidth}
+        locale="ja-JP"
+        TaskListHeader={JapaneseTaskListHeader}
+        TooltipContent={JapaneseTooltip}
       />
     </div>
   );
