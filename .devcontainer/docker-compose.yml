@@ -1,0 +1,12 @@
+services:
+  devcontainer-service:
+    build:
+      context: ${LOCAL_WORKSPACE_FOLDER:-..}
+      dockerfile: .devcontainer/node/Dockerfile
+    image: devcontainer-initial-gantt-task-react-custom:latest
+    command: sleep infinity
+    env_file:
+      - ${LOCAL_WORKSPACE_FOLDER:-..}/.env # .env が必要（手動作成または initializeCommand 経由。Windows では Git Bash/WSL 2 が必要）
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-..}:/gantt-task-react-custom
+    restart: unless-stopped
