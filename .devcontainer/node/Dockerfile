@@ -13,4 +13,4 @@ RUN npm install -g yarn@1.22.19 pnpm@8.15.0
 # Prepare workspace
 WORKDIR /gantt-task-react-custom
 
-USER vscode
+USER node
