@@ -98,9 +98,13 @@ const JapaneseTooltip: React.FC<{
       (task.end.getTime() - task.start.getTime()) / (1000 * 60 * 60 * 24)
     )
   );
+  const formattedDateRange = `${japaneseDateFormatter.format(
+    task.start
+  )} - ${japaneseDateFormatter.format(task.end)}`;
+  const titleText = `${task.name}: ${formattedDateRange}`;
   return (
     <div className={tooltipStyles.tooltipDefaultContainer} style={style}>
-      <b style={{ fontSize: `calc(${fontSize} + 6px)` }}>{`${task.name}: ${japaneseDateFormatter.format(task.start)} - ${japaneseDateFormatter.format(task.end)}`}</b>
+      <b style={{ fontSize: `calc(${fontSize} + 6px)` }}>{titleText}</b>
       {task.end.getTime() - task.start.getTime() !== 0 && (
         <p className={tooltipStyles.tooltipDefaultContainerParagraph}>{`期間: ${durationDays}日`}</p>
       )}
@@ -127,7 +131,7 @@ const App = () => {
   }
 
   const handleTaskChange = (task: Task) => {
-    console.log("日付が変更されたタスク ID:" + task.id);
+    console.log(`日付が変更されたタスク ID: ${task.id}`);
     let newTasks = tasks.map(t => (t.id === task.id ? task : t));
     if (task.project) {
       const [start, end] = getStartEndDateForProject(newTasks, task.project);
@@ -146,7 +150,7 @@ const App = () => {
   };
 
   const handleTaskDelete = (task: Task) => {
-    const conf = window.confirm(task.name + " を削除してもよろしいですか？");
+    const conf = window.confirm(`${task.name} を削除してもよろしいですか？`);
     if (conf) {
       setTasks(tasks.filter(t => t.id !== task.id));
     }
@@ -155,24 +159,25 @@ const App = () => {
 
   const handleProgressChange = async (task: Task) => {
     setTasks(tasks.map(t => (t.id === task.id ? task : t)));
-    console.log("進捗が変更されたタスク ID:" + task.id);
+    console.log(`進捗が変更されたタスク ID: ${task.id}`);
   };
 
   const handleDblClick = (task: Task) => {
-    alert("ダブルクリックイベント ID:" + task.id);
+    alert(`ダブルクリックイベント ID: ${task.id}`);
   };
 
   const handleClick = (task: Task) => {
-    console.log("クリックイベント ID:" + task.id);
+    console.log(`クリックイベント ID: ${task.id}`);
   };
 
   const handleSelect = (task: Task, isSelected: boolean) => {
-    console.log(task.name + " は " + (isSelected ? "選択されました" : "選択解除されました"));
+    const selectionText = isSelected ? "選択されました" : "選択解除されました";
+    console.log(`${task.name} は ${selectionText}`);
   };
 
   const handleExpanderClick = (task: Task) => {
     setTasks(tasks.map(t => (t.id === task.id ? task : t)));
-    console.log("折りたたみ操作のタスク ID:" + task.id);
+    console.log(`折りたたみ操作のタスク ID: ${task.id}`);
   };
 
   return (
