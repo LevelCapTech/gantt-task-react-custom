@@ -3,7 +3,7 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer-service",
   "workspaceFolder": "/gantt-task-react-custom",
-  "remoteUser": "vscode",
+  "remoteUser": "node",
   "customizations": {
     "vscode": {
       "settings": {
