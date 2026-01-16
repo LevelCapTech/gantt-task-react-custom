@@ -19,7 +19,7 @@ const App = () => {
   }
 
   const handleTaskChange = (task: Task) => {
-    console.log("On date change Id:" + task.id);
+    console.log("日付が変更されたタスク ID:" + task.id);
     let newTasks = tasks.map(t => (t.id === task.id ? task : t));
     if (task.project) {
       const [start, end] = getStartEndDateForProject(newTasks, task.project);
@@ -38,7 +38,7 @@ const App = () => {
   };
 
   const handleTaskDelete = (task: Task) => {
-    const conf = window.confirm("Are you sure about " + task.name + " ?");
+    const conf = window.confirm(task.name + " を削除してもよろしいですか？");
     if (conf) {
       setTasks(tasks.filter(t => t.id !== task.id));
     }
@@ -47,24 +47,24 @@ const App = () => {
 
   const handleProgressChange = async (task: Task) => {
     setTasks(tasks.map(t => (t.id === task.id ? task : t)));
-    console.log("On progress change Id:" + task.id);
+    console.log("進捗が変更されたタスク ID:" + task.id);
   };
 
   const handleDblClick = (task: Task) => {
-    alert("On Double Click event Id:" + task.id);
+    alert("ダブルクリックイベント ID:" + task.id);
   };
 
   const handleClick = (task: Task) => {
-    console.log("On Click event Id:" + task.id);
+    console.log("クリックイベント ID:" + task.id);
   };
 
   const handleSelect = (task: Task, isSelected: boolean) => {
-    console.log(task.name + " has " + (isSelected ? "selected" : "unselected"));
+    console.log(task.name + " は " + (isSelected ? "選択されました" : "選択解除されました"));
   };
 
   const handleExpanderClick = (task: Task) => {
     setTasks(tasks.map(t => (t.id === task.id ? task : t)));
-    console.log("On expander click Id:" + task.id);
+    console.log("折りたたみ操作のタスク ID:" + task.id);
   };
 
   return (
@@ -74,7 +74,7 @@ const App = () => {
         onViewListChange={setIsChecked}
         isChecked={isChecked}
       />
-      <h3>Gantt With Unlimited Height</h3>
+      <h3>高さ無制限のガントチャート</h3>
       <Gantt
         tasks={tasks}
         viewMode={view}
@@ -88,7 +88,7 @@ const App = () => {
         listCellWidth={isChecked ? "155px" : ""}
         columnWidth={columnWidth}
       />
-      <h3>Gantt With Limited Height</h3>
+      <h3>高さ制限ありのガントチャート</h3>
       <Gantt
         tasks={tasks}
         viewMode={view}
