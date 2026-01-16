@@ -9,7 +9,7 @@ if [ -z "${token}" ] || [ "${token}" = "your-npm-token-here" ]; then
   token=""
 fi
 
-npmrc_path="/home/vscode/.npmrc"
+npmrc_path="${HOME:-/home/node}/.npmrc"
 
 if [ -f "${npmrc_path}" ]; then
   cp "${npmrc_path}" "${npmrc_path}.bak-$(date +%Y%m%d_%H%M%S)"
