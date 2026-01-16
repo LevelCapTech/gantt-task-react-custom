@@ -5,10 +5,10 @@ import { getStartEndDateForProject, initTasks } from "./helper";
 import "gantt-task-react/dist/index.css";
 
 const taskListHeaderStyles = {
-  ganttTable: "_3_ygE",
-  ganttTable_Header: "_1nBOt",
-  ganttTable_HeaderSeparator: "_2eZzQ",
-  ganttTable_HeaderItem: "_WuQ0f",
+  ganttTable: "TaskListHeader",
+  ganttTable_Header: "TaskListHeaderRow",
+  ganttTable_HeaderSeparator: "TaskListHeaderSeparator",
+  ganttTable_HeaderItem: "TaskListHeaderCell",
 };
 
 const JapaneseTaskListHeader: React.FC<{
@@ -73,8 +73,8 @@ const JapaneseTaskListHeader: React.FC<{
 );
 
 const tooltipStyles = {
-  tooltipDefaultContainer: "_3T42e",
-  tooltipDefaultContainerParagraph: "_29NTg",
+  tooltipDefaultContainer: "TooltipContainer",
+  tooltipDefaultContainerParagraph: "TooltipParagraph",
 };
 
 const japaneseDateFormatter = new Intl.DateTimeFormat("ja-JP", {
