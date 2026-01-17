@@ -23,6 +23,11 @@ npm publish --dry-run
 ```
 本番公開時は `--dry-run` を外して実行してください。
 
+```bash
+# 公開時は必ず public 指定で publish すること
+npm publish --access public
+```
+
 ## トラブルシュート
 
 ### `.env` がない場合
