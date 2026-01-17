@@ -100,7 +100,7 @@ const JapaneseTooltip: React.FC<{
   );
   const formattedDateRange = `${japaneseDateFormatter.format(
     task.start
-  )} - ${japaneseDateFormatter.format(task.end)}`;
+  )}〜${japaneseDateFormatter.format(task.end)}`;
   const titleText = `${task.name}: ${formattedDateRange}`;
   return (
     <div className={tooltipStyles.tooltipDefaultContainer} style={style}>
@@ -227,3 +227,4 @@ const App = () => {
 };
 
 export default App;
+export { JapaneseTaskListHeader, JapaneseTooltip };
