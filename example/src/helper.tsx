@@ -6,7 +6,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15),
-      name: "Some Project",
+      name: "サンプルプロジェクト",
       id: "ProjectSample",
       progress: 25,
       type: "project",
@@ -22,7 +22,7 @@ export function initTasks() {
         12,
         28
       ),
-      name: "Idea",
+      name: "アイデア整理",
       id: "Task 0",
       progress: 45,
       type: "task",
@@ -32,7 +32,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 2),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 4, 0, 0),
-      name: "Research",
+      name: "調査",
       id: "Task 1",
       progress: 25,
       dependencies: ["Task 0"],
@@ -43,7 +43,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 4),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 8, 0, 0),
-      name: "Discussion with team",
+      name: "チームディスカッション",
       id: "Task 2",
       progress: 10,
       dependencies: ["Task 1"],
@@ -54,7 +54,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 8),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 9, 0, 0),
-      name: "Developing",
+      name: "開発",
       id: "Task 3",
       progress: 2,
       dependencies: ["Task 2"],
@@ -65,7 +65,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 8),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 10),
-      name: "Review",
+      name: "レビュー",
       id: "Task 4",
       type: "task",
       progress: 70,
@@ -76,7 +76,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15),
-      name: "Release",
+      name: "リリース",
       id: "Task 6",
       progress: currentDate.getMonth(),
       type: "milestone",
@@ -87,7 +87,7 @@ export function initTasks() {
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 18),
       end: new Date(currentDate.getFullYear(), currentDate.getMonth(), 19),
-      name: "Party Time",
+      name: "打ち上げ",
       id: "Task 9",
       progress: 0,
       isDisabled: true,

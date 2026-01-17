@@ -80,3 +80,40 @@ input:checked + .Slider:before {
   -ms-transform: translateX(26px);
   transform: translateX(26px);
 }
+
+.TaskListHeader {
+  display: table;
+  border-bottom: #e6e4e4 1px solid;
+  border-top: #e6e4e4 1px solid;
+  border-left: #e6e4e4 1px solid;
+}
+
+.TaskListHeaderRow {
+  display: table-row;
+}
+
+.TaskListHeaderCell {
+  display: table-cell;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.TaskListHeaderSeparator {
+  border-right: 1px solid rgb(196, 196, 196);
+  opacity: 1;
+  margin-left: -2px;
+}
+
+.TooltipContainer {
+  background: #fff;
+  padding: 12px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+}
+
+.TooltipParagraph {
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #666;
+}

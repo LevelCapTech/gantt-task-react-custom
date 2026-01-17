@@ -4,7 +4,119 @@ import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "gantt-task-react/dist/index.css";
 
-// Init
+const taskListHeaderStyles = {
+  ganttTable: "TaskListHeader",
+  ganttTable_Header: "TaskListHeaderRow",
+  ganttTable_HeaderSeparator: "TaskListHeaderSeparator",
+  ganttTable_HeaderItem: "TaskListHeaderCell",
+};
+
+const JapaneseTaskListHeader: React.FC<{
+  headerHeight: number;
+  rowWidth: string;
+  fontFamily: string;
+  fontSize: string;
+}> = ({ headerHeight, fontFamily, fontSize, rowWidth }) => (
+  <div
+    className={taskListHeaderStyles.ganttTable}
+    style={{
+      fontFamily: fontFamily,
+      fontSize: fontSize,
+    }}
+  >
+    <div
+      className={taskListHeaderStyles.ganttTable_Header}
+      style={{
+        height: headerHeight - 2,
+      }}
+    >
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderItem}
+        style={{
+          minWidth: rowWidth,
+        }}
+      >
+        &nbsp;タスク名
+      </div>
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderSeparator}
+        style={{
+          height: headerHeight * 0.5,
+          marginTop: headerHeight * 0.2,
+        }}
+      />
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderItem}
+        style={{
+          minWidth: rowWidth,
+        }}
+      >
+        &nbsp;開始日
+      </div>
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderSeparator}
+        style={{
+          height: headerHeight * 0.5,
+          marginTop: headerHeight * 0.2,
+        }}
+      />
+      <div
+        className={taskListHeaderStyles.ganttTable_HeaderItem}
+        style={{
+          minWidth: rowWidth,
+        }}
+      >
+        &nbsp;終了日
+      </div>
+    </div>
+  </div>
+);
+
+const tooltipStyles = {
+  tooltipDefaultContainer: "TooltipContainer",
+  tooltipDefaultContainerParagraph: "TooltipParagraph",
+};
+
+const japaneseDateFormatter = new Intl.DateTimeFormat("ja-JP", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const JapaneseTooltip: React.FC<{
+  task: Task;
+  fontSize: string;
+  fontFamily: string;
+}> = ({ task, fontSize, fontFamily }) => {
+  const style = {
+    fontSize,
+    fontFamily,
+  };
+  const durationDays = Math.max(
+    1,
+    Math.ceil(
+      (task.end.getTime() - task.start.getTime()) / (1000 * 60 * 60 * 24)
+    )
+  );
+  const formattedDateRange = `${japaneseDateFormatter.format(
+    task.start
+  )}〜${japaneseDateFormatter.format(task.end)}`;
+  const titleText = `${task.name}: ${formattedDateRange}`;
+  return (
+    <div className={tooltipStyles.tooltipDefaultContainer} style={style}>
+      <b style={{ fontSize: `calc(${fontSize} + 6px)` }}>{titleText}</b>
+      {task.end.getTime() - task.start.getTime() !== 0 && (
+        <p className={tooltipStyles.tooltipDefaultContainerParagraph}>{`期間: ${durationDays}日`}</p>
+      )}
+
+      <p className={tooltipStyles.tooltipDefaultContainerParagraph}>
+        {!!task.progress && `進捗: ${task.progress} %`}
+      </p>
+    </div>
+  );
+};
+
+// 初期化
 const App = () => {
   const [view, setView] = React.useState<ViewMode>(ViewMode.Day);
   const [tasks, setTasks] = React.useState<Task[]>(initTasks());
@@ -19,7 +131,7 @@ const App = () => {
   }
 
   const handleTaskChange = (task: Task) => {
-    console.log("On date change Id:" + task.id);
+    console.log(`日付が変更されたタスク ID: ${task.id}`);
     let newTasks = tasks.map(t => (t.id === task.id ? task : t));
     if (task.project) {
       const [start, end] = getStartEndDateForProject(newTasks, task.project);
@@ -38,7 +150,7 @@ const App = () => {
   };
 
   const handleTaskDelete = (task: Task) => {
-    const conf = window.confirm("Are you sure about " + task.name + " ?");
+    const conf = window.confirm(`${task.name} を削除してもよろしいですか？`);
     if (conf) {
       setTasks(tasks.filter(t => t.id !== task.id));
     }
@@ -47,24 +159,25 @@ const App = () => {
 
   const handleProgressChange = async (task: Task) => {
     setTasks(tasks.map(t => (t.id === task.id ? task : t)));
-    console.log("On progress change Id:" + task.id);
+    console.log(`進捗が変更されたタスク ID: ${task.id}`);
   };
 
   const handleDblClick = (task: Task) => {
-    alert("On Double Click event Id:" + task.id);
+    alert(`ダブルクリックイベント ID: ${task.id}`);
   };
 
   const handleClick = (task: Task) => {
-    console.log("On Click event Id:" + task.id);
+    console.log(`クリックイベント ID: ${task.id}`);
   };
 
   const handleSelect = (task: Task, isSelected: boolean) => {
-    console.log(task.name + " has " + (isSelected ? "selected" : "unselected"));
+    const selectionText = isSelected ? "選択されました" : "選択解除されました";
+    console.log(`${task.name} は ${selectionText}`);
   };
 
   const handleExpanderClick = (task: Task) => {
     setTasks(tasks.map(t => (t.id === task.id ? task : t)));
-    console.log("On expander click Id:" + task.id);
+    console.log(`折りたたみ操作のタスク ID: ${task.id}`);
   };
 
   return (
@@ -74,7 +187,7 @@ const App = () => {
         onViewListChange={setIsChecked}
         isChecked={isChecked}
       />
-      <h3>Gantt With Unlimited Height</h3>
+      <h3>高さ無制限のガントチャート</h3>
       <Gantt
         tasks={tasks}
         viewMode={view}
@@ -87,8 +200,11 @@ const App = () => {
         onExpanderClick={handleExpanderClick}
         listCellWidth={isChecked ? "155px" : ""}
         columnWidth={columnWidth}
+        locale="ja-JP"
+        TaskListHeader={JapaneseTaskListHeader}
+        TooltipContent={JapaneseTooltip}
       />
-      <h3>Gantt With Limited Height</h3>
+      <h3>高さ制限ありのガントチャート</h3>
       <Gantt
         tasks={tasks}
         viewMode={view}
@@ -102,9 +218,13 @@ const App = () => {
         listCellWidth={isChecked ? "155px" : ""}
         ganttHeight={300}
         columnWidth={columnWidth}
+        locale="ja-JP"
+        TaskListHeader={JapaneseTaskListHeader}
+        TooltipContent={JapaneseTooltip}
       />
     </div>
   );
 };
 
 export default App;
+export { JapaneseTaskListHeader, JapaneseTooltip };

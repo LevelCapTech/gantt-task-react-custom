@@ -1,5 +1,5 @@
-This example was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+このサンプルは [Create React App](https://github.com/facebook/create-react-app) で作成されています。
 
-It is linked to the gantt-task-react package in the parent directory for development purposes.
+開発用途として、親ディレクトリにある gantt-task-react パッケージにリンクされています。
 
-You can run `npm install` and then `npm start` to test your package.
+`npm install` の後に `npm start` を実行すると、このパッケージをテストできます。

@@ -1,6 +1,6 @@
 {
-  "short_name": "gantt-task-react",
-  "name": "gantt-task-react",
+  "short_name": "ガントチャート",
+  "name": "gantt-task-react サンプルアプリ（日本語）",
   "icons": [
     {
       "src": "favicon.ico",
