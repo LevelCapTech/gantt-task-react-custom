@@ -78,9 +78,9 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       event.preventDefault();
 
       point.x = event.clientX;
-      const cursor = point.matrixTransform(
-        svg?.current.getScreenCTM()?.inverse()
-      );
+      const screenCTM = svg.current.getScreenCTM();
+      if (!screenCTM) return;
+      const cursor = point.matrixTransform(screenCTM.inverse());
 
       const { isChanged, changedTask } = handleTaskBySVGMouseEvent(
         cursor.x,
@@ -103,9 +103,9 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       event.preventDefault();
 
       point.x = event.clientX;
-      const cursor = point.matrixTransform(
-        svg?.current.getScreenCTM()?.inverse()
-      );
+      const screenCTM = svg.current.getScreenCTM();
+      if (!screenCTM) return;
+      const cursor = point.matrixTransform(screenCTM.inverse());
       const { changedTask: newChangedTask } = handleTaskBySVGMouseEvent(
         cursor.x,
         action as BarMoveAction,
