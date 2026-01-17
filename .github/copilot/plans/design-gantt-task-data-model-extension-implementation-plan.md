@@ -8,12 +8,17 @@
   - コンポーネント: `src/components/gantt/task-gantt-content.tsx`, `src/components/gantt/gantt.tsx`, `src/components/task-item/task-item.tsx`, `src/components/task-list/task-list.tsx`, `src/components/other/tooltip.tsx`（新フィールドの受け渡し/表示）
   - サンプル: `example/src/helper.tsx` などタスク生成箇所
   - その他: 必要に応じて選択肢定数の切り出しファイルを新設
-- 影響範囲・互換性リスク: 既存利用者の Task 型互換性を守るため新規フィールドはオプショナルとし、欠損時はデフォルト（`process: "その他"`, `status: "未着手"` など）で処理する方針。JSON エクスポートやバーツールチップへの情報伝播を追加するが既存基本動作は維持。
+- 影響範囲・互換性リスク: 既存利用者の Task 型互換性を守るため新規フィールドはオプショナルとし、欠損時はデフォルト（`process: "その他"`, `status: "未着手"` など）で処理する方針。JSON エクスポートやバーのツールチップへの情報伝播を追加するが既存基本動作は維持。
 - 外部依存・Secrets の扱い: 新規依存は追加しない。Secrets/PII は保持しない。
 
 # 3. 設計方針
-- 責務分離 / データフロー: `Task` に `process`/`status` のユニオン型（選択肢定数と併用）と予定/実績系フィールドを追加し、`Gantt` → `TaskGanttContent` → `TaskItem`/`TaskList`/`Tooltip` まで同型で透過的に渡す。リスト側で `process`/`status` を選択式入力（`status` は色付きバッジで表示、色定数は実装時に固定）、`assignee` を表示、`plannedStart`/`plannedEnd` を日付表示、`plannedEffort`/`actualEffort` はツールチップ/詳細表示に載せる。
-- エッジケース / 例外系 / リトライ方針: 不正な `process`/`status` は定数一覧に含まれるか検証し、未定義・不正時はデフォルト値へフォールバック。`planned*`/`*Effort` 未設定は空表示、数値は 0 以上のみ許容とし負数は未設定（undefined）として扱う。既存タスクに新規フィールドがなくてもクラッシュしないよう正常系優先で扱う。
+- 責務分離 / データフロー: `Task` に `process`/`status` のユニオン型（選択肢定数と併用）と予定/実績系フィールドを追加し、`Gantt` → `TaskGanttContent` → `TaskItem`/`TaskList`/`Tooltip` まで同型で透過的に渡す。  
+  リスト側で `process`/`status` を選択式入力（`status` は色付きバッジで表示、色定数は実装時に固定）、`assignee` を表示し、`plannedStart`/`plannedEnd` は日付として、`plannedEffort`/`actualEffort` はツールチップ/詳細表示に載せる。
+- エッジケース / 例外系 / リトライ方針:
+  - 不正な `process`/`status` は定数一覧に含まれるか検証し、未定義・不正時はデフォルト値へフォールバック。
+  - `planned*`/`*Effort` 未設定は空表示とし、数値は 0 以上のみ許容する。
+  - 負数の工数は未設定（undefined）として扱い、計算に含めない。
+  - 既存タスクに新規フィールドがなくてもクラッシュしないよう正常系優先で扱う。
 - ログと観測性（漏洩防止を含む）: 追加フィールドはログ出力不要。例外時は文脈を保持した警告ロギングのみ行い、個人名（assignee）を不用意に出力しない。
 
 # 4. テスト戦略
