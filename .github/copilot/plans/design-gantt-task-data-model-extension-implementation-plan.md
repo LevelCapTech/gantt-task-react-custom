@@ -8,6 +8,18 @@
   - コンポーネント: `src/components/gantt/task-gantt-content.tsx`, `src/components/gantt/gantt.tsx`, `src/components/task-item/task-item.tsx`, `src/components/task-list/task-list.tsx`, `src/components/other/tooltip.tsx`（新フィールドの受け渡し/表示）
   - サンプル: `example/src/helper.tsx` などタスク生成箇所
   - その他: 必要に応じて選択肢定数の切り出しファイルを新設
+- コード編集対象の一覧（新規/変更予定）:
+  | 種別 | ファイル | 役割 |
+  | --- | --- | --- |
+  | 新規 | `src/constants/task-options.ts`（名称仮） | `TASK_PROCESS_OPTIONS`/`TASK_STATUS_OPTIONS` を集約する単一の参照元 |
+  | 変更 | `src/types/public-types.ts` | Task 型に新フィールドと選択肢型を追加し、定数を re-export |
+  | 変更 | `src/components/gantt/gantt.tsx` | props 正規化と `Task` 型の透過（新フィールドを保持） |
+  | 変更 | `src/components/gantt/task-gantt-content.tsx` | バー計算/日付計算へ新フィールドを透過し、ツールチップへの引き渡し |
+  | 変更 | `src/components/task-list/task-list.tsx` | 左リストの列構成に新フィールド列を追加（表示/非表示制御を含む） |
+  | 変更 | `src/components/task-item/task-item.tsx` | バー末尾のステータスバッジ/補足表示の描画 |
+  | 変更 | `src/components/other/tooltip.tsx` | ツールチップで予定日・工数・担当者などを表示 |
+  | 変更 | `example/src/helper.tsx` | サンプルタスクの初期値に新フィールドを追加 |
+  | 変更 | `src/test/**/*.ts*` | 新フィールドを含むフィクスチャ・表示/フォールバックの検証テスト追加 |
 - 影響範囲・互換性リスク: 既存利用者の Task 型互換性を守るため新規フィールドはオプショナルとし、欠損時はデフォルト（`process: "その他"`, `status: "未着手"` を原則とする）で処理する方針。JSON エクスポートやバーのツールチップへの情報伝播を追加するが既存基本動作は維持。
 - 実装時の具体的な修正箇所と影響範囲:
   - データ型: `Task` 拡張と選択肢定数の追加に伴う型エクスポート影響（型利用箇所全般）。
@@ -20,12 +32,33 @@
 # 3. 設計方針
 - 責務分離 / データフロー: `Task` に `process`/`status` のユニオン型（選択肢定数と併用）と予定/実績系フィールドを追加し、`Gantt` → `TaskGanttContent` → `TaskItem`/`TaskList`/`Tooltip` まで同型で透過的に渡す。  
   リスト側で `process`/`status` を選択式入力（`status` は色付きバッジで表示、色定数は実装時に固定）、`assignee` を表示し、`plannedStart`/`plannedEnd` は日付として、`plannedEffort`/`actualEffort` はツールチップ/詳細表示に載せる。
+- UI 配置/横幅・表示制御方針:
+  - デフォルト列幅（px 目安）: `process` 120, `assignee` 140, `plannedStart` 140, `plannedEnd` 140, `plannedEffort` 96, `actualEffort` 96, `status` 96（バッジ）。必要に応じて `listCellWidth` を拡張。
+  - 折り返し: リスト列は1行で表示し、はみ出しはエリプシス＋ツールチップ。バー上のバッジは短縮ラベル（例: 未/進/完/保）で幅固定。
+  - 表示/非表示: `TaskList` に表示制御用のフィールド設定（例: `visibleFields` 配列）を追加してトグル可能にし、既存既定値は全表示。折りたたみ（子タスク展開）は従来の project tree 挙動に準拠し、新規列も同じ行高で追従。
 - エッジケース / 例外系 / リトライ方針:
   - 不正な `process`/`status` は選択肢定数に厳密一致しない値（`undefined`/`null`/空文字/大小文字・全半角揺れ/異なる文字列）として扱い、デフォルト値へフォールバック（ケースセンシティブで `process` は {設計, 開発, テスト, レビュー, リリース, その他}、`status` は {未着手, 進行中, 完了, 保留} に限定し、`public-types.ts` の定数/enum（例: `TASK_PROCESS_OPTIONS`/`TASK_STATUS_OPTIONS`）を唯一の参照元にする）。
   - `planned*`/`*Effort` 未設定は空表示とし、工数は h 単位・0 以上の number のみ許容する。
   - 負数の工数は未設定（undefined）として扱い、計算に含めない。
   - 既存タスクに新規フィールドがなくてもクラッシュしないよう正常系優先で扱う。
 - ログと観測性（漏洩防止を含む）: 追加フィールドはログ出力不要。例外時は文脈を保持した警告ロギングのみ行い、個人名（assignee）は出力しない（必要に応じてタスク ID など匿名化情報に置換）。タスク名・工程名に機微な業務情報が含まれる可能性もあるため、ログには ID/enum 値のみを記録する。ログレベルは WARN を基本とし、デバッグ時もマスクした上で INFO にとどめる。
+- データシーケンス（表示・更新の流れ）:
+  ```mermaid
+  sequenceDiagram
+    actor U as User
+    participant L as TaskList (左リスト)
+    participant G as Gantt
+    participant C as TaskGanttContent
+    participant I as TaskItem (バー)
+    participant T as Tooltip
+    U->>L: フィールド編集/選択 (process/status/assignee/予定日/工数)
+    L->>G: onUpdateTask(taskId, updatedFields)
+    G->>C: tasks 配列を正規化して渡す
+    C->>I: バー描画用データ（新フィールド含む）
+    C->>T: ホバー時の表示用データ（予定日・工数等）
+    I-->>U: バッジ/バー表示（溢れは省略表示）
+    T-->>U: ホバー時に詳細を表示
+  ```
 
 # 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰）: Task 型が新フィールドを許容する型チェック、`process`/`status` のフォールバック動作、予定日・工数表示のフォーマット、JSON エクスポートに新項目が含まれることをユニットテストで確認。既存のガント描画テストに追加ケースを差し込む。
