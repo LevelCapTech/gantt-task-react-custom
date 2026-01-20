@@ -105,18 +105,21 @@ export const DndGanttPlayground: React.FC = () => {
   );
 
   const handleDragStart = React.useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
+    if (typeof event.active.id !== "string") return;
+    setActiveId(event.active.id);
   }, []);
 
   const handleDragEnd = React.useCallback(
     (event: DragEndEvent) => {
       const { active, over, delta } = event;
       setActiveId(null);
-      if (!over) return;
+      if (!over || typeof active.id !== "string" || typeof over.id !== "string") return;
+      const activeIdStr = active.id;
+      const overIdStr = over.id;
       setTasks(prevTasks => {
-        const reordered = moveTaskWithChildren(prevTasks, active.id as string, over.id as string);
+        const reordered = moveTaskWithChildren(prevTasks, activeIdStr, overIdStr);
         const indentSteps = deriveIndentSteps(delta.x);
-        const adjusted = applyIndentSteps(reordered, active.id as string, indentSteps);
+        const adjusted = applyIndentSteps(reordered, activeIdStr, indentSteps);
         return normalizeDisplayOrder(adjusted);
       });
     },

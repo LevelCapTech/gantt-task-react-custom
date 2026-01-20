@@ -8,12 +8,30 @@ export const deriveIndentSteps = (deltaX: number, indentWidth: number = INDENT_W
 export const findTaskById = (tasks: Task[], taskId: string): Task | undefined =>
   tasks.find(task => task.id === taskId);
 
+const buildChildrenMap = (tasks: Task[]): Map<string, string[]> =>
+  tasks.reduce<Map<string, string[]>>((map, task) => {
+    if (!task.project) return map;
+    const siblings = map.get(task.project) ?? [];
+    siblings.push(task.id);
+    map.set(task.project, siblings);
+    return map;
+  }, new Map());
+
 export const findDescendantIds = (tasks: Task[], rootId: string): string[] => {
-  const children = tasks.filter(task => task.project === rootId).map(task => task.id);
-  return children.reduce<string[]>(
-    (acc, childId) => acc.concat(childId, findDescendantIds(tasks, childId)),
-    []
-  );
+  const childrenMap = buildChildrenMap(tasks);
+  const result: string[] = [];
+  const stack = [...(childrenMap.get(rootId) ?? [])];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) continue;
+    result.push(current);
+    const nested = childrenMap.get(current);
+    if (nested) {
+      stack.push(...nested);
+    }
+  }
+  return result;
 };
 
 export const isDescendant = (tasks: Task[], ancestorId: string, maybeChildId?: string): boolean => {
@@ -44,8 +62,9 @@ export const moveTaskWithChildren = (
   const idsToMove = [activeId, ...findDescendantIds(tasks, activeId)];
   const movingTasks = tasks.filter(task => idsToMove.includes(task.id));
   const remaining = tasks.filter(task => !idsToMove.includes(task.id));
-  const activeIndex = tasks.findIndex(task => task.id === activeId);
-  const overIndex = tasks.findIndex(task => task.id === overId);
+  const indexById = new Map<string, number>(tasks.map((task, index) => [task.id, index]));
+  const activeIndex = indexById.get(activeId) ?? -1;
+  const overIndex = indexById.get(overId) ?? -1;
   const targetIndex = remaining.findIndex(task => task.id === overId);
   const baseIndex = targetIndex === -1 ? remaining.length : targetIndex;
   const insertAt =
