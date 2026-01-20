@@ -7,4 +7,3 @@ export type {
   DisplayOption,
   EventOption,
 } from "./types/public-types";
-export { DndGanttPlayground } from "./dnd/dnd-gantt-playground";

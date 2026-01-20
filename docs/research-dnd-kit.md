@@ -1,26 +1,28 @@
 # dnd-kit を用いたガント行ドラッグ／階層化 PoC
 
 ## 目的
+- 本リポジトリにはコードを含めない（調査タスクの方針に従い、PoC コードは手元検証のみ）。
 - `dnd-kit` の `SortableContext` + DragHandle 構成でタスクリスト行を並べ替えできるか確認。
 - 横方向移動量をインデントに反映し、親子関係（`project`）を変えられるかを検証。
 - 並べ替え結果が `Gantt` 描画に同期されるかを目視確認。
 
 ## 実装サマリ
-- `/src/dnd/` に PoC を配置し、`DndGanttPlayground` としてエクスポート。
+- ローカル検証では `/src/dnd/` に PoC を配置し、`DndGanttPlayground` として構成（本コミットには含まず）。
   - 縦方向の並べ替え: `SortableContext` + `verticalListSortingStrategy`。
   - 階層化: 横方向移動量を 24px 単位で丸め、`project` を前行に付け替える `applyIndentSteps` を実装。
   - サブツリー移動: `moveTaskWithChildren` で親を動かすと子もまとめて移動。
   - 見た目: Drag Handle 付き行リスト + 右側に同期された Gantt プレビュー。
-- サンプルデータは `sample-tasks.ts` に分離（プロジェクト2件 + マイルストーン）。
-- 例示 UI を `example` アプリに追加（見出し「dnd-kit 行ドラッグ PoC」）。
+- サンプルデータは `sample-tasks.ts` に分離（プロジェクト2件 + マイルストーン、ローカルのみ）。
+- 例示 UI を `example` アプリに追加して確認（本コミットには未含有）。
 
 ## 動作確認手順
-1. ルートで依存を取得（済みの場合は不要）: `npm install`
+ローカルで PoC コードを適用した上での検証手順（本コミットにはコードを含めないため参考情報）:
+1. ルートで依存を取得: `npm install`
 2. 例示アプリを起動: `cd example && npm install && npm start`
 3. ブラウザで `http://localhost:3001` を開き、ページ下部の「dnd-kit 行ドラッグ PoC」を操作。
    - ハンドル（☰）をドラッグして上下入れ替え。
    - 水平方向に少し移動するとインデント/アウトデントが適用され、右側の Gantt も同期する。
-4. 自動テスト: ルートで `npm test -- --watch=false`（純関数ユーティリティの回帰確認を含む）。
+4. 純関数ユーティリティの確認: ルートで `npm test -- --watch=false`。
 
 ## 観察結果
 - ハンドル限定ドラッグで隣接リストの並べ替えが安定動作。
