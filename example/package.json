@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ../node_modules/react-scripts/bin/react-scripts.js start",
+    "start": "cross-env PORT=3001 node ../node_modules/react-scripts/bin/react-scripts.js start",
     "build": "node ../node_modules/react-scripts/bin/react-scripts.js build",
     "test": "node ../node_modules/react-scripts/bin/react-scripts.js test",
     "eject": "node ../node_modules/react-scripts/bin/react-scripts.js eject"
@@ -24,6 +24,7 @@
     "react-scripts": "file:../node_modules/react-scripts"
   },
   "devDependencies": {
+    "cross-env": "file:../node_modules/cross-env"
   },
   "browserslist": {
     "production": [
