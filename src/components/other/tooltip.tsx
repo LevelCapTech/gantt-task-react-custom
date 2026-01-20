@@ -180,7 +180,7 @@ export const StandardTooltipContent: React.FC<{
         </div>
       )}
       <div className={styles.tooltipRow}>
-        <span className={styles.tooltipLabel}>進捗</span>
+        <span className={styles.tooltipLabel}>ステータス</span>
         <span className={styles.tooltipValue}>
           <span
             className={styles.tooltipStatus}

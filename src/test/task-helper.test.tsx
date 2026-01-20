@@ -5,7 +5,12 @@ import {
   sanitizeEffortInput,
   normalizeProcess,
   normalizeStatus,
+  getStatusBadgeText,
+  getStatusColor,
+  resolveVisibleFields,
+  DEFAULT_VISIBLE_FIELDS,
 } from "../helpers/task-helper";
+import { VisibleField } from "../types/public-types";
 import { TASK_PROCESS_OPTIONS, TASK_STATUS_OPTIONS } from "../constants/taskOptions";
 
 describe("task-helper formatDate", () => {
@@ -71,5 +76,28 @@ describe("task-helper normalize helpers", () => {
   it("normalizes status to defined options", () => {
     expect(normalizeStatus("完了")).toBe("完了");
     expect(TASK_STATUS_OPTIONS).toContain(normalizeStatus("unknown" as any));
+  });
+});
+
+describe("task-helper status helpers", () => {
+  it("returns badge text and color for valid and fallback statuses", () => {
+    expect(getStatusBadgeText("進行中")).toBe("進");
+    expect(getStatusColor("進行中")).toBeDefined();
+    const fallbackBadge = getStatusBadgeText("unknown" as any);
+    const fallbackColor = getStatusColor("unknown" as any);
+    expect(fallbackBadge).toBeDefined();
+    expect(fallbackColor).toBeDefined();
+  });
+});
+
+describe("task-helper resolveVisibleFields", () => {
+  it("returns default fields when input is empty", () => {
+    expect(resolveVisibleFields([])).toEqual(DEFAULT_VISIBLE_FIELDS);
+    expect(resolveVisibleFields(undefined)).toEqual(DEFAULT_VISIBLE_FIELDS);
+  });
+
+  it("returns provided fields when non-empty", () => {
+    const custom: VisibleField[] = ["name", "status"];
+    expect(resolveVisibleFields(custom)).toBe(custom);
   });
 });

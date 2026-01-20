@@ -6,13 +6,14 @@ import {
   VisibleField,
   Gantt,
   TASK_PROCESS_OPTIONS,
-  TASK_STATUS_BADGE_TEXT,
-  TASK_STATUS_COLORS,
   TASK_STATUS_OPTIONS,
   formatEffort,
   formatDate,
   normalizeProcess,
   normalizeStatus,
+  getStatusBadgeText,
+  getStatusColor,
+  DEFAULT_VISIBLE_FIELDS,
 } from "@levelcaptech/gantt-task-react-custom";
 import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
@@ -42,7 +43,7 @@ const JapaneseTaskListHeader: React.FC<{
     plannedEnd: "予定終了",
     plannedEffort: "予定工数",
     actualEffort: "実績工数",
-    status: "進捗",
+    status: "ステータス",
   };
   return (
     <div
@@ -91,24 +92,6 @@ const tooltipStyles = {
 
 type StatusOption = (typeof TASK_STATUS_OPTIONS)[number];
 type ProcessOption = (typeof TASK_PROCESS_OPTIONS)[number];
-
-const statusBadgeText = (status: StatusOption) =>
-  TASK_STATUS_BADGE_TEXT[status] || status?.[0] || "";
-const statusBadgeColor = (status: StatusOption) =>
-  TASK_STATUS_COLORS[status] || "#9e9e9e";
-
-const DEFAULT_VISIBLE_FIELDS: VisibleField[] = [
-  "name",
-  "process",
-  "assignee",
-  "start",
-  "end",
-  "plannedStart",
-  "plannedEnd",
-  "plannedEffort",
-  "actualEffort",
-  "status",
-];
 
 const JapaneseTooltip: React.FC<{
   task: Task;
@@ -166,12 +149,12 @@ const JapaneseTooltip: React.FC<{
         </p>
       )}
       <p className={tooltipStyles.tooltipDefaultContainerParagraph}>
-        進捗:{" "}
+        ステータス:{" "}
         <span
           className="TooltipStatusBadge"
-          style={{ backgroundColor: statusBadgeColor(statusValue) }}
+          style={{ backgroundColor: getStatusColor(statusValue) }}
         >
-          {statusBadgeText(statusValue)}
+          {getStatusBadgeText(statusValue)}
         </span>{" "}
         {statusValue}
       </p>

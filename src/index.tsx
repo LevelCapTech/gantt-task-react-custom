@@ -25,4 +25,7 @@ export {
   normalizeProcess,
   normalizeStatus,
   resolveVisibleFields,
+  getStatusColor,
+  getStatusBadgeText,
+  DEFAULT_VISIBLE_FIELDS,
 } from "./helpers/task-helper";

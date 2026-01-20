@@ -20,7 +20,7 @@ export const TaskListHeaderDefault: React.FC<{
     plannedEnd: "予定終了",
     plannedEffort: "予定工数",
     actualEffort: "実績工数",
-    status: "進捗",
+    status: "ステータス",
   };
   const columns = resolveVisibleFields(visibleFields);
   return (
