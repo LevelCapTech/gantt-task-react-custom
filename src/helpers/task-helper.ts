@@ -38,7 +38,7 @@ export const parseDateFromInput = (value: string) => {
     month < 1 ||
     month > 12 ||
     day < 1 ||
-    day > 31
+    day > 31 /* 月ごとの上限は後続のDateラウンドトリップで検証 */
   ) {
     return undefined;
   }
@@ -76,12 +76,16 @@ export const sanitizeEffortInput = (value: string) => {
   return parsed;
 };
 
+const DEFAULT_TASK_PROCESS: TaskProcess = (
+  TASK_PROCESS_OPTIONS.includes("その他")
+    ? "その他"
+    : TASK_PROCESS_OPTIONS[0]
+) as TaskProcess;
+
 export const normalizeProcess = (process?: TaskProcess) =>
   TASK_PROCESS_OPTIONS.includes(process as TaskProcess)
     ? (process as TaskProcess)
-    : (TASK_PROCESS_OPTIONS.includes("その他")
-        ? ("その他" as TaskProcess)
-        : TASK_PROCESS_OPTIONS[0]);
+    : DEFAULT_TASK_PROCESS;
 
 export const normalizeStatus = (status?: TaskStatus) =>
   TASK_STATUS_OPTIONS.includes(status as TaskStatus)

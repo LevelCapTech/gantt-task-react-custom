@@ -124,6 +124,7 @@ export const TaskListTableDefault: React.FC<{
               return isEditable ? (
                 <select
                   className={styles.taskListSelect}
+                  aria-label="工程"
                   value={processValue}
                   onChange={event => handleProcessChange(event.target.value)}
                 >
@@ -141,6 +142,7 @@ export const TaskListTableDefault: React.FC<{
                 <input
                   className={styles.taskListInput}
                   type="text"
+                  aria-label="担当者"
                   value={t.assignee || ""}
                   onChange={event => handleAssigneeChange(event.target.value)}
                   placeholder="担当者"
@@ -153,6 +155,7 @@ export const TaskListTableDefault: React.FC<{
                 <input
                   className={styles.taskListInput}
                   type="date"
+                  aria-label="予定開始"
                   value={formatDate(t.plannedStart)}
                   onChange={event =>
                     handlePlannedDateChange("plannedStart", event.target.value)
@@ -166,6 +169,7 @@ export const TaskListTableDefault: React.FC<{
                 <input
                   className={styles.taskListInput}
                   type="date"
+                  aria-label="予定終了"
                   value={formatDate(t.plannedEnd)}
                   onChange={event =>
                     handlePlannedDateChange("plannedEnd", event.target.value)
@@ -181,11 +185,13 @@ export const TaskListTableDefault: React.FC<{
                   type="number"
                   min={0}
                   step="0.5"
+                  aria-label="予定工数（入力単位:時間）"
                   value={t.plannedEffort ?? ""}
                   onChange={event =>
                     handleEffortChange("plannedEffort", event.target.value)
                   }
-                  placeholder="0"
+                  placeholder="時間(MH)"
+                  title="入力単位: 時間(MH)"
                 />
               ) : (
                 <span>{formatEffort(t.plannedEffort, effortDisplayUnit)}</span>
@@ -197,11 +203,13 @@ export const TaskListTableDefault: React.FC<{
                   type="number"
                   min={0}
                   step="0.5"
+                  aria-label="実績工数（入力単位:時間）"
                   value={t.actualEffort ?? ""}
                   onChange={event =>
                     handleEffortChange("actualEffort", event.target.value)
                   }
-                  placeholder="0"
+                  placeholder="時間(MH)"
+                  title="入力単位: 時間(MH)"
                 />
               ) : (
                 <span>{formatEffort(t.actualEffort, effortDisplayUnit)}</span>
@@ -218,6 +226,7 @@ export const TaskListTableDefault: React.FC<{
                   {isEditable ? (
                     <select
                       className={styles.taskListSelect}
+                      aria-label="ステータス"
                       value={statusValue}
                       onChange={event => handleStatusChange(event.target.value)}
                     >

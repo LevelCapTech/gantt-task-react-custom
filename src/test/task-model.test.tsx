@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { Gantt, TASK_STATUS_COLORS, TASK_STATUS_OPTIONS } from "../index";
@@ -58,6 +58,55 @@ describe("Task data model extensions", () => {
       "Task-1",
       expect.objectContaining({ status: "完了" })
     );
+  });
+
+  it("fires onTaskUpdate when process dropdown changes", async () => {
+    const onTaskUpdate = jest.fn();
+    render(
+      <Gantt tasks={[baseTask]} onTaskUpdate={onTaskUpdate} listCellWidth="140px" />
+    );
+    const processSelect = screen.getByLabelText("工程");
+    await userEvent.selectOptions(processSelect, "レビュー");
+    expect(onTaskUpdate).toHaveBeenCalledWith(
+      "Task-1",
+      expect.objectContaining({ process: "レビュー" })
+    );
+  });
+
+  it("fires onTaskUpdate when assignee and planned dates change", async () => {
+    const onTaskUpdate = jest.fn();
+    render(
+      <Gantt tasks={[baseTask]} onTaskUpdate={onTaskUpdate} listCellWidth="140px" />
+    );
+
+    const assigneeInput = screen.getByLabelText("担当者");
+    fireEvent.change(assigneeInput, { target: { value: "佐々木" } });
+    const assigneeCall = onTaskUpdate.mock.calls.find(
+      ([id, payload]) => id === "Task-1" && payload.assignee === "佐々木"
+    );
+    expect(assigneeCall).toBeDefined();
+    onTaskUpdate.mockClear();
+
+    const plannedStartInput = screen.getByLabelText("予定開始");
+    const plannedEndInput = screen.getByLabelText("予定終了");
+    fireEvent.change(plannedStartInput, { target: { value: "2026-01-02" } });
+    fireEvent.change(plannedEndInput, { target: { value: "2026-01-04" } });
+
+    const calls = onTaskUpdate.mock.calls;
+    const plannedStartCall = calls.find(
+      ([id, payload]) =>
+        id === "Task-1" &&
+        payload.plannedStart &&
+        payload.plannedStart.getTime() === new Date("2026-01-02").getTime()
+    );
+    const plannedEndCall = calls.find(
+      ([id, payload]) =>
+        id === "Task-1" &&
+        payload.plannedEnd &&
+        payload.plannedEnd.getTime() === new Date("2026-01-04").getTime()
+    );
+    expect(plannedStartCall).toBeDefined();
+    expect(plannedEndCall).toBeDefined();
   });
 
   it("renders tooltip content with planned and actual effort", () => {
