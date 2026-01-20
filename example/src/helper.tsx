@@ -12,6 +12,17 @@ export function initTasks() {
       type: "project",
       hideChildren: false,
       displayOrder: 1,
+      process: "その他",
+      assignee: "チームA",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      ),
+      plannedEnd: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15),
+      plannedEffort: 240,
+      actualEffort: 48,
+      status: "進行中",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
@@ -28,6 +39,21 @@ export function initTasks() {
       type: "task",
       project: "ProjectSample",
       displayOrder: 2,
+      process: "設計",
+      assignee: "田中",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        2
+      ),
+      plannedEffort: 12,
+      actualEffort: 8,
+      status: "進行中",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 2),
@@ -39,6 +65,20 @@ export function initTasks() {
       type: "task",
       project: "ProjectSample",
       displayOrder: 3,
+      process: "設計",
+      assignee: "佐藤",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        2
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        4
+      ),
+      plannedEffort: 16,
+      status: "未着手",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 4),
@@ -50,6 +90,21 @@ export function initTasks() {
       type: "task",
       project: "ProjectSample",
       displayOrder: 4,
+      process: "開発",
+      assignee: "鈴木",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        4
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        8
+      ),
+      plannedEffort: 32,
+      actualEffort: 6,
+      status: "進行中",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 8),
@@ -61,6 +116,21 @@ export function initTasks() {
       type: "task",
       project: "ProjectSample",
       displayOrder: 5,
+      process: "開発",
+      assignee: "山田",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        8
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        9
+      ),
+      plannedEffort: 20,
+      actualEffort: 1,
+      status: "進行中",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 8),
@@ -72,6 +142,21 @@ export function initTasks() {
       dependencies: ["Task 2"],
       project: "ProjectSample",
       displayOrder: 6,
+      process: "レビュー",
+      assignee: "伊藤",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        8
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        10
+      ),
+      plannedEffort: 10,
+      actualEffort: 5,
+      status: "進行中",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 15),
@@ -83,6 +168,21 @@ export function initTasks() {
       dependencies: ["Task 4"],
       project: "ProjectSample",
       displayOrder: 7,
+      process: "リリース",
+      assignee: "PM",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        15
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        15
+      ),
+      plannedEffort: 4,
+      actualEffort: 0,
+      status: "未着手",
     },
     {
       start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 18),
@@ -92,6 +192,20 @@ export function initTasks() {
       progress: 0,
       isDisabled: true,
       type: "task",
+      process: "その他",
+      assignee: "全員",
+      plannedStart: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        18
+      ),
+      plannedEnd: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        19
+      ),
+      plannedEffort: 6,
+      status: "保留",
     },
   ];
   return tasks;

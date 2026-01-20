@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { BarTask } from "../../types/bar-task";
-import { Task } from "../../types/public-types";
+import { EffortUnit, Task, VisibleField } from "../../types/public-types";
 
 export type TaskListProps = {
   headerHeight: number;
@@ -11,17 +11,21 @@ export type TaskListProps = {
   ganttHeight: number;
   scrollY: number;
   locale: string;
+  visibleFields: VisibleField[];
+  effortDisplayUnit: EffortUnit;
   tasks: Task[];
   taskListRef: React.RefObject<HTMLDivElement>;
   horizontalContainerClass?: string;
   selectedTask: BarTask | undefined;
   setSelectedTask: (task: string) => void;
   onExpanderClick: (task: Task) => void;
+  onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
   TaskListHeader: React.FC<{
     headerHeight: number;
     rowWidth: string;
     fontFamily: string;
     fontSize: string;
+    visibleFields: VisibleField[];
   }>;
   TaskListTable: React.FC<{
     rowHeight: number;
@@ -33,6 +37,9 @@ export type TaskListProps = {
     selectedTaskId: string;
     setSelectedTask: (taskId: string) => void;
     onExpanderClick: (task: Task) => void;
+    visibleFields: VisibleField[];
+    onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+    effortDisplayUnit: EffortUnit;
   }>;
 };
 
@@ -53,6 +60,9 @@ export const TaskList: React.FC<TaskListProps> = ({
   horizontalContainerClass,
   TaskListHeader,
   TaskListTable,
+  visibleFields,
+  onUpdateTask,
+  effortDisplayUnit,
 }) => {
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -66,6 +76,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     fontFamily,
     fontSize,
     rowWidth,
+    visibleFields,
   };
   const selectedTaskId = selectedTask ? selectedTask.id : "";
   const tableProps = {
@@ -78,6 +89,9 @@ export const TaskList: React.FC<TaskListProps> = ({
     selectedTaskId: selectedTaskId,
     setSelectedTask,
     onExpanderClick,
+    visibleFields,
+    onUpdateTask,
+    effortDisplayUnit,
   };
 
   return (

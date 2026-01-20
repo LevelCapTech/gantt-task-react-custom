@@ -1,25 +1,27 @@
-import React, { useMemo } from "react";
+import React from "react";
 import styles from "./task-list-table.module.css";
-import { Task } from "../../types/public-types";
-
-const localeDateStringCache = {};
-const toLocaleDateStringFactory =
-  (locale: string) =>
-  (date: Date, dateTimeOptions: Intl.DateTimeFormatOptions) => {
-    const key = date.toString();
-    let lds = localeDateStringCache[key];
-    if (!lds) {
-      lds = date.toLocaleDateString(locale, dateTimeOptions);
-      localeDateStringCache[key] = lds;
-    }
-    return lds;
-  };
-const dateTimeOptions: Intl.DateTimeFormatOptions = {
-  weekday: "short",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-};
+import {
+  EffortUnit,
+  Task,
+  TaskProcess,
+  TaskStatus,
+  VisibleField,
+} from "../../types/public-types";
+import {
+  TASK_PROCESS_OPTIONS,
+  TASK_STATUS_OPTIONS,
+} from "../../constants/taskOptions";
+import {
+  formatDate,
+  formatEffort,
+  getStatusBadgeText,
+  getStatusColor,
+  normalizeProcess,
+  normalizeStatus,
+  parseDateFromInput,
+  resolveVisibleFields,
+  sanitizeEffortInput,
+} from "../../helpers/task-helper";
 
 export const TaskListTableDefault: React.FC<{
   rowHeight: number;
@@ -31,19 +33,22 @@ export const TaskListTableDefault: React.FC<{
   selectedTaskId: string;
   setSelectedTask: (taskId: string) => void;
   onExpanderClick: (task: Task) => void;
+  visibleFields: VisibleField[];
+  onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+  effortDisplayUnit: EffortUnit;
 }> = ({
   rowHeight,
   rowWidth,
   tasks,
   fontFamily,
   fontSize,
-  locale,
   onExpanderClick,
+  visibleFields,
+  onUpdateTask,
+  effortDisplayUnit,
 }) => {
-  const toLocaleDateString = useMemo(
-    () => toLocaleDateStringFactory(locale),
-    [locale]
-  );
+  const columns = resolveVisibleFields(visibleFields);
+  const isEditable = !!onUpdateTask;
 
   return (
     <div
@@ -61,52 +66,195 @@ export const TaskListTableDefault: React.FC<{
           expanderSymbol = "▶";
         }
 
+        const processValue = normalizeProcess(t.process);
+        const statusValue = normalizeStatus(t.status);
+        const handleStatusChange = (value: string) => {
+          const nextStatus = normalizeStatus(value as TaskStatus);
+          onUpdateTask?.(t.id, { status: nextStatus });
+        };
+
+        const handleProcessChange = (value: string) => {
+          const nextProcess = normalizeProcess(value as TaskProcess);
+          onUpdateTask?.(t.id, { process: nextProcess });
+        };
+
+        const handleAssigneeChange = (value: string) => {
+          onUpdateTask?.(t.id, { assignee: value || undefined });
+        };
+
+        const handlePlannedDateChange = (
+          field: "plannedStart" | "plannedEnd",
+          value: string
+        ) => {
+          const parsed = parseDateFromInput(value);
+          onUpdateTask?.(t.id, { [field]: parsed });
+        };
+
+        const handleEffortChange = (
+          field: "plannedEffort" | "actualEffort",
+          value: string
+        ) => {
+          const parsed = sanitizeEffortInput(value);
+          onUpdateTask?.(t.id, { [field]: parsed });
+        };
+
+        const renderCell = (field: VisibleField) => {
+          switch (field) {
+            case "name":
+              return (
+                <div className={styles.taskListNameWrapper}>
+                  <div
+                    className={
+                      expanderSymbol
+                        ? styles.taskListExpander
+                        : styles.taskListEmptyExpander
+                    }
+                    onClick={() => onExpanderClick(t)}
+                  >
+                    {expanderSymbol}
+                  </div>
+                  <div>{t.name}</div>
+                </div>
+              );
+            case "start":
+              return <span>{formatDate(t.start)}</span>;
+            case "end":
+              return <span>{formatDate(t.end)}</span>;
+            case "process":
+              return isEditable ? (
+                <select
+                  className={styles.taskListSelect}
+                  value={processValue}
+                  onChange={event => handleProcessChange(event.target.value)}
+                >
+                  {TASK_PROCESS_OPTIONS.map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span>{processValue}</span>
+              );
+            case "assignee":
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="text"
+                  value={t.assignee || ""}
+                  onChange={event => handleAssigneeChange(event.target.value)}
+                  placeholder="担当者"
+                />
+              ) : (
+                <span>{t.assignee || ""}</span>
+              );
+            case "plannedStart":
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="date"
+                  value={formatDate(t.plannedStart)}
+                  onChange={event =>
+                    handlePlannedDateChange("plannedStart", event.target.value)
+                  }
+                />
+              ) : (
+                <span>{formatDate(t.plannedStart)}</span>
+              );
+            case "plannedEnd":
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="date"
+                  value={formatDate(t.plannedEnd)}
+                  onChange={event =>
+                    handlePlannedDateChange("plannedEnd", event.target.value)
+                  }
+                />
+              ) : (
+                <span>{formatDate(t.plannedEnd)}</span>
+              );
+            case "plannedEffort":
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={t.plannedEffort ?? ""}
+                  onChange={event =>
+                    handleEffortChange("plannedEffort", event.target.value)
+                  }
+                  placeholder="0"
+                />
+              ) : (
+                <span>{formatEffort(t.plannedEffort, effortDisplayUnit)}</span>
+              );
+            case "actualEffort":
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={t.actualEffort ?? ""}
+                  onChange={event =>
+                    handleEffortChange("actualEffort", event.target.value)
+                  }
+                  placeholder="0"
+                />
+              ) : (
+                <span>{formatEffort(t.actualEffort, effortDisplayUnit)}</span>
+              );
+            case "status":
+              return (
+                <div className={styles.statusWrapper}>
+                  <span
+                    className={styles.statusBadge}
+                    style={{ backgroundColor: getStatusColor(statusValue) }}
+                  >
+                    {getStatusBadgeText(statusValue)}
+                  </span>
+                  {isEditable ? (
+                    <select
+                      className={styles.taskListSelect}
+                      value={statusValue}
+                      onChange={event => handleStatusChange(event.target.value)}
+                    >
+                      {TASK_STATUS_OPTIONS.map(option => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className={styles.statusText}>{statusValue}</span>
+                  )}
+                </div>
+              );
+            default:
+              return null;
+          }
+        };
         return (
           <div
             className={styles.taskListTableRow}
             style={{ height: rowHeight }}
             key={`${t.id}row`}
           >
-            <div
-              className={styles.taskListCell}
-              style={{
-                minWidth: rowWidth,
-                maxWidth: rowWidth,
-              }}
-              title={t.name}
-            >
-              <div className={styles.taskListNameWrapper}>
-                <div
-                  className={
-                    expanderSymbol
-                      ? styles.taskListExpander
-                      : styles.taskListEmptyExpander
-                  }
-                  onClick={() => onExpanderClick(t)}
-                >
-                  {expanderSymbol}
-                </div>
-                <div>{t.name}</div>
+            {columns.map(column => (
+              <div
+                key={`${t.id}-${column}`}
+                className={styles.taskListCell}
+                style={{
+                  minWidth: rowWidth,
+                  maxWidth: rowWidth,
+                }}
+                title={column === "name" ? t.name : undefined}
+              >
+                {renderCell(column)}
               </div>
-            </div>
-            <div
-              className={styles.taskListCell}
-              style={{
-                minWidth: rowWidth,
-                maxWidth: rowWidth,
-              }}
-            >
-              &nbsp;{toLocaleDateString(t.start, dateTimeOptions)}
-            </div>
-            <div
-              className={styles.taskListCell}
-              style={{
-                minWidth: rowWidth,
-                maxWidth: rowWidth,
-              }}
-            >
-              &nbsp;{toLocaleDateString(t.end, dateTimeOptions)}
-            </div>
+            ))}
           </div>
         );
       })}

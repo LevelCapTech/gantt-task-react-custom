@@ -20,4 +20,6 @@
   display: table-cell;
   vertical-align: -webkit-baseline-middle;
   vertical-align: middle;
+  padding: 0 6px;
+  white-space: nowrap;
 }

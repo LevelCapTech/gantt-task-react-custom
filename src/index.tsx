@@ -6,4 +6,14 @@ export type {
   StylingOption,
   DisplayOption,
   EventOption,
+  EffortUnit,
+  VisibleField,
+  TaskProcess,
+  TaskStatus,
 } from "./types/public-types";
+export {
+  TASK_PROCESS_OPTIONS,
+  TASK_STATUS_OPTIONS,
+  TASK_STATUS_BADGE_TEXT,
+  TASK_STATUS_COLORS,
+} from "./constants/taskOptions";
