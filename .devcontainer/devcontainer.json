@@ -11,7 +11,8 @@
         "editor.formatOnSave": true,
         "npm.publish.enable": true,
         "files.eol": "\n",
-        "git.enableSmartCommit": true
+        "git.enableSmartCommit": true,
+        "extensions.ignoreRecommendations": true
       },
       "extensions": [
         "dbaeumer.vscode-eslint",
@@ -22,8 +23,7 @@
         "ms-azuretools.vscode-docker",
         "editorconfig.editorconfig",
         "github.copilot",
-        "github.vscode-pull-request-github",
-        "visualstudioexptteam.vscodeintellicode"
+        "github.vscode-pull-request-github"
       ]
     }
   },
