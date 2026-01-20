@@ -14,6 +14,8 @@ import {
   getStatusBadgeText,
   getStatusColor,
   DEFAULT_VISIBLE_FIELDS,
+  TaskProcess,
+  TaskStatus,
 } from "@levelcaptech/gantt-task-react-custom";
 import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
@@ -90,8 +92,8 @@ const tooltipStyles = {
   tooltipDefaultContainerParagraph: "TooltipParagraph",
 };
 
-type StatusOption = (typeof TASK_STATUS_OPTIONS)[number];
-type ProcessOption = (typeof TASK_PROCESS_OPTIONS)[number];
+type StatusOption = TaskStatus;
+type ProcessOption = TaskProcess;
 
 const JapaneseTooltip: React.FC<{
   task: Task;

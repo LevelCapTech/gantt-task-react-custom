@@ -64,13 +64,15 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     }
   }, [task, isSelected]);
 
-  useEffect(() => {
-    if (textRef.current) {
-      const bbox = textRef.current.getBBox
-        ? textRef.current.getBBox()
-        : { width: 0 };
-      setIsTextInside(bbox.width < task.x2 - task.x1);
+  const getBBoxWidth = () => {
+    if (!textRef.current || typeof textRef.current.getBBox !== "function") {
+      return 0;
     }
+    return textRef.current.getBBox().width;
+  };
+
+  useEffect(() => {
+    setIsTextInside(getBBoxWidth() < task.x2 - task.x1);
   }, [textRef, task]);
 
   const getX = () => {
@@ -80,10 +82,9 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       return task.x1 + width * 0.5;
     }
     if (rtl && textRef.current) {
-      const bbox = textRef.current.getBBox ? textRef.current.getBBox() : { width: 0 };
       return (
         task.x1 -
-        bbox.width -
+        getBBoxWidth() -
         arrowIndent * +hasChild -
         arrowIndent * 0.2
       );

@@ -38,7 +38,7 @@ export const parseDateFromInput = (value: string) => {
     month < 1 ||
     month > 12 ||
     day < 1 ||
-    day > 31 /* 月ごとの上限は後続のDateラウンドトリップで検証 */
+    day > 31 /* 31日超を除外し、月ごとの上限（例: 2月30日）はDateコンストラクタの正規化＋ラウンドトリップ比較で検証 */
   ) {
     return undefined;
   }
