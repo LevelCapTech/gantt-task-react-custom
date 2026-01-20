@@ -9,8 +9,11 @@ import {
   TASK_STATUS_BADGE_TEXT,
   TASK_STATUS_COLORS,
   TASK_STATUS_OPTIONS,
+  formatEffort,
+  formatDate,
+  normalizeProcess,
+  normalizeStatus,
 } from "@levelcaptech/gantt-task-react-custom";
-import { formatEffort } from "@levelcaptech/gantt-task-react-custom/dist/helpers/task-helper";
 import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";
@@ -86,28 +89,8 @@ const tooltipStyles = {
   tooltipDefaultContainerParagraph: "TooltipParagraph",
 };
 
-const formatDate = (date?: Date) => {
-  if (!date) return "";
-  const pad = (value: number) => value.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate()
-  )}`;
-};
-
 type StatusOption = (typeof TASK_STATUS_OPTIONS)[number];
 type ProcessOption = (typeof TASK_PROCESS_OPTIONS)[number];
-
-const normalizeStatus = (status?: StatusOption) =>
-  TASK_STATUS_OPTIONS.includes(status as StatusOption)
-    ? (status as StatusOption)
-    : TASK_STATUS_OPTIONS[0];
-
-const normalizeProcess = (process?: ProcessOption) =>
-  TASK_PROCESS_OPTIONS.includes(process as ProcessOption)
-    ? (process as ProcessOption)
-    : (TASK_PROCESS_OPTIONS.includes("その他")
-        ? ("その他" as ProcessOption)
-        : TASK_PROCESS_OPTIONS[0]);
 
 const statusBadgeText = (status: StatusOption) =>
   TASK_STATUS_BADGE_TEXT[status] || status?.[0] || "";

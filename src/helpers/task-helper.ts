@@ -42,7 +42,16 @@ export const parseDateFromInput = (value: string) => {
   ) {
     return undefined;
   }
-  return new Date(year, month - 1, day);
+  const date = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return undefined;
+  }
+  return date;
 };
 
 export const formatEffort = (
