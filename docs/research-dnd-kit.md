@@ -66,6 +66,28 @@
 - `AutoScroller` と KeyboardSensor を有効化した操作性チェック。
 - 衝突アルゴリズムの比較（`closestCenter` / `pointerIntersection` / `shapeIntersection`）とインデント閾値のチューニング結果を追記。
 
+## 詳細設計インプット（提案）
+- コンポーネント構成
+  - `TaskList` 行: `useSortable` 適用 + ハンドル限定ドラッグ。row コンポーネントに `data-id` を付与し、水平移動量からインデント段数を算出。
+  - 状態管理: `tasks` 配列を単一ソースとし、`project` と `displayOrder` を更新する純関数ユーティリティを用意（サブツリー移動を一括処理）。
+  - `Gantt` 連携: 並びと `project` 変更後の `tasks` をそのまま渡すだけで同期。追加の副作用不要。
+  - センサー／プラグイン: `PointerSensor` + `KeyboardSensor`、`AutoScroller`（縦スクロール追従）、アクセシビリティプラグイン。
+- データモデル
+  - 必須フィールド: `id`, `project`, `displayOrder`。`project` は親 ID、ルートは `undefined`。`displayOrder` は兄弟間の並び制御に利用。
+  - インデント計算: ピクセル閾値 `indentStepPx`（例: 24px）を基準に Math.trunc で段数を決定。負のインデントは 0 でクリップ。
+  - サブツリー移動: 移動元タスクと子孫を抽出し、挿入先インデックスにまとめて挿入（Tree ストーリーの `flattenTree/buildTree` 相当）。
+- collisionDetection 方針
+  - 初期: `closestCenter`。
+  - 代替: `pointerIntersection`（ポインタ位置優先）、`shapeIntersection`（矩形重なり優先）。高さの小さい行では `directionBiased` も候補。
+  - 切り替えは `collisionDetection` prop で差し替え可能にする。
+- スクロール／アクセシビリティ
+  - `AutoScroller` を有効にし、閾値（viewport 10–15%）を調整。
+  - KeyboardSensor のショートカット（上下移動 + 左右でインデント）を追加し、ハンドルにフォーカスリングと `aria-describedby` を付与。
+- ビルド／インポート戦略
+  - 主要機能を優先して `/src/dnd` パッケージ群をそのまま取り込み、Tree ストーリーで利用している `packages/react`, `packages/dom`, `packages/collision`, `packages/helpers` を一括インポートする案。
+  - バンドルサイズ増大リスク: microbundle 出力の肥大化が見込まれるため、本番取り込み時は sideEffects 設定やツリーシェイク可否を評価し、不要パスは明示除外する。
+  - PoC では一括取り込みで挙動を優先確認し、サイズ計測結果を設計資料に追記する。
+
 ## 課題・リスク
 - collisionDetection は `closestCenter` をそのまま使用。多段階の入れ子判定やスナップ位置のカスタムは未実装。
 - インデントは水平方向移動量を単純丸めしているため、トラックパッド大移動で過剰に反応する可能性あり（丸め幅は `INDENT_WIDTH_PX` で調整可）。
