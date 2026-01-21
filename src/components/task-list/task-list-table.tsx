@@ -28,7 +28,6 @@ export const TaskListTableDefault: React.FC<{
   rowWidth: string;
   fontFamily: string;
   fontSize: string;
-  locale: string;
   tasks: Task[];
   selectedTaskId: string;
   setSelectedTask: (taskId: string) => void;

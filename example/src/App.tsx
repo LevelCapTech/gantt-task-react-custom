@@ -5,8 +5,6 @@ import {
   ViewMode,
   VisibleField,
   Gantt,
-  TASK_PROCESS_OPTIONS,
-  TASK_STATUS_OPTIONS,
   formatEffort,
   formatDate,
   normalizeProcess,
