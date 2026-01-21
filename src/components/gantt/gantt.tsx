@@ -441,7 +441,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     fontFamily,
     fontSize,
     tasks: barTasks,
-    locale,
     headerHeight,
     scrollY,
     ganttHeight,

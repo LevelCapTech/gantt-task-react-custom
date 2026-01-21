@@ -90,8 +90,6 @@ const tooltipStyles = {
   tooltipDefaultContainerParagraph: "TooltipParagraph",
 };
 
-type StatusOption = TaskStatus;
-type ProcessOption = TaskProcess;
 
 const JapaneseTooltip: React.FC<{
   task: Task;
