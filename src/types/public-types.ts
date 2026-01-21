@@ -161,7 +161,7 @@ export interface StylingOption {
     rowWidth: string;
     fontFamily: string;
     fontSize: string;
-    locale: string;
+    locale?: string;
     tasks: Task[];
     selectedTaskId: string;
     /**
@@ -178,8 +178,3 @@ export interface StylingOption {
 export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   tasks: Task[];
 }
-
-export {
-  TASK_PROCESS_OPTIONS,
-  TASK_STATUS_OPTIONS,
-} from "../constants/taskOptions";

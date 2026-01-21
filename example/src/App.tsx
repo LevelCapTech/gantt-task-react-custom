@@ -111,8 +111,8 @@ const JapaneseTooltip: React.FC<{
     task.end
   )}`;
   const titleText = `${task.name}: ${formattedDateRange}`;
-  const statusValue = normalizeStatus(task.status as StatusOption);
-  const processValue = normalizeProcess(task.process as ProcessOption);
+  const statusValue = normalizeStatus(task.status as TaskStatus);
+  const processValue = normalizeProcess(task.process as TaskProcess);
   const plannedRange =
     task.plannedStart || task.plannedEnd
       ? `${formatDate(task.plannedStart)}〜${formatDate(task.plannedEnd)}`
