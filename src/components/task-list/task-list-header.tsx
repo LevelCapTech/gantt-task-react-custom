@@ -23,6 +23,8 @@ export const TaskListHeaderDefault: React.FC<{
     status: "ステータス",
   };
   const columns = resolveVisibleFields(visibleFields);
+  const getColumnWidth = (column: VisibleField) =>
+    column === "name" ? "140px" : rowWidth;
   return (
     <div
       className={styles.ganttTable}
@@ -42,7 +44,9 @@ export const TaskListHeaderDefault: React.FC<{
             <div
               className={styles.ganttTable_HeaderItem}
               style={{
-                minWidth: rowWidth,
+                minWidth: getColumnWidth(column),
+                paddingLeft: 6,
+                paddingRight: 6,
               }}
             >
               &nbsp;{labels[column]}
