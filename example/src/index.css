@@ -29,6 +29,21 @@
   justify-content: center;
   align-items: center;
 }
+.UnitSwitcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 2px 12px;
+  font-size: 14px;
+  font-family: "Arial, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue";
+}
+.EffortUnitSelect {
+  padding: 6px 8px;
+  font: inherit;
+  border-radius: 6px;
+  border: 1px solid #cfcfcf;
+  background: #fff;
+}
 .Switch_Toggle {
   position: relative;
   display: inline-block;
@@ -116,4 +131,16 @@ input:checked + .Slider:before {
   font-size: 12px;
   margin-bottom: 6px;
   color: #666;
+}
+
+.TooltipStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 11px;
 }

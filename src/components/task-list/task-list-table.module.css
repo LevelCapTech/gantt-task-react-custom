@@ -19,9 +19,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 0 6px;
 }
 .taskListNameWrapper {
   display: flex;
+  align-items: center;
 }
 
 .taskListExpander {
@@ -35,4 +37,44 @@
   font-size: 0.6rem;
   padding-left: 1rem;
   user-select: none;
+}
+
+.taskListInput,
+.taskListSelect {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 4px 6px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.taskListInput:disabled,
+.taskListSelect:disabled {
+  background: #f5f5f5;
+  color: #888;
+}
+
+.statusWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.statusText {
+  font-size: 13px;
 }

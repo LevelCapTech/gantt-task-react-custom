@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BarTask } from "../../types/bar-task";
 import { GanttContentMoveAction } from "../../types/gantt-task-actions";
+import {
+  getStatusBadgeText,
+  getStatusColor,
+  normalizeStatus,
+} from "../../helpers/task-helper";
 import { Bar } from "./bar/bar";
 import { BarSmall } from "./bar/bar-small";
 import { Milestone } from "./milestone/milestone";
@@ -38,6 +43,9 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const textRef = useRef<SVGTextElement>(null);
   const [taskItem, setTaskItem] = useState<JSX.Element>(<div />);
   const [isTextInside, setIsTextInside] = useState(true);
+  const normalizedStatus = normalizeStatus(task.status);
+  const statusColor = getStatusColor(normalizedStatus);
+  const statusBadgeText = getStatusBadgeText(normalizedStatus);
 
   useEffect(() => {
     switch (task.typeInternal) {
@@ -56,10 +64,15 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     }
   }, [task, isSelected]);
 
-  useEffect(() => {
-    if (textRef.current) {
-      setIsTextInside(textRef.current.getBBox().width < task.x2 - task.x1);
+  const getBBoxWidth = () => {
+    if (!textRef.current || typeof textRef.current.getBBox !== "function") {
+      return 0;
     }
+    return textRef.current.getBBox().width;
+  };
+
+  useEffect(() => {
+    setIsTextInside(getBBoxWidth() < task.x2 - task.x1);
   }, [textRef, task]);
 
   const getX = () => {
@@ -71,7 +84,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     if (rtl && textRef.current) {
       return (
         task.x1 -
-        textRef.current.getBBox().width -
+        getBBoxWidth() -
         arrowIndent * +hasChild -
         arrowIndent * 0.2
       );
@@ -118,7 +131,12 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
         }
         ref={textRef}
       >
-        {task.name}
+        {!!statusBadgeText && (
+          <tspan className={style.statusDot} fill={statusColor}>
+            ●
+          </tspan>
+        )}
+        <tspan dx={statusBadgeText ? 4 : 0}>{task.name}</tspan>
       </text>
     </g>
   );

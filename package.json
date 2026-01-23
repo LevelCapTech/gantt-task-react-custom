@@ -27,9 +27,17 @@
     "react-gantt",
     "task"
   ],
+  "microbundle": {
+    "external": [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime"
+    ]
+  },
   "scripts": {
-    "build": "microbundle-crl --no-compress --format modern,cjs",
-    "start": "microbundle-crl watch --no-compress --format modern,cjs",
+    "build": "microbundle-crl --no-compress --format modern,cjs --tsconfig tsconfig.build.json",
+    "start": "microbundle-crl watch --no-compress --format modern,cjs --tsconfig tsconfig.build.json",
     "prepare": "run-s build",
     "test": "run-s test:unit test:lint test:build",
     "test:build": "run-s build",
@@ -40,9 +48,11 @@
     "deploy": "gh-pages -d example/build"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-unicode-property-regex": "^7.18.6",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^14.2.1",
@@ -59,8 +69,6 @@
     "postcss-normalize": "^10.0.1",
     "postcss-preset-env": "^7.6.0",
     "prettier": "^2.7.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
     "typescript": "^4.7.4"
   },

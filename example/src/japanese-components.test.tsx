@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { Task } from "gantt-task-react";
+import { Task, VisibleField } from "@levelcaptech/gantt-task-react-custom";
 import {
   JapaneseTaskListHeader,
   JapaneseTooltip,
@@ -8,18 +8,32 @@ import {
 
 describe("JapaneseTaskListHeader", () => {
   it("renders Japanese header labels", () => {
+    const visibleFields: VisibleField[] = [
+      "name",
+      "process",
+      "assignee",
+      "start",
+      "end",
+      "plannedStart",
+      "plannedEnd",
+      "status",
+    ];
     render(
       <JapaneseTaskListHeader
         headerHeight={50}
         rowWidth="155px"
         fontFamily="Arial"
         fontSize="14px"
+        visibleFields={visibleFields}
       />
     );
 
     expect(screen.getByText("タスク名")).toBeInTheDocument();
+    expect(screen.getByText("工程")).toBeInTheDocument();
+    expect(screen.getByText("担当者")).toBeInTheDocument();
     expect(screen.getByText("開始日")).toBeInTheDocument();
     expect(screen.getByText("終了日")).toBeInTheDocument();
+    expect(screen.getByText("ステータス")).toBeInTheDocument();
   });
 });
 
@@ -31,6 +45,13 @@ describe("JapaneseTooltip", () => {
     id: "TaskA",
     type: "task",
     progress: 50,
+    process: "設計",
+    assignee: "田中",
+    plannedStart: new Date("2026-01-01T00:00:00.000Z"),
+    plannedEnd: new Date("2026-01-03T00:00:00.000Z"),
+    plannedEffort: 16,
+    actualEffort: 8,
+    status: "進行中",
   };
 
   it("renders Japanese date range with wave dash and duration minimum 1 day", () => {
@@ -42,10 +63,15 @@ describe("JapaneseTooltip", () => {
       />
     );
 
-    expect(
-      screen.getByText("タスクA: 2026年1月1日〜2026年1月2日")
-    ).toBeInTheDocument();
+    expect(screen.getByText("タスクA: 2026-01-01〜2026-01-02")).toBeInTheDocument();
     expect(screen.getByText("期間: 1日")).toBeInTheDocument();
+    expect(screen.getByText("工程: 設計")).toBeInTheDocument();
+    expect(screen.getByText("担当: 田中")).toBeInTheDocument();
+    expect(screen.getByText("予定: 2026-01-01〜2026-01-03")).toBeInTheDocument();
+    expect(screen.getByText("予定工数: 16MH")).toBeInTheDocument();
+    expect(screen.getByText("実績工数: 8MH")).toBeInTheDocument();
+    expect(screen.getByText(/進行中/)).toBeInTheDocument();
+    expect(screen.getByText("ステータス: 進 進行中")).toBeInTheDocument();
     expect(screen.getByText("進捗: 50 %")).toBeInTheDocument();
   });
 });

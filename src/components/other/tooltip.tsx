@@ -1,6 +1,14 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Task } from "../../types/public-types";
+import { EffortUnit, Task } from "../../types/public-types";
 import { BarTask } from "../../types/bar-task";
+import {
+  formatDate,
+  formatEffort,
+  getStatusBadgeText,
+  getStatusColor,
+  normalizeProcess,
+  normalizeStatus,
+} from "../../helpers/task-helper";
 import styles from "./tooltip.module.css";
 
 export type TooltipProps = {
@@ -21,7 +29,9 @@ export type TooltipProps = {
     task: Task;
     fontSize: string;
     fontFamily: string;
+    effortDisplayUnit?: EffortUnit;
   }>;
+  effortDisplayUnit: EffortUnit;
 };
 export const Tooltip: React.FC<TooltipProps> = ({
   task,
@@ -37,6 +47,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   headerHeight,
   taskListWidth,
   TooltipContent,
+  effortDisplayUnit,
 }) => {
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [relatedY, setRelatedY] = useState(0);
@@ -107,7 +118,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
       }
       style={{ left: relatedX, top: relatedY }}
     >
-      <TooltipContent task={task} fontSize={fontSize} fontFamily={fontFamily} />
+      <TooltipContent
+        task={task}
+        fontSize={fontSize}
+        fontFamily={fontFamily}
+        effortDisplayUnit={effortDisplayUnit}
+      />
     </div>
   );
 };
@@ -116,30 +132,70 @@ export const StandardTooltipContent: React.FC<{
   task: Task;
   fontSize: string;
   fontFamily: string;
-}> = ({ task, fontSize, fontFamily }) => {
+  effortDisplayUnit?: EffortUnit;
+}> = ({ task, fontSize, fontFamily, effortDisplayUnit = "MH" }) => {
   const style = {
     fontSize,
     fontFamily,
   };
+  const normalizedStatus = normalizeStatus(task.status);
+  const normalizedProcess = normalizeProcess(task.process);
+  const dateRange = `${formatDate(task.start)} 〜 ${formatDate(task.end)}`;
+  const plannedRange =
+    task.plannedStart || task.plannedEnd
+      ? `${formatDate(task.plannedStart)} 〜 ${formatDate(task.plannedEnd)}`
+      : "";
+  const plannedEffort = formatEffort(task.plannedEffort, effortDisplayUnit);
+  const actualEffort = formatEffort(task.actualEffort, effortDisplayUnit);
   return (
     <div className={styles.tooltipDefaultContainer} style={style}>
-      <b style={{ fontSize: fontSize + 6 }}>{`${
-        task.name
-      }: ${task.start.getDate()}-${
-        task.start.getMonth() + 1
-      }-${task.start.getFullYear()} - ${task.end.getDate()}-${
-        task.end.getMonth() + 1
-      }-${task.end.getFullYear()}`}</b>
-      {task.end.getTime() - task.start.getTime() !== 0 && (
-        <p className={styles.tooltipDefaultContainerParagraph}>{`Duration: ${~~(
-          (task.end.getTime() - task.start.getTime()) /
-          (1000 * 60 * 60 * 24)
-        )} day(s)`}</p>
+      <div className={styles.tooltipTitle}>
+        <b className={styles.tooltipName}>{task.name}</b>
+        <span className={styles.tooltipDate}>{dateRange}</span>
+      </div>
+      <div className={styles.tooltipRow}>
+        <span className={styles.tooltipLabel}>工程</span>
+        <span className={styles.tooltipValue}>{normalizedProcess}</span>
+      </div>
+      <div className={styles.tooltipRow}>
+        <span className={styles.tooltipLabel}>担当</span>
+        <span className={styles.tooltipValue}>{task.assignee || "-"}</span>
+      </div>
+      {plannedRange && (
+        <div className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>予定</span>
+          <span className={styles.tooltipValue}>{plannedRange}</span>
+        </div>
       )}
-
-      <p className={styles.tooltipDefaultContainerParagraph}>
-        {!!task.progress && `Progress: ${task.progress} %`}
-      </p>
+      {plannedEffort && (
+        <div className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>予定工数</span>
+          <span className={styles.tooltipValue}>{plannedEffort}</span>
+        </div>
+      )}
+      {actualEffort && (
+        <div className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>実績工数</span>
+          <span className={styles.tooltipValue}>{actualEffort}</span>
+        </div>
+      )}
+      <div className={styles.tooltipRow}>
+        <span className={styles.tooltipLabel}>ステータス</span>
+        <span className={styles.tooltipValue}>
+          <span
+            className={styles.tooltipStatus}
+            style={{ backgroundColor: getStatusColor(normalizedStatus) }}
+          >
+            {getStatusBadgeText(normalizedStatus)}
+          </span>
+          <span className={styles.tooltipStatusText}>{normalizedStatus}</span>
+        </span>
+      </div>
+      {!!task.progress && (
+        <p className={styles.tooltipDefaultContainerParagraph}>
+          進捗率: {task.progress} %
+        </p>
+      )}
     </div>
   );
 };

@@ -22,6 +22,7 @@ import { GanttEvent } from "../../types/gantt-task-actions";
 import { DateSetup } from "../../types/date-setup";
 import { HorizontalScroll } from "../other/horizontal-scroll";
 import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
+import { DEFAULT_VISIBLE_FIELDS } from "../../helpers/task-helper";
 import styles from "./gantt.module.css";
 
 export const Gantt: React.FunctionComponent<GanttProps> = ({
@@ -58,6 +59,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   TooltipContent = StandardTooltipContent,
   TaskListHeader = TaskListHeaderDefault,
   TaskListTable = TaskListTableDefault,
+  visibleFields = DEFAULT_VISIBLE_FIELDS,
+  effortDisplayUnit = "MH",
   onDateChange,
   onProgressChange,
   onDoubleClick,
@@ -65,6 +68,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   onDelete,
   onSelect,
   onExpanderClick,
+  onTaskUpdate,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
@@ -437,7 +441,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     fontFamily,
     fontSize,
     tasks: barTasks,
-    locale,
     headerHeight,
     scrollY,
     ganttHeight,
@@ -448,6 +451,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     onExpanderClick: handleExpanderClick,
     TaskListHeader,
     TaskListTable,
+    visibleFields,
+    onUpdateTask: onTaskUpdate,
+    effortDisplayUnit,
   };
   return (
     <div>
@@ -482,6 +488,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             TooltipContent={TooltipContent}
             rtl={rtl}
             svgWidth={svgWidth}
+            effortDisplayUnit={effortDisplayUnit}
           />
         )}
         <VerticalScroll

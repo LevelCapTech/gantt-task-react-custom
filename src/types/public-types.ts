@@ -1,3 +1,20 @@
+import { TaskProcessOption, TaskStatusOption } from "../constants/taskOptions";
+
+export type TaskProcess = TaskProcessOption;
+export type TaskStatus = TaskStatusOption;
+export type EffortUnit = "MH" | "MD" | "MM";
+export type VisibleField =
+  | "name"
+  | "start"
+  | "end"
+  | "process"
+  | "assignee"
+  | "plannedStart"
+  | "plannedEnd"
+  | "plannedEffort"
+  | "actualEffort"
+  | "status";
+
 export enum ViewMode {
   Hour = "Hour",
   QuarterDay = "Quarter Day",
@@ -31,6 +48,13 @@ export interface Task {
   dependencies?: string[];
   hideChildren?: boolean;
   displayOrder?: number;
+  process?: TaskProcess;
+  assignee?: string;
+  plannedStart?: Date;
+  plannedEnd?: Date;
+  plannedEffort?: number;
+  actualEffort?: number;
+  status?: TaskStatus;
 }
 
 export interface EventOption {
@@ -72,6 +96,10 @@ export interface EventOption {
    * Invokes on expander on task list
    */
   onExpanderClick?: (task: Task) => void;
+  /**
+   * Invokes when task list fields are updated (process, status, planned dates, assignee, effort).
+   */
+  onTaskUpdate?: (taskId: string, updatedFields: Partial<Task>) => void;
 }
 
 export interface DisplayOption {
@@ -113,23 +141,27 @@ export interface StylingOption {
   arrowColor?: string;
   arrowIndent?: number;
   todayColor?: string;
+  visibleFields?: VisibleField[];
+  effortDisplayUnit?: EffortUnit;
   TooltipContent?: React.FC<{
     task: Task;
     fontSize: string;
     fontFamily: string;
+    effortDisplayUnit?: EffortUnit;
   }>;
   TaskListHeader?: React.FC<{
     headerHeight: number;
     rowWidth: string;
     fontFamily: string;
     fontSize: string;
+    visibleFields: VisibleField[];
   }>;
   TaskListTable?: React.FC<{
     rowHeight: number;
     rowWidth: string;
     fontFamily: string;
     fontSize: string;
-    locale: string;
+    locale?: string;
     tasks: Task[];
     selectedTaskId: string;
     /**
@@ -137,6 +169,9 @@ export interface StylingOption {
      */
     setSelectedTask: (taskId: string) => void;
     onExpanderClick: (task: Task) => void;
+    visibleFields: VisibleField[];
+    onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+    effortDisplayUnit: EffortUnit;
   }>;
 }
 

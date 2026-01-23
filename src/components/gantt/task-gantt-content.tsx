@@ -56,7 +56,10 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   onClick,
   onDelete,
 }) => {
-  const point = svg?.current?.createSVGPoint();
+  const point =
+    svg?.current && "createSVGPoint" in svg.current
+      ? svg.current.createSVGPoint()
+      : undefined;
   const [xStep, setXStep] = useState(0);
   const [initEventX1Delta, setInitEventX1Delta] = useState(0);
   const [isMoving, setIsMoving] = useState(false);

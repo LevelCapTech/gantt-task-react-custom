@@ -1,0 +1,10 @@
+{
+  "root": true,
+  "ignorePatterns": [
+    "example/**"
+  ],
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ]
+}

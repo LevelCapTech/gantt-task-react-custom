@@ -21,3 +21,7 @@
   user-select: none;
   pointer-events: none;
 }
+
+.statusDot {
+  font-size: 12px;
+}
