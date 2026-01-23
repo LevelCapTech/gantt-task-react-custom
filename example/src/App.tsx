@@ -19,72 +19,6 @@ import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 
-const taskListHeaderStyles = {
-  ganttTable: "TaskListHeader",
-  ganttTable_Header: "TaskListHeaderRow",
-  ganttTable_HeaderSeparator: "TaskListHeaderSeparator",
-  ganttTable_HeaderItem: "TaskListHeaderCell",
-};
-
-const JapaneseTaskListHeader: React.FC<{
-  headerHeight: number;
-  rowWidth: string;
-  fontFamily: string;
-  fontSize: string;
-  visibleFields: VisibleField[];
-}> = ({ headerHeight, fontFamily, fontSize, rowWidth, visibleFields }) => {
-  const labels: Record<VisibleField, string> = {
-    name: "タスク名",
-    start: "開始日",
-    end: "終了日",
-    process: "工程",
-    assignee: "担当者",
-    plannedStart: "予定開始",
-    plannedEnd: "予定終了",
-    plannedEffort: "予定工数",
-    actualEffort: "実績工数",
-    status: "ステータス",
-  };
-  return (
-    <div
-      className={taskListHeaderStyles.ganttTable}
-      style={{
-        fontFamily: fontFamily,
-        fontSize: fontSize,
-      }}
-    >
-      <div
-        className={taskListHeaderStyles.ganttTable_Header}
-        style={{
-          height: headerHeight - 2,
-        }}
-      >
-        {visibleFields.map((field, index) => (
-          <React.Fragment key={field}>
-            <div
-              className={taskListHeaderStyles.ganttTable_HeaderItem}
-              style={{
-                minWidth: rowWidth,
-              }}
-            >
-              &nbsp;{labels[field]}
-            </div>
-            {index !== visibleFields.length - 1 && (
-              <div
-                className={taskListHeaderStyles.ganttTable_HeaderSeparator}
-                style={{
-                  height: headerHeight * 0.5,
-                  marginTop: headerHeight * 0.2,
-                }}
-              />
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const tooltipStyles = {
   tooltipDefaultContainer: "TooltipContainer",
   tooltipDefaultContainerParagraph: "TooltipParagraph",
@@ -270,7 +204,6 @@ const App = () => {
         listCellWidth={isChecked ? "130px" : ""}
         columnWidth={columnWidth}
         locale="ja-JP"
-        TaskListHeader={JapaneseTaskListHeader}
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
@@ -291,7 +224,6 @@ const App = () => {
         ganttHeight={300}
         columnWidth={columnWidth}
         locale="ja-JP"
-        TaskListHeader={JapaneseTaskListHeader}
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
@@ -302,4 +234,4 @@ const App = () => {
 };
 
 export default App;
-export { JapaneseTaskListHeader, JapaneseTooltip };
+export { JapaneseTooltip };
