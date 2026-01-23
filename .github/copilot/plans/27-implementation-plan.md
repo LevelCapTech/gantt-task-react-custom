@@ -56,6 +56,11 @@
 
 # 7. オープンな課題 / ADR 要否
 - 未確定事項:
-  - 多言語化の将来方針（本 Issue では対応しない）。
+  - なし（多言語化は将来も実施しない前提）。
 - ADR に残すべき判断:
-  - なし（日本語固定を暫定標準とする軽微な UI 仕様変更のため）。
+  - なし（日本語固定を標準とする軽微な UI 仕様変更のため）。
+
+# 8. 実装ドラフト（実装見本）
+- `task-list-header.tsx`: `TaskListHeaderDefault` 内に日本語ラベルの `labels: Record<VisibleField, string>` を定義し、既存 `resolveVisibleFields` とスタイルをそのまま使用する。
+- `Gantt` 呼び出し: デフォルトで上記ヘッダーを利用しつつ、`TaskListHeader` props に別コンポーネントを指定した場合はそちらを優先する（既存互換）。
+- `/example/src/App.tsx`: `JapaneseTaskListHeader` コンポーネント定義と `TaskListHeader` props 指定を削除し、その他のロジックは変更しない。
