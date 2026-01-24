@@ -56,4 +56,18 @@ describe("Task/Schedule split handle", () => {
       expect(taskListPanel).toHaveStyle({ width: "150px" });
     });
   });
+
+  it("clamps task pane width to maximum to keep schedule minimum", async () => {
+    render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
+    const taskListPanel = await screen.findByTestId("task-list-panel");
+    const splitHandle = screen.getByTestId("pane-splitter");
+
+    fireEvent.mouseDown(splitHandle, { clientX: 450 });
+    fireEvent.mouseMove(splitHandle, { clientX: 2000 });
+    fireEvent.mouseUp(splitHandle, { clientX: 2000 });
+
+    await waitFor(() => {
+      expect(taskListPanel).toHaveStyle({ width: "642px" });
+    });
+  });
 });
