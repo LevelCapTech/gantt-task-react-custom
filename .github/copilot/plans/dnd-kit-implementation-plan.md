@@ -20,10 +20,10 @@
 ## 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰）: 依存追加後も既存のビルド・lint・ユニットテストが通過することを確認。バンドルサイズが +100KB 未満であることを目視確認。
 - モック / フィクスチャ方針: 既存テストを流用。コード変更なしのため新規テスト追加なし。
-- テスト追加の実行コマンド: 依存導入後に `npm test`（`test:unit` / `test:lint` / `test:build` を包含）を実行する想定。
+- テスト追加の実行コマンド: 依存導入後に `npm test`（`test:unit` / `test:lint` / `test:build` を包含）を実行する想定。補足として `npm run lint` を単体実行し警告のみでエラーなしを確認。
 
 ## 5. CI 品質ゲート
-- 実行コマンド（format / lint / typecheck / test / security）: 依存導入後に `npm test` を実行し lint/typecheck/build/unit を確認。セキュリティスキャンは現行方針を継続。
+- 実行コマンド（format / lint / typecheck / test / security）: 依存導入後に `npm test` を実行し lint/typecheck/build/unit を確認。`npm run lint` を追加実行し、lint 警告のみでエラーがないことを確認。セキュリティスキャンは現行方針を継続し `npm audit --production` を実行。
 - 通過基準と失敗時の対応: すべて成功すること。失敗時は依存バージョンの互換性を見直し、必要ならロールバック。
 
 ## 6. ロールアウト・運用
@@ -33,6 +33,12 @@
 ## 7. オープンな課題 / ADR 要否
 - 未確定事項: なし（本PRは計画のみ）。
 - ADR に残すべき判断: 依存導入を実施する際にバンドルサイズや Node バージョン方針を変更する場合は ADR 化する。
+
+## 9. 検証ログ（実施結果）
+- npm test: pass（lint 2 warning / error 0, build pass, unit pass）
+- npm run lint: warning 2（既存 Hook 依存警告） / error 0
+- npm audit --production: 0 vulnerabilities
+- dist size: index.js 104K, index.modern.js 102K（増加 +100KB 未満）
 
 ## 8. dnd-kit パッケージ一覧と追加判断
 

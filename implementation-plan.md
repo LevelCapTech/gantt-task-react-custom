@@ -18,7 +18,7 @@
 - テスト追加の実行コマンド: `npm test`（ルートで lint/build/unit を含む）を実行。必要に応じて `cd example && npm test -- --watch=false` は省略可。
 
 # 5. CI 品質ゲート
-- 実行コマンド（format / lint / typecheck / test / security）: 既存 `npm test` により eslint・build・unit を網羅。追加のセキュリティスキャンは無し。
+- 実行コマンド（format / lint / typecheck / test / security）: 既存 `npm test` により eslint・build・unit を網羅。追加のセキュリティスキャンは無し。dnd-kit 導入後に `npm run lint` を個別追加実行し、警告のみでエラーなしであることを確認。
 - 通過基準と失敗時の対応: すべて成功すること。失敗時は該当箇所の文言変更を見直し、ロジック差分がないか確認。
 
 # 6. ロールアウト・運用
