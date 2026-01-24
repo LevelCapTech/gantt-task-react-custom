@@ -41,9 +41,6 @@
   min-width: 100%;
 }
 
-.scrollWrapper {
-  margin-top: 4px;
-}
 .taskListNameWrapper {
   display: flex;
   align-items: center;

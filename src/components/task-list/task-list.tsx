@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { BarTask } from "../../types/bar-task";
 import {
   ColumnState,
@@ -8,7 +8,6 @@ import {
   VisibleField,
 } from "../../types/public-types";
 import styles from "./task-list-table.module.css";
-import { TaskHorizontalScroll } from "../other/horizontal-scroll";
 
 export type TaskListProps = {
   headerHeight: number;
@@ -82,7 +81,6 @@ export const TaskList: React.FC<TaskListProps> = ({
 }) => {
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
-  const [scrollLeft, setScrollLeft] = useState(0);
   useEffect(() => {
     if (horizontalContainerRef.current) {
       horizontalContainerRef.current.scrollTop = scrollY;
@@ -159,7 +157,6 @@ export const TaskList: React.FC<TaskListProps> = ({
     if (!bodyEl || !headerEl) return;
     const syncScroll = () => {
       headerEl.scrollLeft = bodyEl.scrollLeft;
-      setScrollLeft(bodyEl.scrollLeft);
     };
     bodyEl.addEventListener("scroll", syncScroll, { passive: true });
     return () => {
@@ -185,20 +182,6 @@ export const TaskList: React.FC<TaskListProps> = ({
           <TaskListTable {...tableProps} />
         </div>
       </div>
-      <TaskHorizontalScroll
-        scrollLeft={scrollLeft}
-        contentWidth={visibleColumns.reduce(
-          (acc, column) => acc + column.width,
-          0
-        )}
-        onScrollLeftChange={next => {
-          const body = horizontalContainerRef.current;
-          if (body && body.scrollLeft !== next) {
-            body.scrollLeft = next;
-          }
-          setScrollLeft(next);
-        }}
-      />
     </div>
   );
 };
