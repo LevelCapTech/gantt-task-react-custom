@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./task-list-table.module.css";
 import {
+  ColumnsState,
   EffortUnit,
   Task,
   TaskProcess,
@@ -35,6 +36,7 @@ export const TaskListTableDefault: React.FC<{
   visibleFields: VisibleField[];
   onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
   effortDisplayUnit: EffortUnit;
+  columnsState?: ColumnsState;
 }> = ({
   rowHeight,
   rowWidth,
@@ -45,8 +47,13 @@ export const TaskListTableDefault: React.FC<{
   visibleFields,
   onUpdateTask,
   effortDisplayUnit,
+  columnsState,
 }) => {
-  const columns = resolveVisibleFields(visibleFields);
+  const columns = columnsState?.filter(column => column.visible !== false) ??
+    resolveVisibleFields(visibleFields).map(field => ({
+      id: field,
+      width: field === "name" ? Number.parseInt(rowWidth, 10) || 155 : Number.parseInt(rowWidth, 10) || 155,
+    }));
   const isEditable = !!onUpdateTask;
 
   return (
@@ -252,15 +259,21 @@ export const TaskListTableDefault: React.FC<{
           >
             {columns.map(column => (
               <div
-                key={`${t.id}-${column}`}
+                key={`${t.id}-${typeof column === "string" ? column : column.id}`}
                 className={styles.taskListCell}
                 style={{
-                  minWidth: rowWidth,
-                  maxWidth: rowWidth,
+                  minWidth:
+                    typeof column === "string" ? rowWidth : `${column.width}px`,
+                  maxWidth:
+                    typeof column === "string" ? rowWidth : `${column.width}px`,
                 }}
-                title={column === "name" ? t.name : undefined}
+                title={
+                  (typeof column === "string" ? column : column.id) === "name"
+                    ? t.name
+                    : undefined
+                }
               >
-                {renderCell(column)}
+                {renderCell(typeof column === "string" ? column : column.id)}
               </div>
             ))}
           </div>

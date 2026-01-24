@@ -22,4 +22,39 @@
   vertical-align: middle;
   padding: 0 6px;
   white-space: nowrap;
+  position: relative;
+}
+.ganttTable_HeaderItemDragging {
+  opacity: 0.6;
+}
+.ganttTable_DragHandle {
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px 0 2px;
+  user-select: none;
+}
+.ganttTable_DragHandleDisabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.ganttTable_DragIcon {
+  font-size: 12px;
+  line-height: 1;
+}
+.ganttTable_HeaderLabel {
+  display: inline-flex;
+  align-items: center;
+}
+.ganttTable_ResizeHandle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+}
+.ganttTable_ResizeHandleActive {
+  background-color: rgba(0, 0, 0, 0.06);
+  user-select: none;
 }

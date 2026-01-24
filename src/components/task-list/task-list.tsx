@@ -1,6 +1,12 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BarTask } from "../../types/bar-task";
-import { EffortUnit, Task, VisibleField } from "../../types/public-types";
+import {
+  ColumnState,
+  ColumnsState,
+  EffortUnit,
+  Task,
+  VisibleField,
+} from "../../types/public-types";
 
 export type TaskListProps = {
   headerHeight: number;
@@ -25,6 +31,9 @@ export type TaskListProps = {
     fontFamily: string;
     fontSize: string;
     visibleFields: VisibleField[];
+    columnsState?: ColumnsState;
+    setColumnsState?: React.Dispatch<React.SetStateAction<ColumnsState>>;
+    enableColumnDrag?: boolean;
   }>;
   TaskListTable: React.FC<{
     rowHeight: number;
@@ -39,8 +48,12 @@ export type TaskListProps = {
     visibleFields: VisibleField[];
     onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
     effortDisplayUnit: EffortUnit;
+    columnsState?: ColumnsState;
   }>;
+  enableColumnDrag?: boolean;
 };
+
+const DEFAULT_MIN_WIDTH = 120;
 
 export const TaskList: React.FC<TaskListProps> = ({
   headerHeight,
@@ -61,6 +74,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   visibleFields,
   onUpdateTask,
   effortDisplayUnit,
+  enableColumnDrag = true,
 }) => {
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -69,12 +83,35 @@ export const TaskList: React.FC<TaskListProps> = ({
     }
   }, [scrollY]);
 
+  const initialColumns = useMemo<ColumnsState>(
+    () =>
+      visibleFields.map(
+        (field): ColumnState => ({
+          id: field,
+          label: field,
+          width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
+          minWidth: DEFAULT_MIN_WIDTH,
+          visible: true,
+        })
+      ),
+    [visibleFields, rowWidth]
+  );
+
+  const [columnsState, setColumnsState] = useState<ColumnsState>(initialColumns);
+  const visibleColumns = useMemo(
+    () => columnsState.filter(column => column.visible),
+    [columnsState]
+  );
+
   const headerProps = {
     headerHeight,
     fontFamily,
     fontSize,
     rowWidth,
     visibleFields,
+    columnsState,
+    setColumnsState,
+    enableColumnDrag,
   };
   const selectedTaskId = selectedTask ? selectedTask.id : "";
   const tableProps = {
@@ -89,6 +126,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     visibleFields,
     onUpdateTask,
     effortDisplayUnit,
+    columnsState: visibleColumns,
   };
 
   return (
