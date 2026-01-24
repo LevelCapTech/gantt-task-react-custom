@@ -32,3 +32,47 @@ export const HorizontalScroll: React.FC<{
     </div>
   );
 };
+
+type TaskHorizontalScrollProps = {
+  scrollLeft: number;
+  contentWidth: number;
+  containerOffset?: number;
+  onScrollLeftChange: (left: number) => void;
+};
+
+export const TaskHorizontalScroll: React.FC<TaskHorizontalScrollProps> = ({
+  scrollLeft,
+  contentWidth,
+  containerOffset = 0,
+  onScrollLeftChange,
+}) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollLeft;
+    }
+  }, [scrollLeft]);
+
+  const handleScroll = (event: SyntheticEvent<HTMLDivElement>) => {
+    onScrollLeftChange(event.currentTarget.scrollLeft);
+  };
+
+  return (
+    <div
+      dir="ltr"
+      style={{
+        margin: `0px 0px 0px ${containerOffset}px`,
+      }}
+      className={styles.scrollWrapper}
+      onScroll={handleScroll}
+      ref={scrollRef}
+    >
+      <div
+        style={{ width: contentWidth }}
+        className={styles.scroll}
+        aria-hidden
+      />
+    </div>
+  );
+};
