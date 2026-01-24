@@ -14,13 +14,13 @@
 - 変更ファイル（新規/修正/削除）:
   - 修正: `src/components/task-list/task-list-header.tsx`
   - 修正: `src/components/task-list/task-list-table.tsx`
-  - 修正: `src/components/task-list/task-list.tsx`
-  - 修正: `src/components/Gantt.tsx`
-  - 修正: `src/types/public-types.ts`
+- 修正: `src/components/task-list/task-list.tsx`
+- 修正: `src/components/gantt/gantt.tsx`
+- 修正: `src/types/public-types.ts`
   - 追加: Drag/Resize 用のスタイルフックが必要な場合は `task-list-header.module.css` など既存 CSS を拡張
 - 影響範囲・互換性リスク:
   - 列並び/幅の制御が共有状態化されるため、カスタムヘッダを提供する利用者に影響する可能性がある。既存 props は維持し、初期値も従来順序で設定することで後方互換を確保する。
-  - dnd-kit 依存を peerDependencies として追加するが、既に microbundle external に指定済みのためバンドルサイズ影響は限定的。
+  - dnd-kit 依存（`@dnd-kit/core` / `@dnd-kit/sortable` / `@dnd-kit/utilities`）を peerDependencies に明示し、`@dnd-kit/sortable` も含めて microbundle external に指定することでバンドルサイズ影響を限定的に保つ（core/utilities は既に external に指定済み）。
 - 外部依存・Secrets の扱い:
   - Drag 専用で `@dnd-kit/core` / `@dnd-kit/sortable` を利用。Resize はネイティブイベント。
   - Secrets 利用なし。
