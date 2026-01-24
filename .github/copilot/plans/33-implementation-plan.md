@@ -1,0 +1,107 @@
+# 1. 機能要件 / 非機能要件
+- 機能要件:
+  - Task List / Task Table の列ヘッダに対し、Drag & Drop で列順序を変更できること。
+  - 列幅を Resize 操作（mouse down/move/up）で変更でき、最小幅を下回らないこと。
+  - Drag と Resize が互いに干渉しないイベント構造であること（別 DOM・別ハンドル、stopPropagation）。
+  - 列情報（順序・幅・可視性）を単一の SSOT 状態で管理し、ヘッダとボディの表示が常に同期すること。
+  - 既存 public API を維持しつつ型定義（Column/状態管理型）を拡張すること。
+- 非機能要件:
+  - ガント本体（タイムライン領域）は非対象。外部依存は Drag 用の dnd-kit に限定し、Resize はネイティブ実装とする。
+  - 最小限の DOM 追加でアクセシビリティと操作性を両立する。
+  - 互換性を壊さず、既存表示/挙動への影響を最小化する。
+
+# 2. スコープと変更対象
+- 変更ファイル（新規/修正/削除）:
+  - 修正: `src/components/task-list/task-list-header.tsx`
+  - 修正: `src/components/task-list/task-list-table.tsx`
+  - 修正: `src/components/task-list/task-list.tsx`
+  - 修正: `src/components/Gantt.tsx`
+  - 修正: `src/types/public-types.ts`
+  - 追加: Drag/Resize 用のスタイルフックが必要な場合は `task-list-header.module.css` など既存 CSS を拡張
+- 影響範囲・互換性リスク:
+  - 列並び/幅の制御が共有状態化されるため、カスタムヘッダを提供する利用者に影響する可能性がある。既存 props は維持し、初期値も従来順序で設定することで後方互換を確保する。
+  - dnd-kit 依存を peerDependencies として追加するが、既に microbundle external に指定済みのためバンドルサイズ影響は限定的。
+- 外部依存・Secrets の扱い:
+  - Drag 専用で `@dnd-kit/core` / `@dnd-kit/sortable` を利用。Resize はネイティブイベント。
+  - Secrets 利用なし。
+
+# 3. 設計方針
+- 責務分離 / データフロー（必要なら Mermaid 1 枚）:
+  - 列状態 SSOT（例: `columnsState: ColumnState[]`）を Task List コンテナで保持し、順序/幅/表示を一括管理。ヘッダ・ボディ双方に props で配信し、同一 state を参照して描画する。
+  - Drag: ヘッダ内の専用 drag-handle（dnd-kit SortableContext）で順序を更新。ボディ列レンダリングは SSOT 順序に追従。
+  - Resize: ヘッダの resize-handle に `onMouseDown` を付与し、ドキュメントレベルの mousemove/up で幅を更新。最小幅を超過のみ反映。
+  - 競合防止: Drag/Resize ハンドルを別 DOM とし、各ハンドルで `event.stopPropagation()` を実行。Drag センサーと Resize リスナーは独立登録。
+- エッジケース / 例外系 / リトライ方針:
+  - 幅縮小が minWidth 未満の場合は clamp。ドラッグ中にリサイズイベントは発火させない（ハンドル分離）。
+  - 非表示列（visible=false）は並び替え対象外。順序のみ保持し、再表示時に元の順序を再現。
+  - dnd-kit センサーがない環境でも従来順序で描画できるフォールバック（SortableContext なしでも render）。
+- ログと観測性（漏洩防止を含む):
+  - ライブラリのため追加ログなし。必要に応じてコールバック（onColumnsChange 等）を将来追加する拡張ポイントをコメントで明示しない（後方互換優先）。
+
+# 4. テスト戦略
+- テスト観点（正常 / 例外 / 境界 / 回帰):
+  - 正常: Drag 操作で列順が SSOT に従い更新され、ヘッダ/ボディが同期して並び替わる。
+  - 正常: Resize 操作で列幅が更新され、最小幅を下回らない。
+  - 例外: Drag ハンドルと Resize ハンドルのイベントが競合しない（片方操作中にもう片方が誤作動しない）。
+  - 回帰: 既存列構造・visibleFields の初期表示が維持される。
+- モック / フィクスチャ方針:
+  - DOM イベントを伴うため、ユニットテストではヘッダ/ボディの順序・style 幅を検証。dnd-kit はドラッグシミュレーションを最小限にモック。
+- テスト追加の実行コマンド（例: `python -m pytest`）:
+  - `npm test`（既存の react-scripts ベース）
+
+# 5. CI 品質ゲート
+- 実行コマンド（format / lint / typecheck / test / security）:
+  - `npm run test:lint`
+  - `npm run test:unit`
+  - `npm run test:build`
+- 通過基準と失敗時の対応:
+  - すべて 0 エラーで完了すること。警告は既存のもののみ許容し、新規発生は修正。
+
+# 6. ロールアウト・運用
+- ロールバック方法:
+  - 列状態 SSOT と Drag/Resize 追加部分を無効化し、従来の静的ヘッダ・固定幅描画に戻す。
+- 監視・運用上の注意:
+  - ライブラリ利用側で列設定を永続化する場合は破壊的変更を避けるため、列 ID をキーにすることをガイド。
+
+# 7. オープンな課題 / ADR 要否
+- 未確定事項:
+  - 列状態外部公開 API（onColumnsChange など）を追加するかは未決。今回は内部状態のみ。
+- ADR に残すべき判断:
+  - dnd-kit を Drag のみで利用し、Resize はネイティブ実装に限定する方針を ADR 不要の小変更として扱う。
+
+## 付録: 型定義・シーケンス
+- 型更新:
+  - `type ColumnState = { id: string; label: string; width: number; minWidth: number; visible: boolean; }`
+  - SSOT: `columnsState: ColumnState[]` を Task List 親で保持。ヘッダ/ボディへ渡す。
+- Drag (ヘッダ並び替え) イベントシーケンス:
+```mermaid
+sequenceDiagram
+  participant User
+  participant DragHandle as Drag Handle
+  participant DndKit as dnd-kit Sortable
+  participant ColumnState as Columns SSOT
+  participant Header as Header Row
+  participant Body as Body Rows
+  User->>DragHandle: mousedown & drag start
+  DragHandle->>DndKit: start (sensor activates)
+  DndKit->>ColumnState: onDragEnd => reorder by active/over ids
+  ColumnState-->>Header: re-render with new order
+  ColumnState-->>Body: re-render rows with new order
+```
+- Resize (列幅変更) イベントシーケンス:
+```mermaid
+sequenceDiagram
+  participant User
+  participant ResizeHandle as Resize Handle
+  participant Document as document mousemove/up
+  participant ColumnState as Columns SSOT
+  participant Header as Header Row
+  participant Body as Body Rows
+  User->>ResizeHandle: mousedown (stopPropagation)
+  ResizeHandle->>Document: add mousemove/up listeners
+  Document->>ColumnState: update width (clamp to minWidth)
+  ColumnState-->>Header: apply style width
+  ColumnState-->>Body: apply style width across rows
+  Document-->>Document: remove listeners on mouseup
+```
+
