@@ -7,6 +7,7 @@ import {
   Task,
   VisibleField,
 } from "../../types/public-types";
+import styles from "./task-list-table.module.css";
 
 export type TaskListProps = {
   headerHeight: number;
@@ -79,25 +80,24 @@ export const TaskList: React.FC<TaskListProps> = ({
   enableColumnDrag = true,
 }) => {
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (horizontalContainerRef.current) {
       horizontalContainerRef.current.scrollTop = scrollY;
     }
   }, [scrollY]);
 
-  const initialColumns = useMemo<ColumnsState>(
-    () =>
-      visibleFields.map(
-        (field): ColumnState => ({
-          id: field,
-          label: field,
-          width: getDefaultWidth(field, rowWidth),
-          minWidth: DEFAULT_MIN_WIDTH,
-          visible: true,
-        })
-      ),
-    [visibleFields, rowWidth]
-  );
+  const initialColumns = useMemo<ColumnsState>(() => {
+    return visibleFields.map(
+      (field): ColumnState => ({
+        id: field,
+        label: field,
+        width: getDefaultWidth(field, rowWidth),
+        minWidth: DEFAULT_MIN_WIDTH,
+        visible: true,
+      })
+    );
+  }, [visibleFields, rowWidth]);
 
   const [columnsState, setColumnsState] = useState<ColumnsState>(initialColumns);
 
@@ -151,15 +151,36 @@ export const TaskList: React.FC<TaskListProps> = ({
     columnsState: visibleColumns,
   };
 
+  useEffect(() => {
+    const bodyEl = horizontalContainerRef.current;
+    const headerEl = headerScrollRef.current;
+    if (!bodyEl || !headerEl) return;
+    const syncScroll = () => {
+      headerEl.scrollLeft = bodyEl.scrollLeft;
+    };
+    bodyEl.addEventListener("scroll", syncScroll, { passive: true });
+    return () => {
+      bodyEl.removeEventListener("scroll", syncScroll);
+    };
+  }, []);
+
   return (
     <div ref={taskListRef}>
-      <TaskListHeader {...headerProps} />
+      <div className={styles.taskTableHeaderScroll} ref={headerScrollRef}>
+        <div className={styles.taskTableHeaderInner}>
+          <TaskListHeader {...headerProps} />
+        </div>
+      </div>
       <div
         ref={horizontalContainerRef}
-        className={horizontalContainerClass}
+        className={`${styles.taskTableBodyScroll} ${
+          horizontalContainerClass ?? ""
+        }`}
         style={ganttHeight ? { height: ganttHeight } : {}}
       >
-        <TaskListTable {...tableProps} />
+        <div className={styles.taskTableBodyInner}>
+          <TaskListTable {...tableProps} />
+        </div>
       </div>
     </div>
   );

@@ -21,6 +21,25 @@
   text-overflow: ellipsis;
   padding: 0 6px;
 }
+
+.taskTableHeaderScroll {
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+
+.taskTableHeaderInner {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.taskTableBodyScroll {
+  overflow: auto;
+}
+
+.taskTableBodyInner {
+  display: inline-block;
+  min-width: 100%;
+}
 .taskListNameWrapper {
   display: flex;
   align-items: center;

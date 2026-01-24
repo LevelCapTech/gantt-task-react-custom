@@ -25,6 +25,10 @@ import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
 import { DEFAULT_VISIBLE_FIELDS } from "../../helpers/task-helper";
 import styles from "./gantt.module.css";
 
+const INITIAL_TASK_WIDTH = 450;
+const MIN_PANE_WIDTH = 150;
+const DIVIDER_WIDTH = 8;
+
 export const Gantt: React.FunctionComponent<GanttProps> = ({
   tasks,
   headerHeight = 50,
@@ -73,6 +77,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
+  const dividerRef = useRef<HTMLDivElement>(null);
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
     const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
@@ -81,7 +86,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     undefined
   );
 
-  const [taskListWidth, setTaskListWidth] = useState(0);
+  const [taskListWidth, setTaskListWidth] = useState<number>(INITIAL_TASK_WIDTH);
   const [svgContainerWidth, setSvgContainerWidth] = useState(0);
   const [svgContainerHeight, setSvgContainerHeight] = useState(ganttHeight);
   const [barTasks, setBarTasks] = useState<BarTask[]>([]);
@@ -237,19 +242,12 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   }, [failedTask, barTasks]);
 
   useEffect(() => {
-    if (!listCellWidth) {
-      setTaskListWidth(0);
-    }
-    if (taskListRef.current) {
-      setTaskListWidth(taskListRef.current.offsetWidth);
-    }
-  }, [taskListRef, listCellWidth]);
-
-  useEffect(() => {
     if (wrapperRef.current) {
-      setSvgContainerWidth(wrapperRef.current.offsetWidth - taskListWidth);
+      setSvgContainerWidth(
+        wrapperRef.current.offsetWidth - taskListWidth - DIVIDER_WIDTH
+      );
     }
-  }, [wrapperRef, taskListWidth]);
+  }, [taskListWidth]);
 
   useEffect(() => {
     if (ganttHeight) {
@@ -369,6 +367,62 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     setIgnoreScrollEvent(true);
   };
 
+  const clampTaskListWidth = (nextWidth: number) => {
+    const wrapperWidth = wrapperRef.current?.clientWidth ?? nextWidth;
+    const maxTaskWidth = Math.max(
+      MIN_PANE_WIDTH,
+      wrapperWidth - MIN_PANE_WIDTH - DIVIDER_WIDTH
+    );
+    return Math.max(MIN_PANE_WIDTH, Math.min(nextWidth, maxTaskWidth));
+  };
+
+  const handleDividerDrag = (clientX: number) => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const { left } = wrapper.getBoundingClientRect();
+    const nextWidth = clientX - left;
+    setTaskListWidth(prev => clampTaskListWidth(nextWidth || prev));
+  };
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    if (typeof ResizeObserver === "undefined") {
+      const width = wrapperRef.current.offsetWidth;
+      const clamped = clampTaskListWidth(taskListWidth);
+      setTaskListWidth(clamped);
+      setSvgContainerWidth(width - clamped - DIVIDER_WIDTH);
+      return;
+    }
+    const resizeObserver = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect?.width;
+      if (width) {
+        const clamped = clampTaskListWidth(taskListWidth);
+        setTaskListWidth(clamped);
+        setSvgContainerWidth(width - clamped - DIVIDER_WIDTH);
+      }
+    });
+    resizeObserver.observe(wrapperRef.current);
+    return () => resizeObserver.disconnect();
+  }, [taskListWidth]);
+
+  useEffect(() => {
+    setTaskListWidth(prev => clampTaskListWidth(prev));
+  }, []);
+
+  const onDividerPointerDown: React.PointerEventHandler<HTMLDivElement> = event => {
+    const handleMove = (moveEvent: PointerEvent) => {
+      handleDividerDrag(moveEvent.clientX);
+    };
+    const handleUp = () => {
+      document.removeEventListener("pointermove", handleMove);
+      document.removeEventListener("pointerup", handleUp);
+      dividerRef.current?.releasePointerCapture(event.pointerId);
+    };
+    dividerRef.current?.setPointerCapture(event.pointerId);
+    document.addEventListener("pointermove", handleMove);
+    document.addEventListener("pointerup", handleUp);
+  };
+
   /**
    * Task select event
    */
@@ -464,8 +518,20 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         onKeyDown={handleKeyDown}
         tabIndex={0}
         ref={wrapperRef}
+        style={{
+          display: "grid",
+          gridTemplateColumns: `${taskListWidth}px ${DIVIDER_WIDTH}px 1fr`,
+        }}
       >
         {listCellWidth && <TaskList {...tableProps} />}
+        <div
+          ref={dividerRef}
+          className={styles.splitDivider}
+          role="separator"
+          aria-orientation="vertical"
+          tabIndex={0}
+          onPointerDown={onDividerPointerDown}
+        />
         <TaskGantt
           gridProps={gridProps}
           calendarProps={calendarProps}

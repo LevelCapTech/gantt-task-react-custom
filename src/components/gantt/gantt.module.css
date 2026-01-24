@@ -11,6 +11,13 @@
   overflow: hidden;
 }
 
+.taskListScroll {
+  margin: 0;
+  padding: 0;
+  overflow-x: scroll;
+  overflow-y: auto;
+}
+
 .wrapper {
   display: flex;
   padding: 0;
@@ -18,4 +25,12 @@
   list-style: none;
   outline: none;
   position: relative;
+}
+
+.splitDivider {
+  cursor: col-resize;
+  background: #e6e6e6;
+  width: 8px;
+  min-width: 8px;
+  max-width: 8px;
 }
