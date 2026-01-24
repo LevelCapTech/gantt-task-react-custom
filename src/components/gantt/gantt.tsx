@@ -61,6 +61,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   TaskListTable = TaskListTableDefault,
   visibleFields = DEFAULT_VISIBLE_FIELDS,
   effortDisplayUnit = "MH",
+  enableColumnDrag,
   onDateChange,
   onProgressChange,
   onDoubleClick,
@@ -454,6 +455,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     visibleFields,
     onUpdateTask: onTaskUpdate,
     effortDisplayUnit,
+    enableColumnDrag,
   };
   return (
     <div>

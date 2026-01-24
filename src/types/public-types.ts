@@ -15,6 +15,16 @@ export type VisibleField =
   | "actualEffort"
   | "status";
 
+export type ColumnState = {
+  id: VisibleField;
+  label: string;
+  width: number;
+  minWidth: number;
+  visible: boolean;
+};
+
+export type ColumnsState = ColumnState[];
+
 export enum ViewMode {
   Hour = "Hour",
   QuarterDay = "Quarter Day",
@@ -143,6 +153,7 @@ export interface StylingOption {
   todayColor?: string;
   visibleFields?: VisibleField[];
   effortDisplayUnit?: EffortUnit;
+  enableColumnDrag?: boolean;
   TooltipContent?: React.FC<{
     task: Task;
     fontSize: string;
@@ -155,6 +166,9 @@ export interface StylingOption {
     fontFamily: string;
     fontSize: string;
     visibleFields: VisibleField[];
+    columnsState?: ColumnsState;
+    setColumnsState?: React.Dispatch<React.SetStateAction<ColumnsState>>;
+    enableColumnDrag?: boolean;
   }>;
   TaskListTable?: React.FC<{
     rowHeight: number;
@@ -172,6 +186,7 @@ export interface StylingOption {
     visibleFields: VisibleField[];
     onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
     effortDisplayUnit: EffortUnit;
+    columnsState?: ColumnsState;
   }>;
 }
 
