@@ -54,7 +54,7 @@
 - モック / フィクスチャ方針:
   - DOM イベントを伴うため、ユニットテストではヘッダ/ボディの順序・style 幅を検証。dnd-kit はドラッグシミュレーションを最小限にモック。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
-  - `npm test`（既存の react-scripts ベース）
+  - `npm test`（npm-run-all の `run-s` で `test:lint` → `test:unit` → `test:build` を順次実行）
 
 # 5. CI 品質ゲート
 - 実行コマンド（format / lint / typecheck / test / security）:
@@ -76,7 +76,7 @@
 - ADR に残すべき判断:
   - dnd-kit を Drag のみで利用し、Resize はネイティブ実装に限定する方針を ADR 不要の小変更として扱う。
 
-## 付録: 型定義・シーケンス
+# 8. 付録: 型定義・シーケンス
 - 型更新:
   - `type ColumnState = { id: string; label: string; width: number; minWidth: number; visible: boolean; }`
   - SSOT: `columnsState: ColumnState[]` を Task List 親で保持。ヘッダ/ボディへ渡す。
