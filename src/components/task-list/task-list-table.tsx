@@ -8,6 +8,7 @@ import {
   TaskStatus,
   VisibleField,
 } from "../../types/public-types";
+import { getDefaultWidth } from "./task-list";
 import {
   TASK_PROCESS_OPTIONS,
   TASK_STATUS_OPTIONS,
@@ -53,7 +54,7 @@ export const TaskListTableDefault: React.FC<{
     columnsState?.filter(column => column.visible !== false) ??
     resolveVisibleFields(visibleFields).map(field => ({
       id: field,
-      width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
+      width: getDefaultWidth(field, rowWidth),
     }));
   const isEditable = !!onUpdateTask;
 

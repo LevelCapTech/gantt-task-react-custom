@@ -7,6 +7,7 @@ import {
 } from "../../types/public-types";
 import styles from "./task-list-header.module.css";
 import classNames from "classnames";
+import { getDefaultWidth, DEFAULT_MIN_WIDTH } from "./task-list";
 import {
   DndContext,
   DragEndEvent,
@@ -57,8 +58,8 @@ export const TaskListHeaderDefault: React.FC<{
     (field): ColumnState => ({
       id: field,
       label: labels[field],
-      width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
-      minWidth: 32,
+      width: getDefaultWidth(field, rowWidth),
+      minWidth: DEFAULT_MIN_WIDTH,
       visible: true,
     })
   );

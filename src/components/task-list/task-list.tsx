@@ -53,7 +53,9 @@ export type TaskListProps = {
   enableColumnDrag?: boolean;
 };
 
-const DEFAULT_MIN_WIDTH = 32;
+export const DEFAULT_MIN_WIDTH = 32;
+export const getDefaultWidth = (field: VisibleField, rowWidth: string): number =>
+  field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155;
 
 export const TaskList: React.FC<TaskListProps> = ({
   headerHeight,
@@ -89,7 +91,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         (field): ColumnState => ({
           id: field,
           label: field,
-          width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
+          width: getDefaultWidth(field, rowWidth),
           minWidth: DEFAULT_MIN_WIDTH,
           visible: true,
         })
@@ -110,7 +112,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         return {
           id: field,
           label: field,
-          width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
+          width: getDefaultWidth(field, rowWidth),
           minWidth: DEFAULT_MIN_WIDTH,
           visible: true,
         };
