@@ -48,9 +48,9 @@ describe("Task/Schedule split handle", () => {
     const taskListPanel = await screen.findByTestId("task-list-panel");
     const splitHandle = screen.getByTestId("pane-splitter");
 
-    fireEvent.pointerDown(splitHandle, { clientX: 500, pointerId: 1 });
-    fireEvent.pointerMove(splitHandle, { clientX: 0, pointerId: 1 });
-    fireEvent.pointerUp(splitHandle, { clientX: 0, pointerId: 1 });
+    fireEvent.mouseDown(splitHandle, { clientX: 500 });
+    fireEvent.mouseMove(splitHandle, { clientX: 0 });
+    fireEvent.mouseUp(splitHandle, { clientX: 0 });
 
     await waitFor(() => {
       expect(taskListPanel).toHaveStyle({ width: "150px" });

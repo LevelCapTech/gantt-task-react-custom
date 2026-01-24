@@ -87,6 +87,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const taskListRef = useRef<HTMLDivElement>(null);
   const splitStartXRef = useRef<number | null>(null);
   const splitStartWidthRef = useRef<number | null>(null);
+  const splitMoveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);
+  const splitUpHandlerRef = useRef<(() => void) | null>(null);
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
     const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
@@ -291,6 +293,19 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     }
   }, [ganttHeight, tasks, headerHeight, rowHeight]);
 
+  useEffect(() => {
+    return () => {
+      if (splitMoveHandlerRef.current) {
+        document.removeEventListener("mousemove", splitMoveHandlerRef.current);
+        splitMoveHandlerRef.current = null;
+      }
+      if (splitUpHandlerRef.current) {
+        document.removeEventListener("mouseup", splitUpHandlerRef.current);
+        splitUpHandlerRef.current = null;
+      }
+    };
+  }, []);
+
   // scroll events
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
@@ -425,6 +440,21 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     }
   };
 
+  const updateTaskListWidth = (clientX: number) => {
+    if (splitStartXRef.current == null || splitStartWidthRef.current == null) {
+      return;
+    }
+    if (!wrapperRef.current) {
+      return;
+    }
+    const delta = clientX - splitStartXRef.current;
+    const nextWidth = clampTaskListWidth(
+      splitStartWidthRef.current + delta,
+      wrapperRef.current.offsetWidth
+    );
+    setTaskListWidth(nextWidth);
+  };
+
   const handleSplitPointerDown: React.PointerEventHandler<HTMLDivElement> =
     event => {
       event.preventDefault();
@@ -438,18 +468,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   const handleSplitPointerMove: React.PointerEventHandler<HTMLDivElement> =
     event => {
-      if (splitStartXRef.current == null || splitStartWidthRef.current == null) {
-        return;
-      }
-      if (!wrapperRef.current) {
-        return;
-      }
-      const delta = event.clientX - splitStartXRef.current;
-      const nextWidth = clampTaskListWidth(
-        splitStartWidthRef.current + delta,
-        wrapperRef.current.offsetWidth
-      );
-      setTaskListWidth(nextWidth);
+      updateTaskListWidth(event.clientX);
     };
 
   const handleSplitPointerUp: React.PointerEventHandler<HTMLDivElement> = event => {
@@ -459,6 +478,39 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (event.currentTarget.releasePointerCapture) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+  };
+
+  const handleSplitMouseDown: React.MouseEventHandler<HTMLDivElement> = event => {
+    event.preventDefault();
+    splitStartXRef.current = event.clientX;
+    splitStartWidthRef.current = taskListWidth;
+    setIsResizing(true);
+    if (splitMoveHandlerRef.current) {
+      document.removeEventListener("mousemove", splitMoveHandlerRef.current);
+    }
+    if (splitUpHandlerRef.current) {
+      document.removeEventListener("mouseup", splitUpHandlerRef.current);
+    }
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      updateTaskListWidth(moveEvent.clientX);
+    };
+    const handleMouseUp = () => {
+      splitStartXRef.current = null;
+      splitStartWidthRef.current = null;
+      setIsResizing(false);
+      if (splitMoveHandlerRef.current) {
+        document.removeEventListener("mousemove", splitMoveHandlerRef.current);
+        splitMoveHandlerRef.current = null;
+      }
+      if (splitUpHandlerRef.current) {
+        document.removeEventListener("mouseup", splitUpHandlerRef.current);
+        splitUpHandlerRef.current = null;
+      }
+    };
+    splitMoveHandlerRef.current = handleMouseMove;
+    splitUpHandlerRef.current = handleMouseUp;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
   const gridProps: GridProps = {
     columnWidth,
@@ -551,6 +603,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             onPointerMove={handleSplitPointerMove}
             onPointerUp={handleSplitPointerUp}
             onPointerCancel={handleSplitPointerUp}
+            onMouseDown={handleSplitMouseDown}
             role="separator"
             aria-label="Task/Schedule divider"
             aria-orientation="vertical"
