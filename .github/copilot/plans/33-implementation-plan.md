@@ -38,8 +38,11 @@
   - 幅縮小が minWidth 未満の場合は clamp。ドラッグ中にリサイズイベントは発火させない（ハンドル分離）。
   - `box-sizing: border-box` をヘッダセルに適用し、padding/ハンドル幅込みで `minWidth` を評価する。padding-left/right は最小幅に含める前提で clamp を計算。
   - 非表示列（visible=false）は並び替え対象外。順序のみ保持し、再表示時に元の順序を再現。
-  - dnd-kit センサーがない環境でも従来順序で描画できるフォールバック（SortableContext なしでも render）。
-- ログと観測性（漏洩防止を含む):
+  - dnd-kit 非対応環境でのフォールバック:
+    - フォールバック条件: (1) ライブラリ利用側の feature flag で `enableColumnDrag === false` が指定された場合、(2) SSR などで `typeof window === "undefined"` の場合、(3) クライアントで `window` は存在するが `PointerEvent` が未サポートの場合（`!("PointerEvent" in window)`）。
+    - 条件成立時は `DndContext` / `SortableContext` をレンダリングせず、従来順序のまま静的ヘッダを描画する。Drag ハンドルは非表示とし、Resize のみ有効とする。
+    - 実装方針: dnd-kit 関連はクライアント側でのみ動的 import（コード分割）し、feature flag と環境チェックで分岐。`@dnd-kit/core` は peerDependencies 前提であり、「未インストール時フォールバック」は行わない。
+- ログと観測性（漏洩防止を含む）:
   - ライブラリのため追加ログなし。必要に応じてコールバック（onColumnsChange 等）を将来追加する拡張ポイントをコメントで明示しない（後方互換優先）。
 
 # 4. テスト戦略
@@ -109,3 +112,10 @@ sequenceDiagram
   Document-->>Document: remove listeners on mouseup
 ```
 本PRは設計フェーズであり、列ヘッダの Drag & Drop / Resize 設計方針を整理する計画ドキュメントのみを追加・更新する（実装コードの変更なし）。
+
+## 参照
+- [00-index.md](../00-index.md)
+- [10-requirements.md](../10-requirements.md)
+- [20-architecture.md](../20-architecture.md)
+- [40-testing-strategy.md](../40-testing-strategy.md)
+- [60-ci-quality-gates.md](../60-ci-quality-gates.md)
