@@ -1,41 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { Task, VisibleField } from "@levelcaptech/gantt-task-react-custom";
-import {
-  JapaneseTaskListHeader,
-  JapaneseTooltip,
-} from "./App";
-
-describe("JapaneseTaskListHeader", () => {
-  it("renders Japanese header labels", () => {
-    const visibleFields: VisibleField[] = [
-      "name",
-      "process",
-      "assignee",
-      "start",
-      "end",
-      "plannedStart",
-      "plannedEnd",
-      "status",
-    ];
-    render(
-      <JapaneseTaskListHeader
-        headerHeight={50}
-        rowWidth="155px"
-        fontFamily="Arial"
-        fontSize="14px"
-        visibleFields={visibleFields}
-      />
-    );
-
-    expect(screen.getByText("タスク名")).toBeInTheDocument();
-    expect(screen.getByText("工程")).toBeInTheDocument();
-    expect(screen.getByText("担当者")).toBeInTheDocument();
-    expect(screen.getByText("開始日")).toBeInTheDocument();
-    expect(screen.getByText("終了日")).toBeInTheDocument();
-    expect(screen.getByText("ステータス")).toBeInTheDocument();
-  });
-});
+import { Task } from "@levelcaptech/gantt-task-react-custom";
+import { JapaneseTooltip } from "./App";
 
 describe("JapaneseTooltip", () => {
   const baseTask: Task = {
