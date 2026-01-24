@@ -39,6 +39,7 @@
 - npm run lint: warning 2（既存 Hook 依存警告） / error 0
 - npm audit --production: 0 vulnerabilities
 - dist size: index.js 104K, index.modern.js 102K（増加 +100KB 未満）
+- peerDependencies: @dnd-kit/core ^6.3.1, @dnd-kit/utilities ^3.2.2（lockと整合）
 
 ## 8. dnd-kit パッケージ一覧と追加判断
 
