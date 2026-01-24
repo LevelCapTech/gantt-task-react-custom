@@ -108,3 +108,4 @@ sequenceDiagram
   ColumnState-->>Body: apply style width across rows
   Document-->>Document: remove listeners on mouseup
 ```
+本PRは設計フェーズであり、列ヘッダの Drag & Drop / Resize 設計方針を整理する計画ドキュメントのみを追加・更新する（実装コードの変更なし）。
