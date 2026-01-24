@@ -49,10 +49,11 @@ export const TaskListTableDefault: React.FC<{
   effortDisplayUnit,
   columnsState,
 }) => {
-  const columns = columnsState?.filter(column => column.visible !== false) ??
+  const columns =
+    columnsState?.filter(column => column.visible !== false) ??
     resolveVisibleFields(visibleFields).map(field => ({
       id: field,
-      width: field === "name" ? Number.parseInt(rowWidth, 10) || 155 : Number.parseInt(rowWidth, 10) || 155,
+      width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
     }));
   const isEditable = !!onUpdateTask;
 

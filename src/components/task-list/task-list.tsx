@@ -98,6 +98,26 @@ export const TaskList: React.FC<TaskListProps> = ({
   );
 
   const [columnsState, setColumnsState] = useState<ColumnsState>(initialColumns);
+
+  useEffect(() => {
+    setColumnsState(prev => {
+      const existingMap = new Map(prev.map(column => [column.id, column]));
+      const nextColumns: ColumnsState = visibleFields.map(field => {
+        const existing = existingMap.get(field);
+        if (existing) {
+          return existing;
+        }
+        return {
+          id: field,
+          label: field,
+          width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
+          minWidth: DEFAULT_MIN_WIDTH,
+          visible: true,
+        };
+      });
+      return nextColumns;
+    });
+  }, [visibleFields, rowWidth]);
   const visibleColumns = useMemo(
     () => columnsState.filter(column => column.visible),
     [columnsState]
