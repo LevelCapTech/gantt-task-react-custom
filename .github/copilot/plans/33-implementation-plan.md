@@ -54,7 +54,7 @@
 - モック / フィクスチャ方針:
   - DOM イベントを伴うため、ユニットテストではヘッダ/ボディの順序・style 幅を検証。dnd-kit はドラッグシミュレーションを最小限にモック。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
-  - `npm test`（npm-run-all の `run-s` で `test:lint` → `test:unit` → `test:build` を順次実行）
+  - `npm test`（npm-run-all の `run-s` で `test:unit` → `test:lint` → `test:build` を順次実行）
 
 # 5. CI 品質ゲート
 - 実行コマンド（format / lint / typecheck / test / security）:

@@ -16,7 +16,8 @@
 9. [60-ci-quality-gates.md](60-ci-quality-gates.md) — CI 品質ゲート
 10. [70-adr/](70-adr/) — 重要判断の履歴
 11. [80-templates/](80-templates/) — plan / PR / review のテンプレート
-12. [90-research/](90-research/) — RESEARCH フェーズの成果物。DESIGN、IMPLEMENT フェーズのインプット資料でもあります。
+12. [plans/](plans/) — フェーズ別の実装/設計計画（例: 33-implementation-plan.md）
+13. [90-research/](90-research/) — RESEARCH フェーズの成果物。DESIGN、IMPLEMENT フェーズのインプット資料でもあります。
 
 ## 使い方
 - **設計フェーズ (Phase A)**: `80-templates/implementation-plan.md` に沿って plan を作成し、`10-60` の仕様を満たすこと。
