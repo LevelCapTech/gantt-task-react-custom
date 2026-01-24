@@ -43,7 +43,7 @@
     - 条件成立時は `DndContext` / `SortableContext` をレンダリングせず、従来順序のまま静的ヘッダを描画する。Drag ハンドルは非表示とし、Resize のみ有効とする。
     - 実装方針: dnd-kit 関連はクライアント側でのみ動的 import（コード分割）し、feature flag と環境チェックで分岐。`@dnd-kit/core` は peerDependencies 前提であり、「未インストール時フォールバック」は行わない。
 - ログと観測性（漏洩防止を含む）:
-  - ライブラリのため追加ログなし。必要に応じてコールバック（onColumnsChange 等）を将来追加する拡張ポイントをコメントで明示しない（後方互換優先）。
+  - ライブラリのため追加ログなし。現時点では新規コールバック API（例: `onColumnsChange`）は追加しないが、列変更などの観測性が課題になった場合は実装フェーズで API 追加を検討する方針とする。
 
 # 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰):
@@ -113,7 +113,7 @@ sequenceDiagram
 ```
 本PRは設計フェーズであり、列ヘッダの Drag & Drop / Resize 設計方針を整理する計画ドキュメントのみを追加・更新する（実装コードの変更なし）。
 
-## 参照
+# 9. 参照
 - [00-index.md](../00-index.md)
 - [10-requirements.md](../10-requirements.md)
 - [20-architecture.md](../20-architecture.md)
