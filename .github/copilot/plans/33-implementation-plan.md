@@ -30,9 +30,13 @@
   - 列状態 SSOT（例: `columnsState: ColumnState[]`）を Task List コンテナで保持し、順序/幅/表示を一括管理。ヘッダ・ボディ双方に props で配信し、同一 state を参照して描画する。
   - Drag: ヘッダ内の専用 drag-handle（dnd-kit SortableContext）で順序を更新。ボディ列レンダリングは SSOT 順序に追従。
   - Resize: ヘッダの resize-handle に `onMouseDown` を付与し、ドキュメントレベルの mousemove/up で幅を更新。最小幅を超過のみ反映。
-  - 競合防止: Drag/Resize ハンドルを別 DOM とし、各ハンドルで `event.stopPropagation()` を実行。Drag センサーと Resize リスナーは独立登録。
+- UI ハンドル配置と CSS:
+  - Drag ハンドル: ヘッダセル左側に常設し、SVG の三本線アイコン（例: `<svg width="12" height="12">` で縦3本ライン）を表示。クラス例 `ganttTable_DragHandle`（`cursor: grab; display: inline-flex; align-items: center; padding: 0 4px;`）、ドラッグ中は `ganttTable_DragHandle--active`（`cursor: grabbing; opacity: 0.6;`）。
+  - Resize ハンドル: ヘッダセル右端に 6px 程度の専用要素を配置し、クラス `ganttTable_ResizeHandle`（`cursor: col-resize; width: 6px; position: absolute; right: 0; top: 0; bottom: 0;`）。リサイズ中は `ganttTable_ResizeHandle--active` を付与し、`user-select: none; background-color: rgba(0,0,0,0.06);` で視覚フィードバック。
+- 競合防止: Drag/Resize ハンドルを別 DOM とし、各ハンドルで `event.stopPropagation()` を実行。Drag センサーと Resize リスナーは独立登録。リサイズ対象はヘッダセル内の `ganttTable_ResizeHandle` で受け、`ganttTable_HeaderSeparator` は視覚的区切りのみ（イベントを持たない）とするため認識齟齬を避ける。
 - エッジケース / 例外系 / リトライ方針:
   - 幅縮小が minWidth 未満の場合は clamp。ドラッグ中にリサイズイベントは発火させない（ハンドル分離）。
+  - `box-sizing: border-box` をヘッダセルに適用し、padding/ハンドル幅込みで `minWidth` を評価する。padding-left/right は最小幅に含める前提で clamp を計算。
   - 非表示列（visible=false）は並び替え対象外。順序のみ保持し、再表示時に元の順序を再現。
   - dnd-kit センサーがない環境でも従来順序で描画できるフォールバック（SortableContext なしでも render）。
 - ログと観測性（漏洩防止を含む):
@@ -104,4 +108,3 @@ sequenceDiagram
   ColumnState-->>Body: apply style width across rows
   Document-->>Document: remove listeners on mouseup
 ```
-
