@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { resolveVisibleFields } from "../../helpers/task-helper";
 import {
   ColumnState,
@@ -70,7 +70,7 @@ export const TaskListHeaderDefault: React.FC<{
   const sensors = useSensors(useSensor(PointerSensor));
   const [resizingId, setResizingId] = useState<string | null>(null);
   const onDragEnd = (event: DragEndEvent) => {
-    if (!setColumnsState) return;
+    if (!setColumnsState || !enableColumnDrag) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     setColumnsState(prev => {
@@ -124,12 +124,8 @@ export const TaskListHeaderDefault: React.FC<{
     </div>
   );
 
-  if (!enableColumnDrag) {
-    return headerContent;
-  }
-
   return (
-    <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={enableColumnDrag ? onDragEnd : undefined}>
       <SortableContext
         items={resolvedColumns.map(column => column.id)}
         strategy={horizontalListSortingStrategy}
@@ -161,6 +157,21 @@ const SortableHeaderItem: React.FC<{
   });
   const startXRef = useRef<number | null>(null);
   const startWidthRef = useRef<number | null>(null);
+  const moveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);
+  const upHandlerRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (moveHandlerRef.current) {
+        document.removeEventListener("mousemove", moveHandlerRef.current);
+        moveHandlerRef.current = null;
+      }
+      if (upHandlerRef.current) {
+        document.removeEventListener("mouseup", upHandlerRef.current);
+        upHandlerRef.current = null;
+      }
+    };
+  }, []);
 
   const style: React.CSSProperties = {
     minWidth: column.width,
@@ -191,10 +202,18 @@ const SortableHeaderItem: React.FC<{
       startXRef.current = null;
       startWidthRef.current = null;
       setResizingId(null);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      if (moveHandlerRef.current) {
+        document.removeEventListener("mousemove", moveHandlerRef.current);
+        moveHandlerRef.current = null;
+      }
+      if (upHandlerRef.current) {
+        document.removeEventListener("mouseup", upHandlerRef.current);
+        upHandlerRef.current = null;
+      }
     };
 
+    moveHandlerRef.current = handleMouseMove;
+    upHandlerRef.current = handleMouseUp;
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
@@ -228,6 +247,7 @@ const SortableHeaderItem: React.FC<{
         onMouseDown={onMouseDownResize}
         aria-label="Resize column"
         role="separator"
+        aria-orientation="vertical"
       />
     </div>
   );
