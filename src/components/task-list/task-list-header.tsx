@@ -58,7 +58,7 @@ export const TaskListHeaderDefault: React.FC<{
       id: field,
       label: labels[field],
       width: field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155,
-      minWidth: 120,
+      minWidth: 32,
       visible: true,
     })
   );
@@ -75,12 +75,14 @@ export const TaskListHeaderDefault: React.FC<{
     if (!over || active.id === over.id) return;
     setColumnsState(prev => {
       const visible = prev.filter(column => column.visible !== false);
-      const hidden = prev.filter(column => column.visible === false);
       const oldIndex = visible.findIndex(column => column.id === active.id);
       const newIndex = visible.findIndex(column => column.id === over.id);
       if (oldIndex < 0 || newIndex < 0) return prev;
       const moved = arrayMove(visible, oldIndex, newIndex);
-      return [...moved, ...hidden];
+      let idx = 0;
+      return prev.map(column =>
+        column.visible !== false ? moved[idx++] : column
+      );
     });
   };
   const headerContent = (

@@ -153,6 +153,7 @@ export interface StylingOption {
   todayColor?: string;
   visibleFields?: VisibleField[];
   effortDisplayUnit?: EffortUnit;
+  enableColumnDrag?: boolean;
   TooltipContent?: React.FC<{
     task: Task;
     fontSize: string;
