@@ -53,7 +53,7 @@ export type TaskListProps = {
   enableColumnDrag?: boolean;
 };
 
-const DEFAULT_MIN_WIDTH = 120;
+const DEFAULT_MIN_WIDTH = 32;
 
 export const TaskList: React.FC<TaskListProps> = ({
   headerHeight,
