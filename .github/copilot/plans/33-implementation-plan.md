@@ -14,9 +14,9 @@
 - 変更ファイル（新規/修正/削除）:
   - 修正: `src/components/task-list/task-list-header.tsx`
   - 修正: `src/components/task-list/task-list-table.tsx`
-- 修正: `src/components/task-list/task-list.tsx`
-- 修正: `src/components/gantt/gantt.tsx`
-- 修正: `src/types/public-types.ts`
+  - 修正: `src/components/task-list/task-list.tsx`
+  - 修正: `src/components/gantt/gantt.tsx`
+  - 修正: `src/types/public-types.ts`
   - 追加: Drag/Resize 用のスタイルフックが必要な場合は `task-list-header.module.css` など既存 CSS を拡張
 - 影響範囲・互換性リスク:
   - 列並び/幅の制御が共有状態化されるため、カスタムヘッダを提供する利用者に影響する可能性がある。既存 props は維持し、初期値も従来順序で設定することで後方互換を確保する。
