@@ -43,8 +43,13 @@
   line-height: 1;
 }
 .ganttTable_HeaderLabel {
-  display: inline-flex;
+  display: inline-block;
   align-items: center;
+  max-width: calc(100% - 22px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 .ganttTable_ResizeHandle {
   position: absolute;
