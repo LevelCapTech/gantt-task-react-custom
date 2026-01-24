@@ -67,3 +67,10 @@
   - なし（分割比永続化・同期はスコープ外として確定）。
 - ADR に残すべき判断:
   - なし（既存設計方針に沿う小変更のため不要）。
+
+# 8. 参照
+- [00-index.md](../00-index.md)
+- [10-requirements.md](../10-requirements.md)
+- [20-architecture.md](../20-architecture.md)
+- [40-testing-strategy.md](../40-testing-strategy.md)
+- [60-ci-quality-gates.md](../60-ci-quality-gates.md)
