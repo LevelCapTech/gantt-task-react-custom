@@ -13,6 +13,11 @@ const baseTask: Task = {
   type: "task",
 };
 
+const DEFAULT_TASK_LIST_WIDTH = 450;
+const MIN_PANE_WIDTH = 150;
+const LONG_TASK_NAME_REPEAT_COUNT = 30;
+const LONG_LIST_CELL_WIDTH = "600px";
+
 describe("Task/Schedule split handle", () => {
   const originalOffsetWidth = Object.getOwnPropertyDescriptor(
     HTMLElement.prototype,
@@ -51,7 +56,7 @@ describe("Task/Schedule split handle", () => {
     render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
     const taskListPanel = await screen.findByTestId("task-list-panel");
     await waitFor(() => {
-      expect(taskListPanel).toHaveStyle({ width: "450px" });
+      expect(taskListPanel).toHaveStyle({ width: `${DEFAULT_TASK_LIST_WIDTH}px` });
     });
     expect(screen.getByTestId("pane-splitter")).toBeInTheDocument();
   });
@@ -66,7 +71,7 @@ describe("Task/Schedule split handle", () => {
     fireEvent.mouseUp(splitHandle, { clientX: 0 });
 
     await waitFor(() => {
-      expect(taskListPanel).toHaveStyle({ width: "150px" });
+      expect(taskListPanel).toHaveStyle({ width: `${MIN_PANE_WIDTH}px` });
     });
   });
 
@@ -85,6 +90,7 @@ describe("Task/Schedule split handle", () => {
   });
 
   it("clamps task pane width with pointer events", async () => {
+    // window と global の両方に設定し、判定とイベント生成の双方を通す。
     const PointerEventMock = class PointerEvent extends MouseEvent {};
     global.PointerEvent = PointerEventMock;
     window.PointerEvent = PointerEventMock;
@@ -97,7 +103,7 @@ describe("Task/Schedule split handle", () => {
     fireEvent.pointerUp(splitHandle, { clientX: 0, pointerId: 1 });
 
     await waitFor(() => {
-      expect(taskListPanel).toHaveStyle({ width: "150px" });
+      expect(taskListPanel).toHaveStyle({ width: `${MIN_PANE_WIDTH}px` });
     });
   });
 
@@ -107,17 +113,17 @@ describe("Task/Schedule split handle", () => {
         tasks={[
           {
             ...baseTask,
-            name: "長いタスク名".repeat(30),
+            name: "長いタスク名".repeat(LONG_TASK_NAME_REPEAT_COUNT),
           },
         ]}
-        listCellWidth="600px"
+        listCellWidth={LONG_LIST_CELL_WIDTH}
       />
     );
     const taskListPanel = await screen.findByTestId("task-list-panel");
     const ganttPanel = await screen.findByTestId("gantt-panel");
     await waitFor(() => {
-      expect(taskListPanel).toHaveStyle({ width: "450px" });
-      expect(ganttPanel).toHaveStyle({ minWidth: "150px" });
+      expect(taskListPanel).toHaveStyle({ width: `${DEFAULT_TASK_LIST_WIDTH}px` });
+      expect(ganttPanel).toHaveStyle({ minWidth: `${MIN_PANE_WIDTH}px` });
     });
   });
 });
