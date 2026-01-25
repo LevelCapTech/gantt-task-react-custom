@@ -63,7 +63,7 @@ flowchart TD
   - どの値: `scrollX` state（`useState`）を `handleScrollX` で更新。
   - どこへ反映: `scrollX` を `TaskGantt` と `HorizontalScroll` の props に渡す。
   - 関連 prop/ref/event:
-    - function: `handleScrollX(event)` が `setScrollX(event.currentTarget.scrollLeft)`
+    - function: `handleScrollX(event)` が `!ignoreScrollEvent` のときに `setScrollX(event.currentTarget.scrollLeft)` を実行
     - event: `HorizontalScroll` からの `onScroll`、`handleWheel`（Shift or 横スクロール）、`handleKeyDown`
 - 誰が: `TaskGantt`（`src/components/gantt/task-gantt.tsx`）
   - どの値: `scrollX` prop
