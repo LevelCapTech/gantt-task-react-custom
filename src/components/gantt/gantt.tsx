@@ -612,7 +612,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             data-testid="pane-splitter"
           />
         )}
-        <div className={styles.ganttPanel}>
+        <div
+          className={styles.ganttPanel}
+          style={{ minWidth: MIN_PANE_WIDTH }}
+          data-testid="gantt-panel"
+        >
           <TaskGantt
             gridProps={gridProps}
             calendarProps={calendarProps}
