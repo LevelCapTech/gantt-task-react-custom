@@ -89,6 +89,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const splitStartWidthRef = useRef<number | null>(null);
   const splitMoveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);
   const splitUpHandlerRef = useRef<(() => void) | null>(null);
+  const supportsPointerEvents =
+    typeof window !== "undefined" && "PointerEvent" in window;
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
     const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
@@ -599,11 +601,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             className={`${styles.splitHandle} ${
               isResizing ? styles.splitHandleActive : ""
             }`}
-            onPointerDown={handleSplitPointerDown}
-            onPointerMove={handleSplitPointerMove}
-            onPointerUp={handleSplitPointerUp}
-            onPointerCancel={handleSplitPointerUp}
-            onMouseDown={handleSplitMouseDown}
+            onPointerDown={supportsPointerEvents ? handleSplitPointerDown : undefined}
+            onPointerMove={supportsPointerEvents ? handleSplitPointerMove : undefined}
+            onPointerUp={supportsPointerEvents ? handleSplitPointerUp : undefined}
+            onPointerCancel={supportsPointerEvents ? handleSplitPointerUp : undefined}
+            onMouseDown={supportsPointerEvents ? undefined : handleSplitMouseDown}
             role="separator"
             aria-label="Task/Schedule divider"
             aria-orientation="vertical"

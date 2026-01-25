@@ -18,6 +18,7 @@ describe("Task/Schedule split handle", () => {
     HTMLElement.prototype,
     "offsetWidth"
   );
+  const originalPointerEvent = global.PointerEvent;
 
   beforeEach(() => {
     Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
@@ -31,6 +32,12 @@ describe("Task/Schedule split handle", () => {
       Object.defineProperty(HTMLElement.prototype, "offsetWidth", originalOffsetWidth);
     } else {
       delete (HTMLElement.prototype as { offsetWidth?: number }).offsetWidth;
+    }
+    if (originalPointerEvent === undefined) {
+      delete (global as typeof globalThis & { PointerEvent?: typeof PointerEvent })
+        .PointerEvent;
+    } else {
+      global.PointerEvent = originalPointerEvent;
     }
   });
 
@@ -68,6 +75,21 @@ describe("Task/Schedule split handle", () => {
 
     await waitFor(() => {
       expect(taskListPanel).toHaveStyle({ width: "642px" });
+    });
+  });
+
+  it("clamps task pane width with pointer events", async () => {
+    global.PointerEvent = class PointerEvent extends MouseEvent {};
+    render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
+    const taskListPanel = await screen.findByTestId("task-list-panel");
+    const splitHandle = screen.getByTestId("pane-splitter");
+
+    fireEvent.pointerDown(splitHandle, { clientX: 500, pointerId: 1 });
+    fireEvent.pointerMove(splitHandle, { clientX: 0, pointerId: 1 });
+    fireEvent.pointerUp(splitHandle, { clientX: 0, pointerId: 1 });
+
+    await waitFor(() => {
+      expect(taskListPanel).toHaveStyle({ width: "150px" });
     });
   });
 });
