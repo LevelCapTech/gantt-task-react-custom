@@ -1,5 +1,7 @@
 # 45-research: 追従スクロール調査
 
+本ドキュメントは [RESEARCH] Issue における調査結果をまとめたものです。仕様の入口は [00-index.md](../00-index.md) を参照してください。
+
 ## 1. 機能要件 / 非機能要件
 - 機能要件: `horizontal-scroll.tsx` から `calendar.tsx` までの追従スクロール経路を一次原因として明示する。
 - 非機能要件: 変更対象は本ファイルのみとし、既存コードへの影響を与えない。
@@ -18,10 +20,12 @@ flowchart TD
   B --> C["TaskGantt useEffect\nverticalGanttContainerRef.scrollLeft"]
   C --> D["Calendar SVG\n(calendar.tsx)"]
   C --> E["Grid/Bar SVG\n(task-gantt.tsx)"]
+  D --> F["End"]
+  E --> F
 ```
 
 - エッジケース / 例外系 / リトライ方針:
-  - `Gantt.handleScrollX` は `ignoreScrollEvent` が `true` のとき更新をスキップするため、直前のホイール処理などで `ignoreScrollEvent` が立った状態でユーザーが横スクロールした場合、その1回分の `scrollLeft` 変更が `scrollX` に反映されず、ヘッダが追従しない可能性がある（`src/components/gantt/gantt.tsx` の `handleScrollX`）。
+  - 例外シナリオの詳細は「8.4 例外シナリオ」を参照。
 - ログと観測性（漏洩防止を含む）: 追加なし。
 
 ## 4. テスト戦略
