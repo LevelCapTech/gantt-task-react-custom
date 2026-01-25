@@ -19,3 +19,27 @@
   outline: none;
   position: relative;
 }
+
+.taskListPanel {
+  flex: 0 0 auto;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.splitHandle {
+  width: 8px;
+  cursor: col-resize;
+  background-color: transparent;
+  flex: 0 0 auto;
+  user-select: none;
+}
+
+.splitHandleActive {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.ganttPanel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}

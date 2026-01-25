@@ -25,6 +25,18 @@ import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
 import { DEFAULT_VISIBLE_FIELDS } from "../../helpers/task-helper";
 import styles from "./gantt.module.css";
 
+const DEFAULT_TASK_LIST_WIDTH = 450;
+const MIN_PANE_WIDTH = 150;
+const SPLIT_HANDLE_WIDTH = 8;
+
+const clampTaskListWidth = (width: number, containerWidth: number) => {
+  const maxWidth = Math.max(
+    MIN_PANE_WIDTH,
+    containerWidth - MIN_PANE_WIDTH - SPLIT_HANDLE_WIDTH
+  );
+  return Math.min(Math.max(width, MIN_PANE_WIDTH), maxWidth);
+};
+
 export const Gantt: React.FunctionComponent<GanttProps> = ({
   tasks,
   headerHeight = 50,
@@ -73,6 +85,12 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
+  const splitStartXRef = useRef<number | null>(null);
+  const splitStartWidthRef = useRef<number | null>(null);
+  const splitMoveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);
+  const splitUpHandlerRef = useRef<(() => void) | null>(null);
+  const supportsPointerEvents =
+    typeof window !== "undefined" && "PointerEvent" in window;
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
     const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
@@ -81,7 +99,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     undefined
   );
 
-  const [taskListWidth, setTaskListWidth] = useState(0);
+  const [taskListWidth, setTaskListWidth] = useState(DEFAULT_TASK_LIST_WIDTH);
+  const [wrapperWidth, setWrapperWidth] = useState(0);
+  const [isResizing, setIsResizing] = useState(false);
   const [svgContainerWidth, setSvgContainerWidth] = useState(0);
   const [svgContainerHeight, setSvgContainerHeight] = useState(ganttHeight);
   const [barTasks, setBarTasks] = useState<BarTask[]>([]);
@@ -237,19 +257,35 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   }, [failedTask, barTasks]);
 
   useEffect(() => {
-    if (!listCellWidth) {
-      setTaskListWidth(0);
-    }
-    if (taskListRef.current) {
-      setTaskListWidth(taskListRef.current.offsetWidth);
-    }
-  }, [taskListRef, listCellWidth]);
+    const updateWrapperWidth = () => {
+      if (wrapperRef.current) {
+        setWrapperWidth(wrapperRef.current.offsetWidth);
+      }
+    };
+    updateWrapperWidth();
+    window.addEventListener("resize", updateWrapperWidth);
+    return () => window.removeEventListener("resize", updateWrapperWidth);
+  }, []);
 
   useEffect(() => {
-    if (wrapperRef.current) {
-      setSvgContainerWidth(wrapperRef.current.offsetWidth - taskListWidth);
+    if (!listCellWidth) {
+      setTaskListWidth(0);
+      return;
     }
-  }, [wrapperRef, taskListWidth]);
+    if (wrapperWidth) {
+      setTaskListWidth(prev => clampTaskListWidth(prev, wrapperWidth));
+    }
+  }, [listCellWidth, wrapperWidth]);
+
+  const taskListOffset = listCellWidth
+    ? taskListWidth + SPLIT_HANDLE_WIDTH
+    : 0;
+
+  useEffect(() => {
+    if (wrapperWidth) {
+      setSvgContainerWidth(Math.max(wrapperWidth - taskListOffset, 0));
+    }
+  }, [wrapperWidth, taskListOffset]);
 
   useEffect(() => {
     if (ganttHeight) {
@@ -258,6 +294,19 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       setSvgContainerHeight(tasks.length * rowHeight + headerHeight);
     }
   }, [ganttHeight, tasks, headerHeight, rowHeight]);
+
+  useEffect(() => {
+    return () => {
+      if (splitMoveHandlerRef.current) {
+        document.removeEventListener("mousemove", splitMoveHandlerRef.current);
+        splitMoveHandlerRef.current = null;
+      }
+      if (splitUpHandlerRef.current) {
+        document.removeEventListener("mouseup", splitUpHandlerRef.current);
+        splitUpHandlerRef.current = null;
+      }
+    };
+  }, []);
 
   // scroll events
   useEffect(() => {
@@ -392,6 +441,79 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       onExpanderClick({ ...task, hideChildren: !task.hideChildren });
     }
   };
+
+  const updateTaskListWidth = (clientX: number) => {
+    if (splitStartXRef.current == null || splitStartWidthRef.current == null) {
+      return;
+    }
+    if (!wrapperRef.current) {
+      return;
+    }
+    const delta = clientX - splitStartXRef.current;
+    const nextWidth = clampTaskListWidth(
+      splitStartWidthRef.current + delta,
+      wrapperRef.current.offsetWidth
+    );
+    setTaskListWidth(nextWidth);
+  };
+
+  const handleSplitPointerDown: React.PointerEventHandler<HTMLDivElement> =
+    event => {
+      event.preventDefault();
+      splitStartXRef.current = event.clientX;
+      splitStartWidthRef.current = taskListWidth;
+      setIsResizing(true);
+      if (event.currentTarget.setPointerCapture) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+    };
+
+  const handleSplitPointerMove: React.PointerEventHandler<HTMLDivElement> =
+    event => {
+      updateTaskListWidth(event.clientX);
+    };
+
+  const handleSplitPointerUp: React.PointerEventHandler<HTMLDivElement> = event => {
+    splitStartXRef.current = null;
+    splitStartWidthRef.current = null;
+    setIsResizing(false);
+    if (event.currentTarget.releasePointerCapture) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleSplitMouseDown: React.MouseEventHandler<HTMLDivElement> = event => {
+    event.preventDefault();
+    splitStartXRef.current = event.clientX;
+    splitStartWidthRef.current = taskListWidth;
+    setIsResizing(true);
+    if (splitMoveHandlerRef.current) {
+      document.removeEventListener("mousemove", splitMoveHandlerRef.current);
+    }
+    if (splitUpHandlerRef.current) {
+      document.removeEventListener("mouseup", splitUpHandlerRef.current);
+    }
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      updateTaskListWidth(moveEvent.clientX);
+    };
+    const handleMouseUp = () => {
+      splitStartXRef.current = null;
+      splitStartWidthRef.current = null;
+      setIsResizing(false);
+      if (splitMoveHandlerRef.current) {
+        document.removeEventListener("mousemove", splitMoveHandlerRef.current);
+        splitMoveHandlerRef.current = null;
+      }
+      if (splitUpHandlerRef.current) {
+        document.removeEventListener("mouseup", splitUpHandlerRef.current);
+        splitUpHandlerRef.current = null;
+      }
+    };
+    splitMoveHandlerRef.current = handleMouseMove;
+    splitUpHandlerRef.current = handleMouseUp;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
   const gridProps: GridProps = {
     columnWidth,
     svgWidth,
@@ -465,15 +587,45 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         tabIndex={0}
         ref={wrapperRef}
       >
-        {listCellWidth && <TaskList {...tableProps} />}
-        <TaskGantt
-          gridProps={gridProps}
-          calendarProps={calendarProps}
-          barProps={barProps}
-          ganttHeight={ganttHeight}
-          scrollY={scrollY}
-          scrollX={scrollX}
-        />
+        {listCellWidth && (
+          <div
+            className={styles.taskListPanel}
+            style={{ width: taskListWidth }}
+            data-testid="task-list-panel"
+          >
+            <TaskList {...tableProps} />
+          </div>
+        )}
+        {listCellWidth && (
+          <div
+            className={`${styles.splitHandle} ${
+              isResizing ? styles.splitHandleActive : ""
+            }`}
+            onPointerDown={supportsPointerEvents ? handleSplitPointerDown : undefined}
+            onPointerMove={supportsPointerEvents ? handleSplitPointerMove : undefined}
+            onPointerUp={supportsPointerEvents ? handleSplitPointerUp : undefined}
+            onPointerCancel={supportsPointerEvents ? handleSplitPointerUp : undefined}
+            onMouseDown={supportsPointerEvents ? undefined : handleSplitMouseDown}
+            role="separator"
+            aria-label="Task/Schedule divider"
+            aria-orientation="vertical"
+            data-testid="pane-splitter"
+          />
+        )}
+        <div
+          className={styles.ganttPanel}
+          style={{ minWidth: MIN_PANE_WIDTH }}
+          data-testid="gantt-panel"
+        >
+          <TaskGantt
+            gridProps={gridProps}
+            calendarProps={calendarProps}
+            barProps={barProps}
+            ganttHeight={ganttHeight}
+            scrollY={scrollY}
+            scrollX={scrollX}
+          />
+        </div>
         {ganttEvent.changedTask && (
           <Tooltip
             arrowIndent={arrowIndent}
@@ -486,7 +638,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             scrollY={scrollY}
             task={ganttEvent.changedTask}
             headerHeight={headerHeight}
-            taskListWidth={taskListWidth}
+            taskListWidth={taskListOffset}
             TooltipContent={TooltipContent}
             rtl={rtl}
             svgWidth={svgWidth}
@@ -504,7 +656,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       </div>
       <HorizontalScroll
         svgWidth={svgWidth}
-        taskListWidth={taskListWidth}
+        taskListWidth={taskListOffset}
         scroll={scrollX}
         rtl={rtl}
         onScroll={handleScrollX}
