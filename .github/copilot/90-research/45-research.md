@@ -82,8 +82,8 @@ flowchart TD
 - 同一経路: `TaskGantt` の `verticalGanttContainerRef` で `scrollLeft` を更新し、同一コンテナ内の `<svg><Calendar /></svg>`（ヘッダ）と `<div className={styles.horizontalContainer}>` 内のグリッド/バー（本体）が同時にスクロールする。
 
 ### 8.4 例外シナリオ（同期が成立しない可能性）
-- `ignoreScrollEvent` は、`Gantt` 内のホイール操作（`handleWheel`）、キーボード操作（`handleKeyDown`）、および `scrollX` 同期のための programmatic scroll（`handleScrollX` 内）を行う直前にループ防止用として `true` に設定され、直後に発火した次回 1 回分の `onScroll` を無視する挙動を取る（`src/components/gantt/gantt.tsx` の `handleWheel` / `handleKeyDown` / `handleScrollX`）。
-- そのため、「本体グリッドをホイール／キー操作でスクロール → 追従のために `HorizontalScroll` 側 `scrollLeft` を同期更新」という流れで、同期用に発火した `HorizontalScroll` の `onScroll` が 1 回だけスキップされ、特定フレームでスクロールバーと `Calendar` の追従が一時的にずれる可能性がある。
+- `ignoreScrollEvent` は、`Gantt` 内のホイール操作（`handleWheel`）、キーボード操作（`handleKeyDown`）、および `HorizontalScroll` 由来の `onScroll` を受け取る `handleScrollX` で `scrollX` を同期更新する直前にループ防止用として `true` に設定される。programmatic scroll 自体は、これらの操作で更新された `scrollX` を監視する `HorizontalScroll` / `TaskGantt` の `useEffect` が `scrollLeft` を書き換えることで発生する（`src/components/gantt/gantt.tsx` の `handleWheel` / `handleKeyDown` / `handleScrollX` と、各コンポーネントの `useEffect`）。
+- そのため、「本体グリッドをホイール／キー操作でスクロール → その結果として `scrollX` が更新される → 追従のために `HorizontalScroll` 側の `useEffect` が programmatic に `scrollLeft` を同期更新」という流れで、この同期更新により発火した `HorizontalScroll` の `onScroll` が、`ignoreScrollEvent` によって次回 1 回分だけスキップされる。その結果、特定フレームにおいてスクロールバーと `Calendar` の追従が一時的にずれる可能性がある。
 
 ### 8.5 example 初期画面の入口
 - 入口コンポーネント: `example/src/index.tsx` が `createRoot(...).render(<App />)` で `example/src/App.tsx` を描画。
