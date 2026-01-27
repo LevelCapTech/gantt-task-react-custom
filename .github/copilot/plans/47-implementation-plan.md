@@ -30,6 +30,25 @@
     - 最大 `scrollLeft` の算出:
       - 左: `maxScrollLeftLeft = max(0, min(taskListHeader.scrollWidth, taskListTable.scrollWidth) - taskListBody.clientWidth)` を採用する（いずれか未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。ヘッダ/ボディの可視範囲を一致させるため、最小の `scrollWidth` を正とする。
       - 右: `maxScrollLeftRight = max(0, min(calendar.scrollWidth, ganttGrid.scrollWidth) - ganttBody.clientWidth)` を採用する（未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。Calendar/Grid の可視範囲を一致させるため、最小の `scrollWidth` を正とする。
+    - データフロー可視化（左右独立スクロール + ignore）:
+      ```mermaid
+      flowchart TD
+        Start([ユーザー入力]) --> Input{入力経路}
+        Input -->|左スクロールバー| LeftUpdate[scrollXLeft を更新]
+        Input -->|右スクロールバー/ホイール/キー| RightUpdate[scrollXRight を更新]
+        LeftUpdate --> LeftApply[左 DOM に scrollLeft 反映]
+        RightUpdate --> RightApply[右 DOM に scrollLeft 反映]
+        LeftApply --> LeftIgnore{ignore が true?}
+        RightApply --> RightIgnore{ignore が true?}
+        LeftIgnore -->|true| LeftReset[ignore を false に戻す]
+        RightIgnore -->|true| RightReset[ignore を false に戻す]
+        LeftIgnore -->|false| LeftHandle[左 onScroll を処理]
+        RightIgnore -->|false| RightHandle[右 onScroll を処理]
+        LeftReset --> End([完了])
+        RightReset --> End([完了])
+        LeftHandle --> End([完了])
+        RightHandle --> End([完了])
+      ```
   - 更新権限 / 入力優先順位:
     - 左: 下段左スクロールバーの `onScroll` のみが `scrollXLeft` を更新する。
     - 右: 下段右スクロールバーの `onScroll`、ホイール（Shift+Wheel/横ホイール含む）、キー入力が `scrollXRight` を更新する。
@@ -59,6 +78,13 @@
     - programmatic 入力（ホイール/キー）時:
       1) state 更新前に ignore を `true` に設定。
       2) DOM 更新に伴う `onScroll` で ignore を `false` に戻す。
+    - ignore 状態遷移図:
+      ```mermaid
+      stateDiagram-v2
+        [*] --> Idle
+        Idle --> Suppress : programmatic 更新\n(ignore=true)
+        Suppress --> Idle : onScroll 受信\n(ignore=false)
+      ```
   - エッジケース / 例外系 / リトライ方針:
     - `listCellWidth` 未設定時は Task Table を非表示とし、下段左スクロールも非表示にする。
     - コンテナ幅が最小幅を下回る場合は既存の clamp 処理を維持して破綻を防ぐ。
