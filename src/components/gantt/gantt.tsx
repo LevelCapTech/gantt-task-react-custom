@@ -120,8 +120,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const ganttFullHeight = barTasks.length * rowHeight;
 
   const [scrollY, setScrollY] = useState(0);
-  const [scrollX, setScrollX] = useState(-1);
-  const [ignoreScrollEvent, setIgnoreScrollEvent] = useState(false);
+  const [scrollXLeft, setScrollXLeft] = useState(0);
+  const [scrollXRight, setScrollXRight] = useState(-1);
+  const ignoreScrollLeftRef = useRef(false);
+  const ignoreScrollRightRef = useRef(false);
 
   // task change events
   useEffect(() => {
@@ -140,8 +142,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     let newDates = seedDates(startDate, endDate, viewMode);
     if (rtl) {
       newDates = newDates.reverse();
-      if (scrollX === -1) {
-        setScrollX(newDates.length * columnWidth);
+      if (scrollXRight === -1) {
+        setScrollXRight(newDates.length * columnWidth);
       }
     }
     setDateSetup({ dates: newDates, viewMode });
@@ -208,7 +210,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         return;
       }
       setCurrentViewDate(viewDate);
-      setScrollX(columnWidth * index);
+      setScrollXRight(columnWidth * index);
     }
   }, [
     viewDate,
@@ -313,13 +315,14 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     const handleWheel = (event: WheelEvent) => {
       if (event.shiftKey || event.deltaX) {
         const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
-        let newScrollX = scrollX + scrollMove;
+        let newScrollX = scrollXRight + scrollMove;
         if (newScrollX < 0) {
           newScrollX = 0;
         } else if (newScrollX > svgWidth) {
           newScrollX = svgWidth;
         }
-        setScrollX(newScrollX);
+        ignoreScrollRightRef.current = true;
+        setScrollXRight(newScrollX);
         event.preventDefault();
       } else if (ganttHeight) {
         let newScrollY = scrollY + event.deltaY;
@@ -332,10 +335,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           setScrollY(newScrollY);
           event.preventDefault();
         }
-      }
-
-      setIgnoreScrollEvent(true);
-    };
+        }
+      };
 
     // subscribe if scroll is necessary
     wrapperRef.current?.addEventListener("wheel", handleWheel, {
@@ -347,7 +348,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   }, [
     wrapperRef,
     scrollY,
-    scrollX,
+    scrollXRight,
     ganttHeight,
     svgWidth,
     rtl,
@@ -355,20 +356,35 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   ]);
 
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
-    if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollEvent) {
+    if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollLeftRef.current) {
       setScrollY(event.currentTarget.scrollTop);
-      setIgnoreScrollEvent(true);
+      ignoreScrollLeftRef.current = true;
     } else {
-      setIgnoreScrollEvent(false);
+      ignoreScrollLeftRef.current = false;
     }
   };
 
-  const handleScrollX = (event: SyntheticEvent<HTMLDivElement>) => {
-    if (scrollX !== event.currentTarget.scrollLeft && !ignoreScrollEvent) {
-      setScrollX(event.currentTarget.scrollLeft);
-      setIgnoreScrollEvent(true);
+  const handleScrollLeft = (event: SyntheticEvent<HTMLDivElement>) => {
+    if (
+      scrollXLeft !== event.currentTarget.scrollLeft &&
+      !ignoreScrollLeftRef.current
+    ) {
+      setScrollXLeft(event.currentTarget.scrollLeft);
+      ignoreScrollLeftRef.current = true;
     } else {
-      setIgnoreScrollEvent(false);
+      ignoreScrollLeftRef.current = false;
+    }
+  };
+
+  const handleScrollRight = (event: SyntheticEvent<HTMLDivElement>) => {
+    if (
+      scrollXRight !== event.currentTarget.scrollLeft &&
+      !ignoreScrollRightRef.current
+    ) {
+      setScrollXRight(event.currentTarget.scrollLeft);
+      ignoreScrollRightRef.current = true;
+    } else {
+      ignoreScrollRightRef.current = false;
     }
   };
 
@@ -378,7 +394,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
     let newScrollY = scrollY;
-    let newScrollX = scrollX;
+    let newScrollX = scrollXRight;
     let isX = true;
     switch (event.key) {
       case "Down": // IE/Edge specific value
@@ -406,7 +422,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       } else if (newScrollX > svgWidth) {
         newScrollX = svgWidth;
       }
-      setScrollX(newScrollX);
+      ignoreScrollRightRef.current = true;
+      setScrollXRight(newScrollX);
     } else {
       if (newScrollY < 0) {
         newScrollY = 0;
@@ -415,7 +432,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       }
       setScrollY(newScrollY);
     }
-    setIgnoreScrollEvent(true);
   };
 
   /**
