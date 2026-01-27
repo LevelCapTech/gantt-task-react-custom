@@ -39,7 +39,7 @@
       - state 更新は下段左/右 `HorizontalScroll` の `onScroll` のみで行い、TaskListHeader/TaskListTable/Calendar/Grid の `onScroll` は programmatic 更新時の ignore 解除に限定する。
       - programmatic `scrollLeft` 更新による `onScroll` は ignore が `true` の場合のみスキップし、`onScroll` 内で `false` に戻す。
     - 非同期 setState の競合:
-    - `scrollXLeft` / `scrollXRight` 更新は最新入力が勝つ前提とし、`useRef` と functional update で stale 値を避ける。
+      - `scrollXLeft` / `scrollXRight` 更新は最新入力が勝つ前提とし、`useRef` と functional update で stale 値を避ける。
     - 連続入力（ホイール/ドラッグ/キー）のバッチングでも最後の値が state に残るようにする。
     - キーボードフォーカス:
       - 既存の Gantt wrapper にフォーカスがある場合のみキー入力で右スクロールを更新する。
