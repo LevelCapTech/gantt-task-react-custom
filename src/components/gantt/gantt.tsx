@@ -85,6 +85,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
+  const taskListHeaderRef = useRef<HTMLDivElement>(null);
+  const taskListBodyRef = useRef<HTMLDivElement>(null);
+  const ganttContainerRef = useRef<HTMLDivElement>(null);
   const splitStartXRef = useRef<number | null>(null);
   const splitStartWidthRef = useRef<number | null>(null);
   const splitMoveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);
@@ -386,6 +389,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     } else {
       ignoreScrollRightRef.current = false;
     }
+    if (ganttContainerRef.current && ganttContainerRef.current.scrollLeft !== event.currentTarget.scrollLeft) {
+      ganttContainerRef.current.scrollLeft = event.currentTarget.scrollLeft;
+    }
   };
 
   /**
@@ -582,8 +588,12 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     tasks: barTasks,
     headerHeight,
     scrollY,
+    horizontalScroll: scrollXLeft,
     ganttHeight,
     horizontalContainerClass: styles.horizontalContainer,
+    headerContainerRef: taskListHeaderRef,
+    bodyContainerRef: taskListBodyRef,
+    onHorizontalScroll: handleScrollLeft,
     selectedTask,
     taskListRef,
     setSelectedTask: handleSelectedTask,
@@ -639,7 +649,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             barProps={barProps}
             ganttHeight={ganttHeight}
             scrollY={scrollY}
-            scrollX={scrollX}
+            scrollX={scrollXRight}
+            verticalGanttContainerRef={ganttContainerRef}
           />
         </div>
         {ganttEvent.changedTask && (
@@ -650,7 +661,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             svgContainerWidth={svgContainerWidth}
             fontFamily={fontFamily}
             fontSize={fontSize}
-            scrollX={scrollX}
+             scrollX={scrollXRight}
             scrollY={scrollY}
             task={ganttEvent.changedTask}
             headerHeight={headerHeight}
@@ -670,13 +681,27 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           rtl={rtl}
         />
       </div>
-      <HorizontalScroll
-        svgWidth={svgWidth}
-        taskListWidth={taskListOffset}
-        scroll={scrollX}
-        rtl={rtl}
-        onScroll={handleScrollX}
-      />
+      <div className={styles.scrollRow} style={{ "--splitter-width": `${SPLIT_HANDLE_WIDTH}px` } as React.CSSProperties}>
+        <div className={styles.scrollCellLeft}>
+          {listCellWidth && (
+            <HorizontalScroll
+              svgWidth={taskListWidth}
+              scroll={scrollXLeft}
+              rtl={rtl}
+              onScroll={handleScrollLeft}
+            />
+          )}
+        </div>
+        {listCellWidth && <div className={styles.scrollSplitter} />}
+        <div className={styles.scrollCellRight}>
+          <HorizontalScroll
+            svgWidth={svgWidth}
+            scroll={scrollXRight}
+            rtl={rtl}
+            onScroll={handleScrollRight}
+          />
+        </div>
+      </div>
     </div>
   );
 };

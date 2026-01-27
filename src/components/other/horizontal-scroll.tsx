@@ -1,14 +1,25 @@
 import React, { SyntheticEvent, useRef, useEffect } from "react";
 import styles from "./horizontal-scroll.module.css";
 
-export const HorizontalScroll: React.FC<{
+export type HorizontalScrollProps = {
   scroll: number;
   svgWidth: number;
   rtl: boolean;
   onScroll: (event: SyntheticEvent<HTMLDivElement>) => void;
   "data-testid"?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
-}> = ({ scroll, svgWidth, rtl, onScroll, "data-testid": dataTestId, containerRef }) => {
+  hidden?: boolean;
+};
+
+export const HorizontalScroll: React.FC<HorizontalScrollProps> = ({
+  scroll,
+  svgWidth,
+  rtl,
+  onScroll,
+  "data-testid": dataTestId,
+  containerRef,
+  hidden,
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const wrapperRef = containerRef ?? scrollRef;
 
@@ -20,11 +31,12 @@ export const HorizontalScroll: React.FC<{
 
   return (
     <div
-      dir="ltr"
+      dir={rtl ? "rtl" : "ltr"}
       className={styles.scrollWrapper}
       onScroll={onScroll}
       ref={wrapperRef}
       data-testid={dataTestId}
+      style={hidden ? { display: "none" } : undefined}
     >
       <div style={{ width: svgWidth }} className={styles.scroll} />
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BarTask } from "../../types/bar-task";
 import {
   ColumnState,
@@ -16,14 +16,18 @@ export type TaskListProps = {
   rowHeight: number;
   ganttHeight: number;
   scrollY: number;
+  horizontalScroll?: number;
   visibleFields: VisibleField[];
   effortDisplayUnit: EffortUnit;
   tasks: Task[];
   taskListRef: React.RefObject<HTMLDivElement>;
+  headerContainerRef?: React.RefObject<HTMLDivElement>;
+  bodyContainerRef?: React.RefObject<HTMLDivElement>;
   horizontalContainerClass?: string;
   selectedTask: BarTask | undefined;
   setSelectedTask: (task: string) => void;
   onExpanderClick: (task: Task) => void;
+  onHorizontalScroll?: (event: SyntheticEvent<HTMLDivElement>) => void;
   onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
   TaskListHeader: React.FC<{
     headerHeight: number;
@@ -64,12 +68,15 @@ export const TaskList: React.FC<TaskListProps> = ({
   rowWidth,
   rowHeight,
   scrollY,
+  horizontalScroll = 0,
   tasks,
   selectedTask,
   setSelectedTask,
   onExpanderClick,
   ganttHeight,
   taskListRef,
+  headerContainerRef,
+  bodyContainerRef,
   horizontalContainerClass,
   TaskListHeader,
   TaskListTable,
@@ -77,13 +84,24 @@ export const TaskList: React.FC<TaskListProps> = ({
   onUpdateTask,
   effortDisplayUnit,
   enableColumnDrag = true,
+  onHorizontalScroll,
 }) => {
-  const horizontalContainerRef = useRef<HTMLDivElement>(null);
+  const horizontalContainerRef = bodyContainerRef ?? useRef<HTMLDivElement>(null);
+  const headerRef = headerContainerRef ?? useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (horizontalContainerRef.current) {
       horizontalContainerRef.current.scrollTop = scrollY;
     }
   }, [scrollY]);
+
+  useEffect(() => {
+    if (horizontalContainerRef.current) {
+      horizontalContainerRef.current.scrollLeft = horizontalScroll;
+    }
+    if (headerRef.current) {
+      headerRef.current.scrollLeft = horizontalScroll;
+    }
+  }, [horizontalScroll, horizontalContainerRef, headerRef]);
 
   const initialColumns = useMemo<ColumnsState>(
     () =>
@@ -151,13 +169,25 @@ export const TaskList: React.FC<TaskListProps> = ({
     columnsState: visibleColumns,
   };
 
+  useEffect(() => {
+    if (horizontalContainerRef.current) {
+      horizontalContainerRef.current.scrollLeft = horizontalScroll;
+    }
+    if (headerRef.current) {
+      headerRef.current.scrollLeft = horizontalScroll;
+    }
+  }, [horizontalScroll]);
+
   return (
     <div ref={taskListRef}>
-      <TaskListHeader {...headerProps} />
+      <div ref={headerRef} onScroll={onHorizontalScroll}>
+        <TaskListHeader {...headerProps} />
+      </div>
       <div
         ref={horizontalContainerRef}
         className={horizontalContainerClass}
         style={ganttHeight ? { height: ganttHeight } : {}}
+        onScroll={onHorizontalScroll}
       >
         <TaskListTable {...tableProps} />
       </div>
