@@ -27,11 +27,23 @@
   - スクロール SSOT:
     - `Gantt` が `scrollXLeft` / `scrollXRight` を保持し、DOM の `scrollLeft` は state の派生値とする。
     - `HorizontalScroll` と Task/Gantt のスクロール可能コンテナは state を受け取り、`useEffect` で `scrollLeft` を反映する。
+    - 最大 `scrollLeft` の算出:
+      - 左: `maxScrollLeftLeft = max(0, min(taskListHeader.scrollWidth, taskListTable.scrollWidth) - taskListBody.clientWidth)` を採用する（いずれか未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。
+      - 右: `maxScrollLeftRight = max(0, min(calendar.scrollWidth, ganttGrid.scrollWidth) - ganttBody.clientWidth)` を採用する（未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。
   - 更新権限 / 入力優先順位:
     - 左: 下段左スクロールバーの `onScroll` のみが `scrollXLeft` を更新する。
     - 右: 下段右スクロールバーの `onScroll`、ホイール（Shift+Wheel/横ホイール含む）、キー入力が `scrollXRight` を更新する。
     - 同時入力はイベント到達順で上書きし、特別な優先順位は設けない（最新入力が正）。
     - ホイール/キー入力は上段の Gantt wrapper で従来通り捕捉し、フォーカスやマウス位置依存の新仕様は導入しない。
+    - `onScroll` 境界:
+      - state 更新は下段左/右 `HorizontalScroll` の `onScroll` のみで行い、TaskListHeader/TaskListTable/Calendar/Grid の `onScroll` は programmatic 更新時の ignore 解除に限定する。
+      - programmatic `scrollLeft` 更新による `onScroll` は ignore が `true` の場合のみスキップし、`onScroll` 内で `false` に戻す。
+    - 非同期 setState の競合:
+      - `scrollXLeft` / `scrollXRight` 更新は最新入力が勝つ前提とし、`useRef` と functional update で stale 値を避ける。
+      - 連続入力（ホイール/ドラッグ/キー）のバッチングでも最後の値が state に残るようにする。
+    - キーボードフォーカス:
+      - 既存の Gantt wrapper にフォーカスがある場合のみキー入力で右スクロールを更新する。
+      - 下段スクロールバー要素はフォーカス対象にせず、キー入力の捕捉対象にしない。
   - 上下段レイアウト同期:
     - 上段/下段は別 DOM とし、`taskListWidth` と `SPLIT_HANDLE_WIDTH` を `Gantt` state の SSOT として共有する。
     - 両段とも `gridTemplateColumns: ${taskListWidth}px ${SPLIT_HANDLE_WIDTH}px 1fr` を適用し、上下段の分割位置を一致させる。
@@ -44,10 +56,13 @@
     - programmatic 入力（ホイール/キー）時:
       1) state 更新前に ignore を `true` に設定。
       2) DOM 更新に伴う `onScroll` で ignore を `false` に戻す。
-- エッジケース / 例外系 / リトライ方針:
-  - `listCellWidth` 未設定時は Task Table を非表示とし、下段左スクロールも非表示にする。
-  - コンテナ幅が最小幅を下回る場合は既存の clamp 処理を維持して破綻を防ぐ。
-  - `ignore` フラグの誤設定による無限ループを避けるため、更新は最新値のみ反映する。
+  - エッジケース / 例外系 / リトライ方針:
+    - `listCellWidth` 未設定時は Task Table を非表示とし、下段左スクロールも非表示にする。
+    - コンテナ幅が最小幅を下回る場合は既存の clamp 処理を維持して破綻を防ぐ。
+    - `ignore` フラグの誤設定による無限ループを避けるため、更新は最新値のみ反映する。
+    - リサイズ / 幅変更時:
+      - 新しい `maxScrollLeftLeft` / `maxScrollLeftRight` を再計算し、`scrollXLeft` / `scrollXRight` を範囲内に clamp する。
+      - clamp により値が変わる場合は state 更新後に programmatic `scrollLeft` を適用し、`ignore` フラグで `onScroll` の二重更新を防ぐ。
 - ログと観測性（漏洩防止を含む）:
   - 新規ログは追加せず、機微情報は出力しない。
 
@@ -65,6 +80,15 @@
   - ループ防止の回帰:
     - 観測対象: `onScroll` ハンドラの呼び出し回数、`ignore` の戻り。
     - 判定: programmatic 更新と user scroll を区別し、`onScroll` が二重に state 更新しない。
+  - 最大 `scrollLeft` の clamp:
+    - 観測対象: TaskListHeader/TaskListTable と Calendar/GanttGrid の `scrollWidth` 差分。
+    - 判定: 左右とも `min(scrollWidth)` 基準の `maxScrollLeft` で clamp される。
+  - リサイズ時の clamp と programmatic 更新:
+    - 観測対象: `scrollXLeft` / `scrollXRight` と対象 DOM の `scrollLeft`。
+    - 判定: リサイズ後に新しい最大値へ clamp され、`ignore` が解除される。
+  - キーボード入力の前提:
+    - 観測対象: Gantt wrapper のフォーカス有無とキー入力時の `scrollXRight` 更新。
+    - 判定: wrapper へのフォーカスがない場合は更新しない。
   - 下段分割バー操作で上下段の分割位置が一致することの確認:
     - 観測対象: 上段/下段コンテナの `gridTemplateColumns` と `taskListWidth`。
     - 判定: ドラッグ後に両段の列幅が一致する。
@@ -91,6 +115,7 @@
 # 7. オープンな課題 / ADR 要否
 - 未確定事項:
   - 分割バー幅は既存定数（splitterWidth）と一致させる。
-- ADR に残すべき判断:
-  - ADR なし。理由: 変更は内部レイアウト/入力経路の整理で、公開 API・データモデル・永続化仕様に影響せず、可逆であるため。
-  - ただし将来、左右同期や永続化など API 追加を伴う場合は ADR を追加する。
+  - ADR に残すべき判断:
+    - ADR なし。理由: 変更は内部レイアウト/入力経路の整理で、公開 API・データモデル・永続化仕様に影響せず、可逆であるため。
+    - ただし将来、左右同期や永続化など API 追加を伴う場合は ADR を追加する。
+    - 左右2本スクロールの挙動は公開 API / 設定として露出せず、内部仕様として維持する。
