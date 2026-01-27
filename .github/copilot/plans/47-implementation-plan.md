@@ -28,8 +28,8 @@
     - `Gantt` が `scrollXLeft` / `scrollXRight` を保持し、DOM の `scrollLeft` は state の派生値とする。
     - `HorizontalScroll` と Task/Gantt のスクロール可能コンテナは state を受け取り、`useEffect` で `scrollLeft` を反映する。
     - 最大 `scrollLeft` の算出:
-      - 左: `maxScrollLeftLeft = max(0, min(taskListHeader.scrollWidth, taskListTable.scrollWidth) - taskListBody.clientWidth)` を採用する（いずれか未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。
-      - 右: `maxScrollLeftRight = max(0, min(calendar.scrollWidth, ganttGrid.scrollWidth) - ganttBody.clientWidth)` を採用する（未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。
+      - 左: `maxScrollLeftLeft = max(0, min(taskListHeader.scrollWidth, taskListTable.scrollWidth) - taskListBody.clientWidth)` を採用する（いずれか未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。ヘッダ/ボディの可視範囲を一致させるため、最小の `scrollWidth` を正とする。
+      - 右: `maxScrollLeftRight = max(0, min(calendar.scrollWidth, ganttGrid.scrollWidth) - ganttBody.clientWidth)` を採用する（未取得時は対応するスクロールコンテナの `scrollWidth - clientWidth` にフォールバック）。Calendar/Grid の可視範囲を一致させるため、最小の `scrollWidth` を正とする。
   - 更新権限 / 入力優先順位:
     - 左: 下段左スクロールバーの `onScroll` のみが `scrollXLeft` を更新する。
     - 右: 下段右スクロールバーの `onScroll`、ホイール（Shift+Wheel/横ホイール含む）、キー入力が `scrollXRight` を更新する。
@@ -39,17 +39,20 @@
       - state 更新は下段左/右 `HorizontalScroll` の `onScroll` のみで行い、TaskListHeader/TaskListTable/Calendar/Grid の `onScroll` は programmatic 更新時の ignore 解除に限定する。
       - programmatic `scrollLeft` 更新による `onScroll` は ignore が `true` の場合のみスキップし、`onScroll` 内で `false` に戻す。
     - 非同期 setState の競合:
-      - `scrollXLeft` / `scrollXRight` 更新は最新入力が勝つ前提とし、`useRef` と functional update で stale 値を避ける。
-      - 連続入力（ホイール/ドラッグ/キー）のバッチングでも最後の値が state に残るようにする。
+    - `scrollXLeft` / `scrollXRight` 更新は最新入力が勝つ前提とし、`useRef` と functional update で stale 値を避ける。
+    - 連続入力（ホイール/ドラッグ/キー）のバッチングでも最後の値が state に残るようにする。
     - キーボードフォーカス:
       - 既存の Gantt wrapper にフォーカスがある場合のみキー入力で右スクロールを更新する。
       - 下段スクロールバー要素はフォーカス対象にせず、キー入力の捕捉対象にしない。
+    - 下段スクロールバーの表示条件:
+      - `scrollWidth <= clientWidth` の場合は対応する下段スクロールバーを非表示にする。
   - 上下段レイアウト同期:
     - 上段/下段は別 DOM とし、`taskListWidth` と `SPLIT_HANDLE_WIDTH` を `Gantt` state の SSOT として共有する。
     - 両段とも `gridTemplateColumns: ${taskListWidth}px ${SPLIT_HANDLE_WIDTH}px 1fr` を適用し、上下段の分割位置を一致させる。
     - 下段の分割バーも上段と同一のドラッグハンドラを用い、幅変更は `taskListWidth` state に集約する。
   - ループ防止フラグの状態遷移:
     - 左右それぞれ `ignoreScrollLeftRef` / `ignoreScrollRightRef`（`useRef<boolean>`）を持つ。
+    - ignore は一時的なイベント抑止用途に限定し、render を跨いだ状態保持や永続化は行わない。
     - ユーザー入力（下段スクロールバーの `onScroll`）時:
       1) ignore が `false` の場合のみ state 更新 → ignore を `true` に設定。
       2) `useEffect` による programmatic scroll 発火後、`onScroll` で ignore を `false` に戻す。
