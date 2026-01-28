@@ -125,6 +125,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [scrollY, setScrollY] = useState(0);
   const [scrollXLeft, setScrollXLeft] = useState(0);
   const [scrollXRight, setScrollXRight] = useState(-1);
+  const [leftScrollerWidth, setLeftScrollerWidth] = useState(1430);
   const ignoreScrollLeftRef = useRef(false);
   const ignoreScrollRightRef = useRef(false);
 
@@ -358,6 +359,29 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     ganttFullHeight,
   ]);
 
+  // update left scroller width from the task list body content
+  useEffect(() => {
+    const updateLeftScroller = () => {
+      const el = taskListBodyRef.current;
+      if (el) {
+        setLeftScrollerWidth(el.scrollWidth || 0);
+      }
+    };
+    updateLeftScroller();
+    const RO = (window as any).ResizeObserver;
+    const ro = RO ? new RO(updateLeftScroller) : null;
+    if (ro && taskListBodyRef.current) {
+      ro.observe(taskListBodyRef.current);
+    }
+    window.addEventListener("resize", updateLeftScroller);
+    return () => {
+      if (ro) {
+        ro.disconnect();
+      }
+      window.removeEventListener("resize", updateLeftScroller);
+    };
+  }, [tasks, fontFamily, fontSize, listCellWidth, taskListBodyRef, visibleFields]);
+
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
     if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollLeftRef.current) {
       setScrollY(event.currentTarget.scrollTop);
@@ -376,12 +400,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       ignoreScrollLeftRef.current = true;
     } else {
       ignoreScrollLeftRef.current = false;
-    }
-    if (taskListBodyRef.current && taskListBodyRef.current.scrollLeft !== event.currentTarget.scrollLeft) {
-      taskListBodyRef.current.scrollLeft = event.currentTarget.scrollLeft;
-    }
-    if (taskListHeaderRef.current && taskListHeaderRef.current.scrollLeft !== event.currentTarget.scrollLeft) {
-      taskListHeaderRef.current.scrollLeft = event.currentTarget.scrollLeft;
     }
   };
 
@@ -692,7 +710,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           {listCellWidth && (
             <HorizontalScroll
               svgWidth={taskListWidth}
-              scrollerWidth={taskListWidth}
+              scrollerWidth={leftScrollerWidth}
               scroll={scrollXLeft}
               rtl={rtl}
               onScroll={handleScrollLeft}
