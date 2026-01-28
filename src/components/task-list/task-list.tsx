@@ -180,7 +180,11 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div ref={taskListRef}>
-      <div ref={headerRef} onScroll={onHorizontalScroll}>
+      <div
+        ref={headerRef}
+        onScroll={onHorizontalScroll}
+        style={{ width: "100%", overflowX: "hidden" }}
+      >
         <TaskListHeader {...headerProps} />
       </div>
       <div
