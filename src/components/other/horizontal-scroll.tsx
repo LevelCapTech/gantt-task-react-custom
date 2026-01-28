@@ -4,6 +4,7 @@ import styles from "./horizontal-scroll.module.css";
 export type HorizontalScrollProps = {
   scroll: number;
   svgWidth: number;
+  scrollerWidth?: number;
   rtl: boolean;
   onScroll: (event: SyntheticEvent<HTMLDivElement>) => void;
   "data-testid"?: string;
@@ -14,6 +15,7 @@ export type HorizontalScrollProps = {
 export const HorizontalScroll: React.FC<HorizontalScrollProps> = ({
   scroll,
   svgWidth,
+  scrollerWidth,
   rtl,
   onScroll,
   "data-testid": dataTestId,
@@ -36,9 +38,9 @@ export const HorizontalScroll: React.FC<HorizontalScrollProps> = ({
       onScroll={onScroll}
       ref={wrapperRef}
       data-testid={dataTestId}
-      style={hidden ? { display: "none" } : undefined}
+      style={hidden ? { display: "none" } : {width: svgWidth}}
     >
-      <div style={{ width: svgWidth }} className={styles.scroll} />
+      <div style={{ width: scrollerWidth ?? svgWidth }} className={styles.scroll} />
     </div>
   );
 };

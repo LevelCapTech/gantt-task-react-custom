@@ -686,6 +686,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           {listCellWidth && (
             <HorizontalScroll
               svgWidth={taskListWidth}
+              scrollerWidth={1000}
               scroll={scrollXLeft}
               rtl={rtl}
               onScroll={handleScrollLeft}
