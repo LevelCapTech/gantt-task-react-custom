@@ -5,6 +5,12 @@
   padding: 0;
 }
 
+/* SVG はデフォルトで inline 表示になり、下部にベースラインの余白が生じることがある。
+   テーブル本体と水平スクロール間の隙間を無くすために block にする */
+.ganttVerticalContainer svg,
+.horizontalContainer svg {
+  display: block;
+}
 .horizontalContainer {
   margin: 0;
   padding: 0;
@@ -12,12 +18,13 @@
 }
 
 .wrapper {
-  display: flex;
+  display: grid;
   padding: 0;
   margin: 0;
   list-style: none;
   outline: none;
   position: relative;
+  grid-template-columns: auto var(--splitter-width, 8px) 1fr;
 }
 
 .taskListPanel {
@@ -42,4 +49,23 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+}
+
+.scrollRow {
+  display: grid;
+  grid-template-columns: auto var(--splitter-width, 8px) 1fr;
+  align-items: stretch;
+}
+
+.scrollCellLeft {
+  overflow: hidden;
+}
+
+.scrollCellRight {
+  overflow: hidden;
+}
+
+.scrollSplitter {
+  width: var(--splitter-width, 8px);
+  background: transparent;
 }

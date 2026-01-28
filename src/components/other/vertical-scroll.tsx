@@ -27,9 +27,11 @@ export const VerticalScroll: React.FC<{
   return (
     <div
       style={{
+        position: "absolute",
+        top: headerHeight,
         height: ganttHeight,
-        marginTop: headerHeight,
-        marginLeft: rtl ? "" : "-1rem",
+        right: rtl ? undefined : 0,
+        left: rtl ? 0 : undefined,
       }}
       className={styles.scroll}
       onScroll={onScroll}

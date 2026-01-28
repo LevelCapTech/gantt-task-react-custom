@@ -1,34 +1,46 @@
 import React, { SyntheticEvent, useRef, useEffect } from "react";
 import styles from "./horizontal-scroll.module.css";
 
-export const HorizontalScroll: React.FC<{
+export type HorizontalScrollProps = {
   scroll: number;
   svgWidth: number;
-  taskListWidth: number;
+  scrollerWidth?: number;
   rtl: boolean;
   onScroll: (event: SyntheticEvent<HTMLDivElement>) => void;
-}> = ({ scroll, svgWidth, taskListWidth, rtl, onScroll }) => {
+  "data-testid"?: string;
+  containerRef?: React.RefObject<HTMLDivElement>;
+  hidden?: boolean;
+};
+
+export const HorizontalScroll: React.FC<HorizontalScrollProps> = ({
+  scroll,
+  svgWidth,
+  scrollerWidth,
+  rtl,
+  onScroll,
+  "data-testid": dataTestId,
+  containerRef,
+  hidden,
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = containerRef ?? scrollRef;
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scroll;
+    if (wrapperRef.current) {
+      wrapperRef.current.scrollLeft = scroll;
     }
-  }, [scroll]);
+  }, [scroll, wrapperRef]);
 
   return (
     <div
-      dir="ltr"
-      style={{
-        margin: rtl
-          ? `0px ${taskListWidth}px 0px 0px`
-          : `0px 0px 0px ${taskListWidth}px`,
-      }}
+      dir={rtl ? "rtl" : "ltr"}
       className={styles.scrollWrapper}
       onScroll={onScroll}
-      ref={scrollRef}
+      ref={wrapperRef}
+      data-testid={dataTestId}
+      style={hidden ? { display: "none" } : { width: svgWidth }}
     >
-      <div style={{ width: svgWidth }} className={styles.scroll} />
+      <div style={{ width: scrollerWidth ?? svgWidth }} className={styles.scroll} />
     </div>
   );
 };
