@@ -5,6 +5,12 @@
   padding: 0;
 }
 
+/* SVG はデフォルトで inline 表示になり、下部にベースラインの余白が生じることがある。
+   テーブル本体と水平スクロール間の隙間を無くすために block にする */
+.ganttVerticalContainer svg,
+.horizontalContainer svg {
+  display: block;
+}
 .horizontalContainer {
   margin: 0;
   padding: 0;
