@@ -38,7 +38,7 @@ export const HorizontalScroll: React.FC<HorizontalScrollProps> = ({
       onScroll={onScroll}
       ref={wrapperRef}
       data-testid={dataTestId}
-      style={hidden ? { display: "none" } : {width: svgWidth}}
+      style={hidden ? { display: "none" } : { width: svgWidth }}
     >
       <div style={{ width: scrollerWidth ?? svgWidth }} className={styles.scroll} />
     </div>

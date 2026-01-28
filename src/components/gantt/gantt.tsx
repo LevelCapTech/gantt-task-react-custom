@@ -377,6 +377,12 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     } else {
       ignoreScrollLeftRef.current = false;
     }
+    if (taskListBodyRef.current && taskListBodyRef.current.scrollLeft !== event.currentTarget.scrollLeft) {
+      taskListBodyRef.current.scrollLeft = event.currentTarget.scrollLeft;
+    }
+    if (taskListHeaderRef.current && taskListHeaderRef.current.scrollLeft !== event.currentTarget.scrollLeft) {
+      taskListHeaderRef.current.scrollLeft = event.currentTarget.scrollLeft;
+    }
   };
 
   const handleScrollRight = (event: SyntheticEvent<HTMLDivElement>) => {
@@ -686,7 +692,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           {listCellWidth && (
             <HorizontalScroll
               svgWidth={taskListWidth}
-              scrollerWidth={1000}
+              scrollerWidth={taskListWidth}
               scroll={scrollXLeft}
               rtl={rtl}
               onScroll={handleScrollLeft}
