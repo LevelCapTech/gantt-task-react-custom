@@ -50,6 +50,12 @@ yarn install
 yarn start
 ```
 
+#### 一括で実行する婆
+
+```bash
+rm -rf node_modules && yarn install && yarn start
+```
+
 ---
 
 ## なぜ example 側も再インストールが必要なのか？
