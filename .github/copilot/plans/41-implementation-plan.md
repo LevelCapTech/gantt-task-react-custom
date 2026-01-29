@@ -34,7 +34,7 @@
 ## 3. 設計方針
 - 責務分離 / データフロー:
   - State Owner は `TaskList`（テーブルルート）とし、`EditingState` を単一保持する。
-  ```
+  ```ts
   // EditingState (conceptual)
   // {
   //   rowId: string | null
