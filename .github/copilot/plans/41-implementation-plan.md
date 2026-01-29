@@ -40,31 +40,33 @@
   - `onCellCommit` を await し、pending 中は UI 遷移を抑止する。
  - 公開 API 契約 / 拡張方針:
    - `onCellCommit` は必須で Promise を返す。未指定時は編集不可。
-   - 編集可否の優先順位: `editable` (table) が false なら常に不可 → `isCellEditable` があれば最終判定 → 列/行の `editable` があれば両方 true のときのみ可。
-   - `EditingState` は内部実装であり外部公開しない。外部から編集中セルを強制指定する API は提供しない。
-   - Controlled Editing を許可する場合は破壊的変更になるため、新規 props で明示的に導入する（現時点では非対応）。
-   - Tab/Shift+Tab は現時点で Commit + 移動を行わず、将来拡張候補とする。
+    - 編集可否の優先順位: `editable` (table) が false なら常に不可 → 列/行の `editable` があれば両方 true のときのみ可 → `isCellEditable` があれば最終 AND フィルタとして評価する。
+    - `EditingState` は内部実装であり外部公開しない。外部から編集中セルを強制指定する API は提供しない。
+    - Controlled Editing を許可する場合は破壊的変更になるため、新規 props で明示的に導入する（現時点では非対応）。
+    - Tab/Shift+Tab は現時点で Commit + 移動を行わず、将来拡張候補とする。
  - 状態定義と遷移:
    - Viewing: `rowId/columnId=null`。選択枠なし。
    - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
    - Editing: overlay 表示、input focused。`pending` は commit 待ち制御に利用。
    - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
    - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
-   - Selected → Viewing: テーブル外クリックで選択解除（任意）。
+    - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。
    - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
    - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
    - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
- - 入力制御 / キーボード:
-   - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
-   - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
-   - 文字キー開始時は既存値を置換する（Excel/Sheets 同様）。
-   - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
-   - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
- - フォーカス / 優先順位:
-  - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
-  - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
-  - pending 中の click / Enter / Escape は無効化し、入力欄を disabled にする。
-  - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
+  - 入力制御 / キーボード:
+    - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
+    - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
+    - composition 中の blur は Commit/Cancel を発火せず、編集を継続する。
+    - 文字キー開始時は既存値を置換する（Excel/Sheets 同様）。
+    - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
+    - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
+  - フォーカス / 優先順位:
+   - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
+   - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
+   - pending 中の click / Enter / Escape は無効化し、入力欄を disabled にする。
+    - pending 中は軽量な視覚フィードバック（例: opacity 変更やインライン表示）を出す。
+   - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
   - A11y:
     - Selected セルは confirmation focusable（例: `tabIndex=0`, `aria-selected=true`）。
     - Editor input は `role="textbox"` を持ち、`aria-label` で列名を示す。
@@ -77,12 +79,13 @@
   - rowId/columnId/trigger/reason をデバッグログに残す。
   - 入力値・トークン・PII はログに含めない。
  - Portal 配置 / rect 追従:
-  - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
-  - Task Table とガント本体の同期スクロール時も rect を再計算する。
-  - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
-  - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
-  - スクロールコンテナは Task Table の縦スクロール要素と、ガント本体と共有する横スクロール要素を対象とする。
-  - window スクロールが有効なレイアウトでは window も監視対象に含める。
+   - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
+   - Task Table とガント本体の同期スクロール時も rect を再計算する。
+   - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
+   - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
+   - スクロールコンテナは Task Table の縦スクロール要素と、ガント本体と共有する横スクロール要素を対象とする。
+   - window スクロールが有効なレイアウトでは window も監視対象に含める。
+   - ネストしたスクロール要素がある場合は最も近い scrollable ancestor を優先し、明示指定があればそれを優先する。
 
 ## 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
@@ -95,6 +98,7 @@
   - Editing 中にスクロールして rect が再計算される。
   - IME composition 開始で Editing に遷移し入力が保持される。
   - 回帰条件: 単クリックで編集開始しない / Enter なしで commit しない / ガント本体操作を阻害しない。
+  - 非機能回帰（セル再マウント検知など）は自動テストが難しいため、設計レビュー時に手動チェック項目として残す。
 - モック / フィクスチャ方針:
   - `onCellCommit` を Promise でモックし、resolve/reject を切り替える。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
@@ -119,5 +123,7 @@
   - Portal のルート要素（`document.body` か専用 root）の標準化。
   - エラー表示の UI 形式（tooltip かインラインメッセージ）。
   - 仮想化は現時点で公式サポート外とし、導入時は ADR で方針を確定する。
+  - 仮想化環境では editor が閉じる、スクロール時に一時的にズレる可能性がある。
+  - Quick Spec（README に短縮版仕様）を別途用意するか検討する。
 - ADR に残すべき判断:
   - 仮想化導入時の DOM 消失扱いを正式に決定する場合は ADR に残す。
