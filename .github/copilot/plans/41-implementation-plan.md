@@ -70,8 +70,8 @@ editable =
    - Editing: overlay 表示、input focused。`pending` は commit 待ち制御に利用。
    - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
    - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
-    - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
-      - Esc は Editing 専用の操作であり、Selected では意味を持たない
+   - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
+     - Esc は Editing 専用の操作であり、Selected では意味を持たない
    - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
    - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
    - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
