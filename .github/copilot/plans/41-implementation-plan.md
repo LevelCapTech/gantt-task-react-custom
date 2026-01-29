@@ -40,7 +40,7 @@
 //   rowId: string | null
 //   columnId: string | null
 //   pending: boolean
-//   trigger: 'click' | 'enter' | 'key'
+//   trigger: 'dblclick' | 'enter' | 'key'
 // }
 ```
   - `TaskListTable` はセルイベントを集約し、編集開始/終了の通知のみを行う。
