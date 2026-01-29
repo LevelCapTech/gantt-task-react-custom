@@ -15,11 +15,17 @@
 
 ## 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）:
-  - `.github/copilot/plans/41-implementation-plan.md`（本 plan のみ）
+  - `src/components/task-list/task-list.tsx`（選択/編集状態の管理）
+  - `src/components/task-list/task-list-table.tsx`（セルイベントと編集トリガー）
+  - `src/components/task-list/` 配下の新規 Overlay Editor（Portal）
+  - `src/components/task-list/task-list-table.module.css`（オーバーレイ配置/エラー表示）
+  - `src/types/public-types.ts`（公開 API と payload 型の追加）
 - 影響範囲・互換性リスク:
-  - 設計ドキュメント追加のみ。コード変更は行わないため互換性影響なし。
+  - Task Table のセル操作と編集 UX のみが対象。ガント本体のバー操作は対象外。
+  - 追加 props は任意として後方互換を維持する。
 - 外部依存・Secrets の扱い:
-  - 新規依存追加は行わない。Commit の永続化はホストアプリ責務。
+  - React Portal を利用し、新規依存は追加しない。
+  - Commit の永続化と認証はホストアプリ責務とする。
 
 ## 3. 設計方針
 - 責務分離 / データフロー:
