@@ -48,20 +48,21 @@
   - Overlay Editor は Portal で 1 インスタンスのみ生成し、編集中セルの rect に追従する。
   - `onCellCommit` を await し、pending 中は UI 遷移を抑止する。
   - 公開 API 契約 / 拡張方針:
-    - `onCellCommit` は必須で Promise を返す。未指定時は編集不可。
+    - `onCellCommit` は編集機能を有効にする場合に必須（Promise を返す）。未指定時は従来通り閲覧専用とする。
       - onCellCommit は値の検証・永続化・副作用を担う
       - Selected / Viewing などの UI 状態遷移は本コンポーネントの責務とする
     - `EditingState` は内部実装であり外部公開しない。外部から編集中セルを強制指定する API は提供しない。
     - Controlled Editing を許可する場合は破壊的変更になるため、新規 props で明示的に導入する（現時点では非対応）。
     - Tab/Shift+Tab は現時点で Commit + 移動を行わず、将来拡張候補とする。
-    - 編集可否はすべて AND 条件で評価する。`editable` (table) が false なら常に不可、列/行の `editable` は前提条件として両方 true の場合のみ評価し、その上で `isCellEditable` を最終フィルタとして適用する（short-circuit せず最終結果で判定）。
+    - 編集可否はすべて AND 条件で評価する。`editable` (table) が false なら常に不可、列/行の `editable` は前提条件として両方 true の場合のみ評価し、その上で `isCellEditable` を最終フィルタとして適用する（各条件は個別に評価し、最終結果を AND 判定する）。
+    - `isCellEditable` 未指定時は `true` として扱う。
 
 ```ts
 // 編集可否は short-circuit せず、各条件を個別に評価してから最終結果を判定する
 const tableEditable = isTableEditable(tableMeta);
 const columnEditable = isColumnEditable(columnMeta);
 const rowEditable = isRowEditable(rowMeta);
-const cellEditableByRule = isCellEditable(row, column);
+const cellEditableByRule = isCellEditable?.(row, column) ?? true;
 
 editable =
   tableEditable &&
@@ -70,17 +71,17 @@ editable =
   cellEditableByRule;
 ```
 
-- 状態定義と遷移:
-  - Viewing: `rowId/columnId=null`。選択枠なし。
-  - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
-  - Editing: overlay 表示、input focused。`pending` は commit 待ち制御に利用。
-  - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
-  - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
-  - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
-    - Esc は Editing 専用の操作であり、Selected では意味を持たない
-  - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
-  - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
-  - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
+  - 状態定義と遷移:
+    - Viewing: `rowId/columnId=null`。選択枠なし。
+    - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
+    - Editing: overlay 表示、input focused。`pending` は commit 待ち制御に利用。
+    - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
+    - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
+    - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
+      - Esc は Editing 専用の操作であり、Selected では意味を持たない
+    - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
+    - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
+    - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
 - 入力制御 / キーボード:
   - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
   - 想定外キーは無視する前提とし、編集開始トリガーにしない。
