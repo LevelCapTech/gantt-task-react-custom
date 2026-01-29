@@ -98,12 +98,12 @@ editable =
     - pending 中は軽量な視覚フィードバック（例: opacity 変更やインライン表示）を出す。
     - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
 - A11y:
-    - Selected セルのみ `tabIndex=0`、非 Selected セルは `tabIndex=-1` を基本とする。
-      - tabIndex の切り替えは Selected 変更時にのみ行い、再レンダリングを最小化する
-    - Selected セルはキーボードフォーカス可能なセルとして扱い、その状態を `aria-selected="true"` で示す。
-    - Editor input は `role="textbox"` を持ち、`aria-label` で列名を示す。
-    - キーボード操作前提 UI である旨をドキュメントで明示する。
-    - Tab 移動はテーブル外のフォーカス遷移を優先し、セル間移動は矢印キー前提とする。
+  - Selected セルのみ `tabIndex=0`、非 Selected セルは `tabIndex=-1` を基本とする。
+    - tabIndex の切り替えは Selected 変更時にのみ行い、再レンダリングを最小化する
+  - Selected セルはキーボードフォーカス可能なセルとして扱い、その状態を `aria-selected="true"` で示す。
+  - Editor input は `role="textbox"` を持ち、`aria-label` で列名を示す。
+  - キーボード操作前提 UI である旨をドキュメントで明示する。
+  - Tab 移動はテーブル外のフォーカス遷移を優先し、セル間移動は矢印キー前提とする。
 - エッジケース / 例外系 / リトライ方針:
   - 値変更なし blur は Cancel（reason=nochange-blur）として通知する。
   - Commit reject は Editing 継続＋エラー表示とし、Enter で再試行できる。
