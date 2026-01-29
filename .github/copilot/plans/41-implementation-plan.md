@@ -34,12 +34,23 @@
 ## 3. 設計方針
 - 責務分離 / データフロー:
   - State Owner は `TaskList`（テーブルルート）とし、`EditingState` を単一保持する。
+```
+// EditingState (conceptual)
+// {
+//   rowId: string | null
+//   columnId: string | null
+//   pending: boolean
+//   trigger: 'click' | 'enter' | 'key'
+// }
+```
   - `TaskListTable` はセルイベントを集約し、編集開始/終了の通知のみを行う。
   - セルは状態を持たず、data 属性で rowId/columnId を識別する。
   - Overlay Editor は Portal で 1 インスタンスのみ生成し、編集中セルの rect に追従する。
   - `onCellCommit` を await し、pending 中は UI 遷移を抑止する。
   - 公開 API 契約 / 拡張方針:
     - `onCellCommit` は必須で Promise を返す。未指定時は編集不可。
+      - onCellCommit は値の検証・永続化・副作用を担う
+      - Selected / Viewing などの UI 状態遷移は本コンポーネントの責務とする
     - `EditingState` は内部実装であり外部公開しない。外部から編集中セルを強制指定する API は提供しない。
     - Controlled Editing を許可する場合は破壊的変更になるため、新規 props で明示的に導入する（現時点では非対応）。
     - Tab/Shift+Tab は現時点で Commit + 移動を行わず、将来拡張候補とする。
@@ -151,6 +162,10 @@ editable =
   - 仮想化は現時点で公式サポート外とし、導入時は ADR で方針を確定する。
   - 仮想化環境では editor が閉じる、スクロール時に一時的にズレる可能性がある。
   - Quick Spec（README に短縮版仕様）を別途用意するか検討する。
+    - Click: 選択
+    - Enter / DoubleClick: 編集開始
+    - Esc: キャンセル
+    - Blur: 条件付きキャンセル
   - README/Quick Spec では「仮想化環境の編集 UX は保証しない」「editor が閉じる/ズレるのは仕様」と明記する。
     - 仮想化環境では編集 UX は保証しない
     - editor が閉じる／ズレる挙動は仕様である
