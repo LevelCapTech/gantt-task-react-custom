@@ -82,13 +82,13 @@ const editable =
     - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
     - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
   - 入力制御 / キーボード:
-  - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
-  - 想定外キーは無視する前提とし、編集開始トリガーにしない。
-  - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
-  - composition 中の blur は Commit/Cancel を発火せず、編集を継続する。
-  - 文字キー開始時は既存値を置換する（Excel/Sheets 同様）。
-  - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
-  - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
+    - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
+    - 想定外キーは無視する前提とし、編集開始トリガーにしない。
+    - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
+    - composition 中の blur は Commit/Cancel を発火せず、編集を継続する。
+    - 文字キー開始時は既存値を置換する（Excel/Sheets 同様）。
+    - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
+    - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
 - フォーカス / 優先順位:
   - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
   - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
