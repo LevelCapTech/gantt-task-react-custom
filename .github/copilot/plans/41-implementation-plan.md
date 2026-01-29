@@ -34,15 +34,15 @@
 ## 3. 設計方針
 - 責務分離 / データフロー:
   - State Owner は `TaskList`（テーブルルート）とし、`EditingState` を単一保持する。
-```
-// EditingState (conceptual)
-// {
-//   rowId: string | null
-//   columnId: string | null
-//   pending: boolean
-//   trigger: 'dblclick' | 'enter' | 'key'
-// }
-```
+  ```
+  // EditingState (conceptual)
+  // {
+  //   rowId: string | null
+  //   columnId: string | null
+  //   pending: boolean
+  //   trigger: 'dblclick' | 'enter' | 'key'
+  // }
+  ```
   - `TaskListTable` はセルイベントを集約し、編集開始/終了の通知のみを行う。
   - セルは状態を持たず、data 属性で rowId/columnId を識別する。
   - Overlay Editor は Portal で 1 インスタンスのみ生成し、編集中セルの rect に追従する。
@@ -58,13 +58,13 @@
     - `isCellEditable` 未指定時は `true` として扱う。
 
 ```ts
-// 編集可否は short-circuit せず、各条件を個別に評価してから最終結果を判定する
+// 各条件は個別に評価した上で最終的に AND 判定する（評価順は統一）
 const tableEditable = isTableEditable(tableMeta);
 const columnEditable = isColumnEditable(columnMeta);
 const rowEditable = isRowEditable(rowMeta);
 const cellEditableByRule = isCellEditable?.(row, column) ?? true;
 
-editable =
+const editable =
   tableEditable &&
   columnEditable &&
   rowEditable &&
@@ -82,7 +82,7 @@ editable =
     - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
     - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
     - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
-- 入力制御 / キーボード:
+  - 入力制御 / キーボード:
   - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
   - 想定外キーは無視する前提とし、編集開始トリガーにしない。
   - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
