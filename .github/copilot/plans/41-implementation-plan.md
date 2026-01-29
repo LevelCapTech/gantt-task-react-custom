@@ -13,6 +13,7 @@
   - uncontrolled input を利用し、入力中の再レンダリングを抑える。
   - 値はログ出力せず、rowId/columnId/trigger のみを観測対象とする。
   - IME/Composition 入力を阻害せず、フォーカスと状態を破綻させない。
+  - 公開 API の互換性を維持し、既存の閲覧 UX を壊さない。
 
 ## 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）:
@@ -25,6 +26,7 @@
   - Task Table のセル操作と編集 UX のみが対象。ガント本体のバー操作は対象外。
   - `onCellCommit` 未指定または `editable=false` の場合は従来通り閲覧専用とし、後方互換を維持する。
   - ガント本体（バー領域）のクリックは編集終了トリガーとして扱い、スクロール同期時はエディタ位置のみ追従する。
+  - 公開 API の追加は任意 props とし、既存のシグネチャは変更しない。
 - 外部依存・Secrets の扱い:
   - React Portal を利用し、新規依存は追加しない。
   - Commit の永続化と認証はホストアプリ責務とする。
@@ -36,6 +38,12 @@
   - セルは状態を持たず、data 属性で rowId/columnId を識別する。
   - Overlay Editor は Portal で 1 インスタンスのみ生成し、編集中セルの rect に追従する。
   - `onCellCommit` を await し、pending 中は UI 遷移を抑止する。
+ - 公開 API 契約 / 拡張方針:
+   - `onCellCommit` は必須で Promise を返す。未指定時は編集不可。
+   - 編集可否の優先順位: `editable` (table) が false なら常に不可 → `isCellEditable` があれば最終判定 → 列/行の `editable` があれば両方 true のときのみ可。
+   - `EditingState` は内部実装であり外部公開しない。外部から編集中セルを強制指定する API は提供しない。
+   - Controlled Editing を許可する場合は破壊的変更になるため、新規 props で明示的に導入する（現時点では非対応）。
+   - Tab/Shift+Tab は現時点で Commit + 移動を行わず、将来拡張候補とする。
  - 状態定義と遷移:
    - Viewing: `rowId/columnId=null`。選択枠なし。
    - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
@@ -53,10 +61,14 @@
    - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
    - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
  - フォーカス / 優先順位:
-   - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
-   - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
-   - pending 中の click / Enter / Escape は無効化し、入力欄を disabled にする。
-   - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
+  - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
+  - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
+  - pending 中の click / Enter / Escape は無効化し、入力欄を disabled にする。
+  - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
+  - A11y:
+    - Selected セルは confirmation focusable（例: `tabIndex=0`, `aria-selected=true`）。
+    - Editor input は `role="textbox"` を持ち、`aria-label` で列名を示す。
+    - キーボード操作前提 UI である旨をドキュメントで明示する。
 - エッジケース / 例外系 / リトライ方針:
   - 値変更なし blur は Cancel（reason=nochange-blur）として通知する。
   - Commit reject は Editing 継続＋エラー表示とし、Enter で再試行できる。
@@ -65,10 +77,12 @@
   - rowId/columnId/trigger/reason をデバッグログに残す。
   - 入力値・トークン・PII はログに含めない。
  - Portal 配置 / rect 追従:
-   - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
-   - Task Table とガント本体の同期スクロール時も rect を再計算する。
-   - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
-   - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
+  - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
+  - Task Table とガント本体の同期スクロール時も rect を再計算する。
+  - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
+  - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
+  - スクロールコンテナは Task Table の縦スクロール要素と、ガント本体と共有する横スクロール要素を対象とする。
+  - window スクロールが有効なレイアウトでは window も監視対象に含める。
 
 ## 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
@@ -80,6 +94,7 @@
   - Pending 中の別セルクリックは無視される。
   - Editing 中にスクロールして rect が再計算される。
   - IME composition 開始で Editing に遷移し入力が保持される。
+  - 回帰条件: 単クリックで編集開始しない / Enter なしで commit しない / ガント本体操作を阻害しない。
 - モック / フィクスチャ方針:
   - `onCellCommit` を Promise でモックし、resolve/reject を切り替える。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
@@ -103,5 +118,6 @@
 - 未確定事項:
   - Portal のルート要素（`document.body` か専用 root）の標準化。
   - エラー表示の UI 形式（tooltip かインラインメッセージ）。
+  - 仮想化は現時点で公式サポート外とし、導入時は ADR で方針を確定する。
 - ADR に残すべき判断:
   - 仮想化導入時の DOM 消失扱いを正式に決定する場合は ADR に残す。
