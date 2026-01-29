@@ -57,11 +57,17 @@
     - 編集可否はすべて AND 条件で評価する。`editable` (table) が false なら常に不可、列/行の `editable` は前提条件として両方 true の場合のみ評価し、その上で `isCellEditable` を最終フィルタとして適用する（short-circuit せず最終結果で判定）。
 
 ```ts
+// 編集可否は short-circuit せず、各条件を個別に評価してから最終結果を判定する
+const tableEditable = isTableEditable(tableMeta);
+const columnEditable = isColumnEditable(columnMeta);
+const rowEditable = isRowEditable(rowMeta);
+const cellEditableByRule = isCellEditable(row, column);
+
 editable =
   tableEditable &&
   columnEditable &&
   rowEditable &&
-  isCellEditable(row, column);
+  cellEditableByRule;
 ```
 
  - 状態定義と遷移:
