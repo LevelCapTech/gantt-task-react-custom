@@ -99,7 +99,7 @@ editable =
 - A11y:
     - Selected セルのみ `tabIndex=0`、非 Selected セルは `tabIndex=-1` を基本とする。
       - tabIndex の切り替えは Selected 変更時にのみ行い、再レンダリングを最小化する
-    - Selected セルは confirmation focusable（例: `aria-selected=true`）。
+    - Selected セルはキーボードフォーカス可能なセルとして扱い、その状態を `aria-selected="true"` で示す。
     - Editor input は `role="textbox"` を持ち、`aria-label` で列名を示す。
     - キーボード操作前提 UI である旨をドキュメントで明示する。
     - Tab 移動はテーブル外のフォーカス遷移を優先し、セル間移動は矢印キー前提とする。
