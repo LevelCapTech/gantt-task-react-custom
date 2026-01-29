@@ -40,10 +40,19 @@
   - `onCellCommit` を await し、pending 中は UI 遷移を抑止する。
   - 公開 API 契約 / 拡張方針:
     - `onCellCommit` は必須で Promise を返す。未指定時は編集不可。
-    - 編集可否はすべて AND 条件で評価する。`editable` (table) が false なら常に不可、列/行の `editable` は前提条件として両方 true の場合のみ評価し、その上で `isCellEditable` を最終フィルタとして適用する（short-circuit せず最終結果で判定）。
     - `EditingState` は内部実装であり外部公開しない。外部から編集中セルを強制指定する API は提供しない。
     - Controlled Editing を許可する場合は破壊的変更になるため、新規 props で明示的に導入する（現時点では非対応）。
     - Tab/Shift+Tab は現時点で Commit + 移動を行わず、将来拡張候補とする。
+    - 編集可否はすべて AND 条件で評価する。`editable` (table) が false なら常に不可、列/行の `editable` は前提条件として両方 true の場合のみ評価し、その上で `isCellEditable` を最終フィルタとして適用する（short-circuit せず最終結果で判定）。
+
+```ts
+editable =
+  tableEditable &&
+  columnEditable &&
+  rowEditable &&
+  isCellEditable(row, column);
+```
+
  - 状態定義と遷移:
    - Viewing: `rowId/columnId=null`。選択枠なし。
    - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
@@ -51,6 +60,7 @@
    - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
    - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
     - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
+      - Esc は Editing 専用の操作であり、Selected では意味を持たない
    - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
    - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
    - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
@@ -66,10 +76,12 @@
    - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
    - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
     - pending 中の click / Enter / Escape は無効化し、入力欄は readOnly を優先して focus を維持する。keydown はガードし、入力変更は受け付けない。
+      - pending 中は value 変更系イベント（input/change）も無視する
     - pending 中は軽量な視覚フィードバック（例: opacity 変更やインライン表示）を出す。
     - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
   - A11y:
     - Selected セルのみ `tabIndex=0`、非 Selected セルは `tabIndex=-1` を基本とする。
+      - tabIndex の切り替えは Selected 変更時にのみ行い、再レンダリングを最小化する
     - Selected セルは confirmation focusable（例: `aria-selected=true`）。
     - Editor input は `role="textbox"` を持ち、`aria-label` で列名を示す。
     - キーボード操作前提 UI である旨をドキュメントで明示する。
@@ -84,6 +96,7 @@
   - 入力値・トークン・PII はログに含めない。
   - Portal 配置 / rect 追従:
    - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
+     - rect 再計算は requestAnimationFrame 内で 1 回のみ行う
    - Task Table とガント本体の同期スクロール時も rect を再計算する。
    - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
    - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
@@ -139,5 +152,7 @@
   - 仮想化環境では editor が閉じる、スクロール時に一時的にズレる可能性がある。
   - Quick Spec（README に短縮版仕様）を別途用意するか検討する。
   - README/Quick Spec では「仮想化環境の編集 UX は保証しない」「editor が閉じる/ズレるのは仕様」と明記する。
+    - 仮想化環境では編集 UX は保証しない
+    - editor が閉じる／ズレる挙動は仕様である
 - ADR に残すべき判断:
   - 仮想化導入時の DOM 消失扱いを正式に決定する場合は ADR に残す。
