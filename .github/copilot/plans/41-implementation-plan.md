@@ -70,33 +70,33 @@ editable =
   cellEditableByRule;
 ```
 
- - 状態定義と遷移:
-   - Viewing: `rowId/columnId=null`。選択枠なし。
-   - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
-   - Editing: overlay 表示、input focused。`pending` は commit 待ち制御に利用。
-   - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
-   - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
-   - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
-     - Esc は Editing 専用の操作であり、Selected では意味を持たない
-   - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
-   - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
-   - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
-  - 入力制御 / キーボード:
-    - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
-    - 想定外キーは無視する前提とし、編集開始トリガーにしない。
-    - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
-    - composition 中の blur は Commit/Cancel を発火せず、編集を継続する。
-    - 文字キー開始時は既存値を置換する（Excel/Sheets 同様）。
-    - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
-    - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
-  - フォーカス / 優先順位:
-   - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
-   - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
+- 状態定義と遷移:
+  - Viewing: `rowId/columnId=null`。選択枠なし。
+  - Selected: `rowId/columnId` 保持、選択枠表示。編集は未開始。
+  - Editing: overlay 表示、input focused。`pending` は commit 待ち制御に利用。
+  - Viewing → Selected: 単クリック/矢印移動で対象セルを選択。
+  - Selected → Editing: DoubleClick / Enter / 文字キー（プリント可能）で遷移。
+  - Selected → Viewing: デフォルトは選択維持とし、テーブル外クリックでは解除しない。Esc は Selected 中は no-op とし、将来拡張候補とする。
+    - Esc は Editing 専用の操作であり、Selected では意味を持たない
+  - Editing → Selected: Commit resolve / Cancel（Escape, nochange-blur）。
+  - Editing → Viewing: DOM 消失で Cancel（reason=unmounted）し選択解除。
+  - 禁止遷移: pending 中の Selected 変更、Editing 再入、再 Commit。
+- 入力制御 / キーボード:
+  - 文字キー対象: `event.key.length === 1` かつ `!meta/ctrl/alt`。英数/記号/Space を含む。
+  - 想定外キーは無視する前提とし、編集開始トリガーにしない。
+  - IME: `compositionstart` または `key === 'Process'` で Editing 開始し、既存値はクリアして IME 入力を許可。
+  - composition 中の blur は Commit/Cancel を発火せず、編集を継続する。
+  - 文字キー開始時は既存値を置換する（Excel/Sheets 同様）。
+  - Editing 中の Enter は Commit、Escape は Cancel（pending 中は無効）。
+  - Editing 中の矢印/Tab はセル移動を行わず input 操作を優先する。
+- フォーカス / 優先順位:
+  - Editing 開始時は input に focus、Selected 状態はセル root に focus を戻す。
+  - Editing 中の click は「現在セル Commit → resolve 後にクリック先セルを Selected」。
     - pending 中の click / Enter / Escape は無効化し、入力欄は readOnly を優先して focus を維持する。keydown はガードし、入力変更は受け付けない。
       - pending 中は value 変更系イベント（input/change）も無視する
     - pending 中は軽量な視覚フィードバック（例: opacity 変更やインライン表示）を出す。
     - Cancel 後は元セル Selected を維持し、unmounted ではテーブル root に戻す。
-  - A11y:
+- A11y:
     - Selected セルのみ `tabIndex=0`、非 Selected セルは `tabIndex=-1` を基本とする。
       - tabIndex の切り替えは Selected 変更時にのみ行い、再レンダリングを最小化する
     - Selected セルは confirmation focusable（例: `aria-selected=true`）。
