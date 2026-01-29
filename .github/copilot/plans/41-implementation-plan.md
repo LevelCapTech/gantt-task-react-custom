@@ -112,17 +112,17 @@ editable =
 - ログと観測性（漏洩防止を含む）:
   - rowId/columnId/trigger/reason をデバッグログに残す。
   - 入力値・トークン・PII はログに含めない。
-  - Portal 配置 / rect 追従:
-   - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
-     - rect 再計算は requestAnimationFrame 内で 1 回のみ行う
-   - Task Table とガント本体の同期スクロール時も rect を再計算する。
-   - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
-   - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
-   - スクロールコンテナは Task Table の縦スクロール要素と、ガント本体と共有する横スクロール要素を対象とする。
-   - window スクロールが有効なレイアウトでは window も監視対象に含める。
-   - ネストしたスクロール要素がある場合は最も近い scrollable ancestor を優先し、明示指定があればそれを優先する。
-   - 親子で同時にスクロールする場合は最後に発火したイベントで rect を確定する。
-   - scroll/resize が同一 frame 内で発生した場合も、最後に計算した rect を採用する。
+- Portal 配置 / rect 追従:
+  - scroll/resize は capture で監視し、`requestAnimationFrame` で 1frame に集約する。
+    - rect 再計算は requestAnimationFrame 内で 1 回のみ行う
+  - Task Table とガント本体の同期スクロール時も rect を再計算する。
+  - `getBoundingClientRect()` を使い、`Math.round` でサブピクセル揺れを抑える。
+  - `ResizeObserver` が利用可能ならセル/テーブルのサイズ変化を監視する。
+  - スクロールコンテナは Task Table の縦スクロール要素と、ガント本体と共有する横スクロール要素を対象とする。
+  - window スクロールが有効なレイアウトでは window も監視対象に含める。
+  - ネストしたスクロール要素がある場合は最も近い scrollable ancestor を優先し、明示指定があればそれを優先する。
+  - 親子で同時にスクロールする場合は最後に発火したイベントで rect を確定する。
+  - scroll/resize が同一 frame 内で発生した場合も、最後に計算した rect を採用する。
 
 ## 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
