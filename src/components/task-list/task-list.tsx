@@ -247,15 +247,6 @@ export const TaskList: React.FC<TaskListProps> = ({
     [editingState, selectCell, startEditing]
   );
 
-  useEffect(() => {
-    if (horizontalContainerRef.current) {
-      horizontalContainerRef.current.scrollLeft = horizontalScroll;
-    }
-    if (headerRef.current) {
-      headerRef.current.scrollLeft = horizontalScroll;
-    }
-  }, [horizontalScroll, horizontalContainerRef, headerRef]);
-
   return (
     <div ref={taskListRef}>
       <div

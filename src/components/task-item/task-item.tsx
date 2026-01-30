@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { BarTask } from "../../types/bar-task";
 import { GanttContentMoveAction } from "../../types/gantt-task-actions";
 import {
@@ -37,6 +37,8 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     isSelected,
     rtl,
     onEventStart,
+    isProgressChangeable,
+    isDateChangeable,
   } = {
     ...props,
   };
@@ -47,22 +49,51 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const statusColor = getStatusColor(normalizedStatus);
   const statusBadgeText = getStatusBadgeText(normalizedStatus);
 
+  const taskItemProps = useMemo(
+    () => ({
+      task,
+      arrowIndent,
+      taskHeight,
+      isProgressChangeable,
+      isDateChangeable,
+      isDelete,
+      isSelected,
+      rtl,
+      onEventStart,
+    }),
+    [
+      task,
+      arrowIndent,
+      taskHeight,
+      isProgressChangeable,
+      isDateChangeable,
+      isDelete,
+      isSelected,
+      rtl,
+      onEventStart,
+    ]
+  );
+
   useEffect(() => {
     switch (task.typeInternal) {
       case "milestone":
-        setTaskItem(<Milestone {...props} />);
+        setTaskItem(<Milestone {...taskItemProps} />);
         break;
       case "project":
-        setTaskItem(<Project {...props} />);
+        setTaskItem(<Project {...taskItemProps} />);
         break;
       case "smalltask":
-        setTaskItem(<BarSmall {...props} />);
+        setTaskItem(<BarSmall {...taskItemProps} />);
         break;
       default:
-        setTaskItem(<Bar {...props} />);
+        setTaskItem(<Bar {...taskItemProps} />);
         break;
     }
-  }, [task, isSelected, props]);
+  }, [
+    task,
+    task.typeInternal,
+    taskItemProps,
+  ]);
 
   const getBBoxWidth = () => {
     if (!textRef.current || typeof textRef.current.getBBox !== "function") {
