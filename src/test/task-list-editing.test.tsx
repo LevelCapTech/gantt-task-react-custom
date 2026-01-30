@@ -89,12 +89,14 @@ describe("TaskList EditingStateContext", () => {
 
   it("does not allow startEditing when pending is true", () => {
     // Create a custom TaskList wrapper that can set pending state
+    type EditingTrigger = "dblclick" | "enter" | "key";
+    
     const TaskListWithPending: React.FC<any> = () => {
       const [editingState, setEditingState] = React.useState<{
         mode: "viewing" | "selected" | "editing";
         rowId: string | null;
         columnId: VisibleField | null;
-        trigger: any;
+        trigger: EditingTrigger | null;
         pending: boolean;
       }>({
         mode: "viewing",
@@ -114,7 +116,7 @@ describe("TaskList EditingStateContext", () => {
         });
       });
 
-      const startEditing = jest.fn((rowId: string, columnId: VisibleField, trigger: any) => {
+      const startEditing = jest.fn((rowId: string, columnId: VisibleField, trigger: EditingTrigger) => {
         if (editingState.pending) {
           // Note: Not logging to avoid test output pollution
           return;

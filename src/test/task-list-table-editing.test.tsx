@@ -200,6 +200,23 @@ describe("TaskListTable keyboard navigation", () => {
     expect(context.startEditing).not.toHaveBeenCalled();
   });
 
+  it("starts editing with double-click on cell", () => {
+    const context = createEditingContext("viewing", null, null);
+    
+    render(
+      <TaskListEditingStateContext.Provider value={context}>
+        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+      </TaskListEditingStateContext.Provider>
+    );
+
+    // Find a cell by its data attributes (the name cell for the first task)
+    const cells = document.querySelectorAll('[data-row-id="task-1"][data-column-id="name"]');
+    const nameCell = cells[0] as HTMLElement;
+    fireEvent.doubleClick(nameCell);
+
+    expect(context.startEditing).toHaveBeenCalledWith("task-1", "name", "dblclick");
+  });
+
   it("does not handle arrow keys when in editing mode", () => {
     const context = createEditingContext("editing", "task-1", "name");
     
@@ -499,5 +516,10 @@ describe("TaskListTable editable fields", () => {
     expect(screen.getByLabelText("終了日")).toBeInTheDocument();
     expect(screen.getByLabelText("工程")).toBeInTheDocument();
     expect(screen.getByLabelText("担当者")).toBeInTheDocument();
+    expect(screen.getByLabelText("予定開始")).toBeInTheDocument();
+    expect(screen.getByLabelText("予定終了")).toBeInTheDocument();
+    expect(screen.getByLabelText("予定工数（入力単位:時間）")).toBeInTheDocument();
+    expect(screen.getByLabelText("実績工数（入力単位:時間）")).toBeInTheDocument();
+    expect(screen.getByLabelText("ステータス")).toBeInTheDocument();
   });
 });
