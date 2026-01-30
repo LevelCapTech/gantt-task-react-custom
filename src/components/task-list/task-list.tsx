@@ -204,7 +204,6 @@ export const TaskList: React.FC<TaskListProps> = ({
   });
 
   const selectCell = useCallback((rowId: string, columnId: VisibleField) => {
-    console.debug("[TaskList] select cell", { rowId, columnId });
     setEditingState({
       mode: "selected",
       rowId,
@@ -217,14 +216,8 @@ export const TaskList: React.FC<TaskListProps> = ({
   const startEditing = useCallback(
     (rowId: string, columnId: VisibleField, trigger: EditingTrigger) => {
       if (editingState.pending) {
-        console.debug("[TaskList] ignore enter editing", {
-          reason: "pending",
-          rowId,
-          columnId,
-        });
         return;
       }
-      console.debug("[TaskList] enter editing", { rowId, columnId, trigger });
       setEditingState({
         mode: "editing",
         rowId,

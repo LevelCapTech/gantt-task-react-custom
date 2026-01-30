@@ -71,12 +71,10 @@ export const TaskListTableDefault: React.FC<{
     "actualEffort",
     "status",
   ]);
-  const columnIds = columns.map(column =>
-    typeof column === "string" ? column : column.id
-  );
+  const columnIds = columns.map(column => column.id);
 
   const resolveColumnId = (column: (typeof columns)[number]) =>
-    (typeof column === "string" ? column : column.id) as VisibleField;
+    column.id as VisibleField;
 
   const isCellEditable = (task: Task, columnId: VisibleField) => {
     const tableEditable = isEditable;
@@ -196,11 +194,6 @@ export const TaskListTableDefault: React.FC<{
     }
     if (event.key === "Enter") {
       if (!isCellEditable(selectedCell.task, selectedCell.columnId)) {
-        console.debug("[TaskList] ignore enter editing", {
-          reason: "not-editable",
-          rowId: selectedCell.task.id,
-          columnId: selectedCell.columnId,
-        });
         return;
       }
       event.preventDefault();
@@ -221,11 +214,6 @@ export const TaskListTableDefault: React.FC<{
       !event.altKey;
     if (isPrintableKey) {
       if (!isCellEditable(selectedCell.task, selectedCell.columnId)) {
-        console.debug("[TaskList] ignore enter editing", {
-          reason: "not-editable",
-          rowId: selectedCell.task.id,
-          columnId: selectedCell.columnId,
-        });
         return;
       }
       event.preventDefault();
@@ -233,10 +221,13 @@ export const TaskListTableDefault: React.FC<{
     }
   };
 
+  const hasSelectedCell =
+    editingState?.mode === "selected" && !!resolveSelectedCell();
+
   return (
     <div
       className={styles.taskListWrapper}
-      tabIndex={0}
+      tabIndex={hasSelectedCell ? -1 : 0}
       onKeyDown={handleWrapperKeyDown}
       style={{
         fontFamily: fontFamily,
@@ -265,15 +256,6 @@ export const TaskListTableDefault: React.FC<{
 
         const handleAssigneeChange = (value: string) => {
           onUpdateTask?.(t.id, { assignee: value || undefined });
-        };
-
-        const handleNameChange = (value: string) => {
-          onUpdateTask?.(t.id, { name: value });
-        };
-
-        const handleDateChange = (field: "start" | "end", value: string) => {
-          const parsed = parseDateFromInput(value);
-          onUpdateTask?.(t.id, { [field]: parsed });
         };
 
         const handlePlannedDateChange = (
@@ -307,44 +289,13 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {expanderSymbol}
                   </div>
-                  {isEditable ? (
-                    <input
-                      className={styles.taskListInput}
-                      type="text"
-                      aria-label="タスク名"
-                      value={t.name}
-                      onChange={event => handleNameChange(event.target.value)}
-                      placeholder="タスク名"
-                    />
-                  ) : (
-                    <div>{t.name}</div>
-                  )}
+                  <div>{t.name}</div>
                 </div>
               );
             case "start":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="date"
-                  aria-label="開始日"
-                  value={formatDate(t.start)}
-                  onChange={event => handleDateChange("start", event.target.value)}
-                />
-              ) : (
-                <span>{formatDate(t.start)}</span>
-              );
+              return <span>{formatDate(t.start)}</span>;
             case "end":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="date"
-                  aria-label="終了日"
-                  value={formatDate(t.end)}
-                  onChange={event => handleDateChange("end", event.target.value)}
-                />
-              ) : (
-                <span>{formatDate(t.end)}</span>
-              );
+              return <span>{formatDate(t.end)}</span>;
             case "process":
               return isEditable ? (
                 <select
@@ -496,11 +447,6 @@ export const TaskListTableDefault: React.FC<{
                   return;
                 }
                 if (!isCellEditable(t, columnId)) {
-                  console.debug("[TaskList] ignore enter editing", {
-                    reason: "not-editable",
-                    rowId: t.id,
-                    columnId,
-                  });
                   return;
                 }
                 startEditing(t.id, columnId, "dblclick");
@@ -520,11 +466,6 @@ export const TaskListTableDefault: React.FC<{
                     return;
                   }
                   if (!isCellEditable(t, columnId)) {
-                    console.debug("[TaskList] ignore enter editing", {
-                      reason: "not-editable",
-                      rowId: t.id,
-                      columnId,
-                    });
                     return;
                   }
                   event.preventDefault();
@@ -544,11 +485,6 @@ export const TaskListTableDefault: React.FC<{
                     return;
                   }
                   if (!isCellEditable(t, columnId)) {
-                    console.debug("[TaskList] ignore enter editing", {
-                      reason: "not-editable",
-                      rowId: t.id,
-                      columnId,
-                    });
                     return;
                   }
                   event.preventDefault();
@@ -568,14 +504,8 @@ export const TaskListTableDefault: React.FC<{
                   onDoubleClick={handleCellDoubleClick}
                   onKeyDown={handleCellKeyDown}
                   style={{
-                    minWidth:
-                      typeof column === "string"
-                        ? rowWidth
-                        : `${column.width}px`,
-                    maxWidth:
-                      typeof column === "string"
-                        ? rowWidth
-                        : `${column.width}px`,
+                    minWidth: `${column.width}px`,
+                    maxWidth: `${column.width}px`,
                   }}
                   title={columnId === "name" ? t.name : undefined}
                 >
