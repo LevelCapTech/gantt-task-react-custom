@@ -6,7 +6,7 @@ import { Task, VisibleField } from "../types/public-types";
 
 // Mock components
 const MockTaskListHeader: React.FC<any> = () => <div data-testid="mock-header">Header</div>;
-const MockTaskListTable: React.FC<any> = (props) => {
+const MockTaskListTable: React.FC<any> = () => {
   const context = React.useContext(TaskListEditingStateContext);
   return (
     <div data-testid="mock-table">
@@ -29,6 +29,7 @@ const MockTaskListTable: React.FC<any> = (props) => {
   );
 };
 
+// Using 2026 as test data - far enough in the future to avoid date-related issues
 const createMockTask = (id: string, name: string): Task => ({
   id,
   name,
@@ -88,12 +89,18 @@ describe("TaskList EditingStateContext", () => {
 
   it("does not allow startEditing when pending is true", () => {
     // Create a custom TaskList wrapper that can set pending state
-    const TaskListWithPending: React.FC<any> = (props: any) => {
-      const [editingState, setEditingState] = React.useState({
-        mode: "viewing" as const,
-        rowId: null as string | null,
-        columnId: null as VisibleField | null,
-        trigger: null as any,
+    const TaskListWithPending: React.FC<any> = () => {
+      const [editingState, setEditingState] = React.useState<{
+        mode: "viewing" | "selected" | "editing";
+        rowId: string | null;
+        columnId: VisibleField | null;
+        trigger: any;
+        pending: boolean;
+      }>({
+        mode: "viewing",
+        rowId: null,
+        columnId: null,
+        trigger: null,
         pending: false,
       });
 
@@ -109,11 +116,7 @@ describe("TaskList EditingStateContext", () => {
 
       const startEditing = jest.fn((rowId: string, columnId: VisibleField, trigger: any) => {
         if (editingState.pending) {
-          console.debug("[TaskList] ignore enter editing", {
-            reason: "pending",
-            rowId,
-            columnId,
-          });
+          // Note: Not logging to avoid test output pollution
           return;
         }
         setEditingState({
@@ -156,7 +159,7 @@ describe("TaskList EditingStateContext", () => {
       );
     };
 
-    render(<TaskListWithPending {...defaultProps} />);
+    render(<TaskListWithPending />);
     
     // Start editing task-1 (this will set pending to true)
     fireEvent.click(screen.getByTestId("start-edit-1"));

@@ -8,9 +8,14 @@ import { Task, VisibleField } from "../types/public-types";
 /* eslint-disable testing-library/no-container */
 /* eslint-disable testing-library/no-node-access */
 
+// Note: Using container.firstChild to access the wrapper div that handles keyboard events.
+// This is necessary because the wrapper div has tabIndex but no specific role or test-id
+// in the production code, and we're testing keyboard navigation at the wrapper level.
+
 const createMockTask = (id: string, name: string, overrides?: Partial<Task>): Task => ({
   id,
   name,
+  // Using 2026 as test data - far enough in the future to avoid date-related issues
   start: new Date(2026, 0, 1),
   end: new Date(2026, 0, 10),
   progress: 50,
@@ -31,7 +36,7 @@ const createEditingContext = (
       mode,
       rowId,
       columnId,
-      trigger: null as any,
+      trigger: null,
       pending: false,
     },
     selectCell,
@@ -328,7 +333,7 @@ describe("TaskListTable cell editing", () => {
     
     const callArgs = onUpdateTask.mock.calls[0][1] as any;
     expect(callArgs.start.getFullYear()).toBe(2026);
-    expect(callArgs.start.getMonth()).toBe(1); // February (0-indexed)
+    expect(callArgs.start.getMonth()).toBe(1); // February (0-indexed: 0=Jan, 1=Feb)
     expect(callArgs.start.getDate()).toBe(15);
   });
 
@@ -348,7 +353,7 @@ describe("TaskListTable cell editing", () => {
     
     const callArgs = onUpdateTask.mock.calls[0][1] as any;
     expect(callArgs.end.getFullYear()).toBe(2026);
-    expect(callArgs.end.getMonth()).toBe(2); // March (0-indexed)
+    expect(callArgs.end.getMonth()).toBe(2); // March (0-indexed: 0=Jan, 1=Feb, 2=Mar)
     expect(callArgs.end.getDate()).toBe(20);
   });
 
@@ -460,7 +465,7 @@ describe("TaskListTable cell editing", () => {
 });
 
 describe("TaskListTable editable fields", () => {
-  it("identifies correct editable fields", () => {
+  it("renders input elements for all editable fields when table is editable", () => {
     const props = {
       rowHeight: 40,
       rowWidth: "155px",
