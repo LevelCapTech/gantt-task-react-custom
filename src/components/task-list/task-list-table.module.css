@@ -21,28 +21,6 @@
   text-overflow: ellipsis;
   padding: 0 6px;
 }
-.taskListCell[data-state] {
-  position: relative;
-}
-.taskListCell[data-state]::after {
-  content: attr(data-state);
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  font-size: 10px;
-  line-height: 1;
-  padding: 2px 4px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.08);
-  color: #222;
-  pointer-events: none;
-}
-.taskListCell[aria-selected="true"] {
-  background-color: #e5f2ff;
-}
-.taskListCell[data-editing="true"] {
-  background-color: #ffe7b3;
-}
 .taskListNameWrapper {
   display: flex;
   align-items: center;

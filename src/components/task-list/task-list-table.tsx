@@ -482,15 +482,6 @@ export const TaskListTableDefault: React.FC<{
                 editingState?.mode !== "viewing" &&
                 editingState?.rowId === t.id &&
                 editingState?.columnId === columnId;
-              const isEditing =
-                editingState?.mode === "editing" &&
-                editingState?.rowId === t.id &&
-                editingState?.columnId === columnId;
-              const stateLabel = isEditing
-                ? "Editing"
-                : isSelected
-                ? "Selected"
-                : undefined;
               const handleCellClick = (
                 event: React.MouseEvent<HTMLDivElement>
               ) => {
@@ -571,8 +562,6 @@ export const TaskListTableDefault: React.FC<{
                   className={styles.taskListCell}
                   data-row-id={t.id}
                   data-column-id={columnId}
-                  data-editing={isEditing || undefined}
-                  data-state={stateLabel}
                   aria-selected={isSelected || undefined}
                   tabIndex={isSelected ? 0 : -1}
                   onClick={handleCellClick}
