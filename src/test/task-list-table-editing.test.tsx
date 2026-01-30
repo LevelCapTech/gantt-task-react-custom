@@ -348,10 +348,10 @@ describe("TaskListTable cell editing", () => {
       start: expect.any(Date),
     });
     
-    const callArgs = onUpdateTask.mock.calls[0][1] as any;
-    expect(callArgs.start.getFullYear()).toBe(2026);
-    expect(callArgs.start.getMonth()).toBe(1); // February (0-indexed: 0=Jan, 1=Feb)
-    expect(callArgs.start.getDate()).toBe(15);
+    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
+    expect(callArgs.start?.getFullYear()).toBe(2026);
+    expect(callArgs.start?.getMonth()).toBe(1); // February (0-indexed: 0=Jan, 1=Feb)
+    expect(callArgs.start?.getDate()).toBe(15);
   });
 
   it("calls onUpdateTask when end date is changed", () => {
@@ -368,10 +368,10 @@ describe("TaskListTable cell editing", () => {
       end: expect.any(Date),
     });
     
-    const callArgs = onUpdateTask.mock.calls[0][1] as any;
-    expect(callArgs.end.getFullYear()).toBe(2026);
-    expect(callArgs.end.getMonth()).toBe(2); // March (0-indexed: 0=Jan, 1=Feb, 2=Mar)
-    expect(callArgs.end.getDate()).toBe(20);
+    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
+    expect(callArgs.end?.getFullYear()).toBe(2026);
+    expect(callArgs.end?.getMonth()).toBe(2); // March (0-indexed: 0=Jan, 1=Feb, 2=Mar)
+    expect(callArgs.end?.getDate()).toBe(20);
   });
 
   it("renders select for process field when editable", () => {
@@ -498,10 +498,10 @@ describe("TaskListTable cell editing", () => {
       plannedStart: expect.any(Date),
     });
     
-    const callArgs = onUpdateTask.mock.calls[0][1] as any;
-    expect(callArgs.plannedStart.getFullYear()).toBe(2026);
-    expect(callArgs.plannedStart.getMonth()).toBe(3); // April (0-indexed: 0=Jan, 3=Apr)
-    expect(callArgs.plannedStart.getDate()).toBe(1);
+    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
+    expect(callArgs.plannedStart?.getFullYear()).toBe(2026);
+    expect(callArgs.plannedStart?.getMonth()).toBe(3); // April (0-indexed: 0=Jan, 3=Apr)
+    expect(callArgs.plannedStart?.getDate()).toBe(1);
   });
 
   it("calls onUpdateTask when plannedEnd date is changed", () => {
@@ -522,10 +522,10 @@ describe("TaskListTable cell editing", () => {
       plannedEnd: expect.any(Date),
     });
     
-    const callArgs = onUpdateTask.mock.calls[0][1] as any;
-    expect(callArgs.plannedEnd.getFullYear()).toBe(2026);
-    expect(callArgs.plannedEnd.getMonth()).toBe(4); // May (0-indexed: 0=Jan, 4=May)
-    expect(callArgs.plannedEnd.getDate()).toBe(15);
+    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
+    expect(callArgs.plannedEnd?.getFullYear()).toBe(2026);
+    expect(callArgs.plannedEnd?.getMonth()).toBe(4); // May (0-indexed: 0=Jan, 4=May)
+    expect(callArgs.plannedEnd?.getDate()).toBe(15);
   });
 
   it("calls onUpdateTask when plannedEffort is changed", () => {

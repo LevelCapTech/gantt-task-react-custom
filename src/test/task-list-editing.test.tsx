@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { TaskList, TaskListEditingStateContext } from "../components/task-list/task-list";
+import { TaskList, TaskListEditingStateContext, EditingTrigger } from "../components/task-list/task-list";
 import { Task, VisibleField } from "../types/public-types";
 
 // Mock components
@@ -89,8 +89,6 @@ describe("TaskList EditingStateContext", () => {
 
   it("does not allow startEditing when pending is true", () => {
     // Create a custom TaskList wrapper that can set pending state
-    type EditingTrigger = "dblclick" | "enter" | "key";
-    
     const TaskListWithPending: React.FC<any> = () => {
       const [editingState, setEditingState] = React.useState<{
         mode: "viewing" | "selected" | "editing";
