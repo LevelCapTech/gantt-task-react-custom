@@ -36,8 +36,10 @@ describe("Task data model extensions", () => {
 
     expect(screen.getByDisplayValue("開発")).toBeInTheDocument();
     expect(screen.getByDisplayValue("田中")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("2026-01-01")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("2026-01-03")).toBeInTheDocument();
+    const plannedStartInput = screen.getByLabelText("予定開始");
+    expect(plannedStartInput).toHaveValue("2026-01-01");
+    const plannedEndInput = screen.getByLabelText("予定終了");
+    expect(plannedEndInput).toHaveValue("2026-01-03");
     expect(screen.getByDisplayValue("16")).toBeInTheDocument();
     expect(screen.getByDisplayValue("8")).toBeInTheDocument();
 
