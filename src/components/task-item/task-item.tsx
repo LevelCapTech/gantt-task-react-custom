@@ -91,7 +91,6 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     }
   }, [
     task,
-    task.typeInternal,
     taskItemProps,
   ]);
 
