@@ -15,7 +15,7 @@ import {
   VisibleField,
 } from "../../types/public-types";
 
-type EditingTrigger = "dblclick" | "enter" | "key";
+export type EditingTrigger = "dblclick" | "enter" | "key";
 type EditingMode = "viewing" | "selected" | "editing";
 type EditingState = {
   mode: EditingMode;
