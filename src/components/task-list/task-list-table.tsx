@@ -60,6 +60,9 @@ export const TaskListTableDefault: React.FC<{
   const editingContext = React.useContext(TaskListEditingStateContext);
   const editingState = editingContext?.editingState;
   const editableFields = new Set<VisibleField>([
+    "name",
+    "start",
+    "end",
     "process",
     "assignee",
     "plannedStart",
@@ -264,6 +267,15 @@ export const TaskListTableDefault: React.FC<{
           onUpdateTask?.(t.id, { assignee: value || undefined });
         };
 
+        const handleNameChange = (value: string) => {
+          onUpdateTask?.(t.id, { name: value });
+        };
+
+        const handleDateChange = (field: "start" | "end", value: string) => {
+          const parsed = parseDateFromInput(value);
+          onUpdateTask?.(t.id, { [field]: parsed });
+        };
+
         const handlePlannedDateChange = (
           field: "plannedStart" | "plannedEnd",
           value: string
@@ -295,13 +307,44 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {expanderSymbol}
                   </div>
-                  <div>{t.name}</div>
+                  {isEditable ? (
+                    <input
+                      className={styles.taskListInput}
+                      type="text"
+                      aria-label="タスク名"
+                      value={t.name}
+                      onChange={event => handleNameChange(event.target.value)}
+                      placeholder="タスク名"
+                    />
+                  ) : (
+                    <div>{t.name}</div>
+                  )}
                 </div>
               );
             case "start":
-              return <span>{formatDate(t.start)}</span>;
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="date"
+                  aria-label="開始日"
+                  value={formatDate(t.start)}
+                  onChange={event => handleDateChange("start", event.target.value)}
+                />
+              ) : (
+                <span>{formatDate(t.start)}</span>
+              );
             case "end":
-              return <span>{formatDate(t.end)}</span>;
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="date"
+                  aria-label="終了日"
+                  value={formatDate(t.end)}
+                  onChange={event => handleDateChange("end", event.target.value)}
+                />
+              ) : (
+                <span>{formatDate(t.end)}</span>
+              );
             case "process":
               return isEditable ? (
                 <select
