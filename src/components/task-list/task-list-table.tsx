@@ -8,7 +8,7 @@ import {
   TaskStatus,
   VisibleField,
 } from "../../types/public-types";
-import { getDefaultWidth } from "./task-list";
+import { getDefaultWidth, TaskListEditingStateContext } from "./task-list";
 import {
   TASK_PROCESS_OPTIONS,
   TASK_STATUS_OPTIONS,
@@ -57,10 +57,187 @@ export const TaskListTableDefault: React.FC<{
       width: getDefaultWidth(field, rowWidth),
     }));
   const isEditable = !!onUpdateTask;
+  const editingContext = React.useContext(TaskListEditingStateContext);
+  const editingState = editingContext?.editingState;
+  const editableFields = new Set<VisibleField>([
+    "name",
+    "start",
+    "end",
+    "process",
+    "assignee",
+    "plannedStart",
+    "plannedEnd",
+    "plannedEffort",
+    "actualEffort",
+    "status",
+  ]);
+  const columnIds = columns.map(column =>
+    typeof column === "string" ? column : column.id
+  );
+
+  const resolveColumnId = (column: (typeof columns)[number]) =>
+    (typeof column === "string" ? column : column.id) as VisibleField;
+
+  const isCellEditable = (task: Task, columnId: VisibleField) => {
+    const tableEditable = isEditable;
+    const columnEditable = editableFields.has(columnId);
+    const rowEditable = task.isDisabled !== true;
+    const cellEditableByRule = true;
+    return tableEditable && columnEditable && rowEditable && cellEditableByRule;
+  };
+
+  const selectCell = editingContext?.selectCell;
+  const startEditing = editingContext?.startEditing;
+
+  const findCellPosition = () => {
+    if (!editingState || editingState.mode === "viewing") {
+      return null;
+    }
+    const rowIndex = tasks.findIndex(task => task.id === editingState.rowId);
+    const columnIndex = columnIds.indexOf(editingState.columnId as VisibleField);
+    if (rowIndex < 0 || columnIndex < 0) {
+      return null;
+    }
+    return { rowIndex, columnIndex };
+  };
+
+  const resolveSelectedCell = () => {
+    if (!editingState || editingState.mode !== "selected") {
+      return null;
+    }
+    const columnId = editingState.columnId as VisibleField | null;
+    if (!columnId || !columnIds.includes(columnId)) {
+      return null;
+    }
+    const task = tasks.find(row => row.id === editingState.rowId);
+    if (!task) {
+      return null;
+    }
+    return { task, columnId };
+  };
+
+  const moveSelection = (direction: "up" | "down" | "left" | "right") => {
+    if (!selectCell || tasks.length === 0 || columnIds.length === 0) {
+      return;
+    }
+    const position = findCellPosition();
+    if (!position) {
+      const firstColumn = columnIds[0];
+      selectCell(tasks[0].id, firstColumn);
+      return;
+    }
+    let { rowIndex, columnIndex } = position;
+    switch (direction) {
+      case "up":
+        rowIndex = Math.max(0, rowIndex - 1);
+        break;
+      case "down":
+        rowIndex = Math.min(tasks.length - 1, rowIndex + 1);
+        break;
+      case "left":
+        columnIndex = Math.max(0, columnIndex - 1);
+        break;
+      case "right":
+        columnIndex = Math.min(columnIds.length - 1, columnIndex + 1);
+        break;
+      default:
+        break;
+    }
+    selectCell(tasks[rowIndex].id, columnIds[columnIndex]);
+  };
+
+  const shouldIgnoreKeyEvent = (target: EventTarget) => {
+    if (!(target instanceof HTMLElement)) {
+      return false;
+    }
+    if (target.isContentEditable) {
+      return true;
+    }
+    const tagName = target.tagName;
+    return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+  };
+
+  const handleWrapperKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+    if (shouldIgnoreKeyEvent(event.target)) {
+      return;
+    }
+    if (editingState?.mode === "editing") {
+      return;
+    }
+    switch (event.key) {
+      case "ArrowUp":
+        event.preventDefault();
+        moveSelection("up");
+        return;
+      case "ArrowDown":
+        event.preventDefault();
+        moveSelection("down");
+        return;
+      case "ArrowLeft":
+        event.preventDefault();
+        moveSelection("left");
+        return;
+      case "ArrowRight":
+        event.preventDefault();
+        moveSelection("right");
+        return;
+      default:
+        break;
+    }
+    if (editingState?.mode !== "selected") {
+      return;
+    }
+    const selectedCell = resolveSelectedCell();
+    if (!selectedCell || !startEditing) {
+      return;
+    }
+    if (event.key === "Enter") {
+      if (!isCellEditable(selectedCell.task, selectedCell.columnId)) {
+        console.debug("[TaskList] ignore enter editing", {
+          reason: "not-editable",
+          rowId: selectedCell.task.id,
+          columnId: selectedCell.columnId,
+        });
+        return;
+      }
+      event.preventDefault();
+      startEditing(
+        selectedCell.task.id,
+        selectedCell.columnId,
+        "enter"
+      );
+      return;
+    }
+    if (event.key === "Escape") {
+      return;
+    }
+    const isPrintableKey =
+      event.key.length === 1 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey;
+    if (isPrintableKey) {
+      if (!isCellEditable(selectedCell.task, selectedCell.columnId)) {
+        console.debug("[TaskList] ignore enter editing", {
+          reason: "not-editable",
+          rowId: selectedCell.task.id,
+          columnId: selectedCell.columnId,
+        });
+        return;
+      }
+      event.preventDefault();
+      startEditing(selectedCell.task.id, selectedCell.columnId, "key");
+    }
+  };
 
   return (
     <div
       className={styles.taskListWrapper}
+      tabIndex={0}
+      onKeyDown={handleWrapperKeyDown}
       style={{
         fontFamily: fontFamily,
         fontSize: fontSize,
@@ -88,6 +265,15 @@ export const TaskListTableDefault: React.FC<{
 
         const handleAssigneeChange = (value: string) => {
           onUpdateTask?.(t.id, { assignee: value || undefined });
+        };
+
+        const handleNameChange = (value: string) => {
+          onUpdateTask?.(t.id, { name: value });
+        };
+
+        const handleDateChange = (field: "start" | "end", value: string) => {
+          const parsed = parseDateFromInput(value);
+          onUpdateTask?.(t.id, { [field]: parsed });
         };
 
         const handlePlannedDateChange = (
@@ -121,13 +307,44 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {expanderSymbol}
                   </div>
-                  <div>{t.name}</div>
+                  {isEditable ? (
+                    <input
+                      className={styles.taskListInput}
+                      type="text"
+                      aria-label="タスク名"
+                      value={t.name}
+                      onChange={event => handleNameChange(event.target.value)}
+                      placeholder="タスク名"
+                    />
+                  ) : (
+                    <div>{t.name}</div>
+                  )}
                 </div>
               );
             case "start":
-              return <span>{formatDate(t.start)}</span>;
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="date"
+                  aria-label="開始日"
+                  value={formatDate(t.start)}
+                  onChange={event => handleDateChange("start", event.target.value)}
+                />
+              ) : (
+                <span>{formatDate(t.start)}</span>
+              );
             case "end":
-              return <span>{formatDate(t.end)}</span>;
+              return isEditable ? (
+                <input
+                  className={styles.taskListInput}
+                  type="date"
+                  aria-label="終了日"
+                  value={formatDate(t.end)}
+                  onChange={event => handleDateChange("end", event.target.value)}
+                />
+              ) : (
+                <span>{formatDate(t.end)}</span>
+              );
             case "process":
               return isEditable ? (
                 <select
@@ -259,25 +476,113 @@ export const TaskListTableDefault: React.FC<{
             style={{ height: rowHeight }}
             key={`${t.id}row`}
           >
-            {columns.map(column => (
-              <div
-                key={`${t.id}-${typeof column === "string" ? column : column.id}`}
-                className={styles.taskListCell}
-                style={{
-                  minWidth:
-                    typeof column === "string" ? rowWidth : `${column.width}px`,
-                  maxWidth:
-                    typeof column === "string" ? rowWidth : `${column.width}px`,
-                }}
-                title={
-                  (typeof column === "string" ? column : column.id) === "name"
-                    ? t.name
-                    : undefined
+            {columns.map(column => {
+              const columnId = resolveColumnId(column);
+              const isSelected =
+                editingState?.mode !== "viewing" &&
+                editingState?.rowId === t.id &&
+                editingState?.columnId === columnId;
+              const handleCellClick = (
+                event: React.MouseEvent<HTMLDivElement>
+              ) => {
+                if (selectCell) {
+                  selectCell(t.id, columnId);
                 }
-              >
-                {renderCell(typeof column === "string" ? column : column.id)}
-              </div>
-            ))}
+                event.currentTarget.focus();
+              };
+
+              const handleCellDoubleClick = () => {
+                if (!startEditing) {
+                  return;
+                }
+                if (!isCellEditable(t, columnId)) {
+                  console.debug("[TaskList] ignore enter editing", {
+                    reason: "not-editable",
+                    rowId: t.id,
+                    columnId,
+                  });
+                  return;
+                }
+                startEditing(t.id, columnId, "dblclick");
+              };
+
+              const handleCellKeyDown = (
+                event: React.KeyboardEvent<HTMLDivElement>
+              ) => {
+                if (shouldIgnoreKeyEvent(event.target)) {
+                  return;
+                }
+                if (!isSelected || editingState?.mode !== "selected") {
+                  return;
+                }
+                if (event.key === "Enter") {
+                  if (!startEditing) {
+                    return;
+                  }
+                  if (!isCellEditable(t, columnId)) {
+                    console.debug("[TaskList] ignore enter editing", {
+                      reason: "not-editable",
+                      rowId: t.id,
+                      columnId,
+                    });
+                    return;
+                  }
+                  event.preventDefault();
+                  startEditing(t.id, columnId, "enter");
+                  return;
+                }
+                if (event.key === "Escape") {
+                  return;
+                }
+                const isPrintableKey =
+                  event.key.length === 1 &&
+                  !event.metaKey &&
+                  !event.ctrlKey &&
+                  !event.altKey;
+                if (isPrintableKey) {
+                  if (!startEditing) {
+                    return;
+                  }
+                  if (!isCellEditable(t, columnId)) {
+                    console.debug("[TaskList] ignore enter editing", {
+                      reason: "not-editable",
+                      rowId: t.id,
+                      columnId,
+                    });
+                    return;
+                  }
+                  event.preventDefault();
+                  startEditing(t.id, columnId, "key");
+                }
+              };
+
+              return (
+                <div
+                  key={`${t.id}-${columnId}`}
+                  className={styles.taskListCell}
+                  data-row-id={t.id}
+                  data-column-id={columnId}
+                  aria-selected={isSelected || undefined}
+                  tabIndex={isSelected ? 0 : -1}
+                  onClick={handleCellClick}
+                  onDoubleClick={handleCellDoubleClick}
+                  onKeyDown={handleCellKeyDown}
+                  style={{
+                    minWidth:
+                      typeof column === "string"
+                        ? rowWidth
+                        : `${column.width}px`,
+                    maxWidth:
+                      typeof column === "string"
+                        ? rowWidth
+                        : `${column.width}px`,
+                  }}
+                  title={columnId === "name" ? t.name : undefined}
+                >
+                  {renderCell(columnId)}
+                </div>
+              );
+            })}
           </div>
         );
       })}
