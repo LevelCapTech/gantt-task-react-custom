@@ -38,7 +38,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
     if (ganttContainerRef.current) {
       ganttContainerRef.current.scrollLeft = scrollX;
     }
-  }, [scrollX]);
+  }, [scrollX, ganttContainerRef]);
 
   return (
     <div

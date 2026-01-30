@@ -112,13 +112,15 @@ export const TaskList: React.FC<TaskListProps> = ({
   enableColumnDrag = true,
   onHorizontalScroll,
 }) => {
-  const horizontalContainerRef = bodyContainerRef ?? useRef<HTMLDivElement>(null);
-  const headerRef = headerContainerRef ?? useRef<HTMLDivElement>(null);
+  const internalHorizontalRef = useRef<HTMLDivElement>(null);
+  const internalHeaderRef = useRef<HTMLDivElement>(null);
+  const horizontalContainerRef = bodyContainerRef ?? internalHorizontalRef;
+  const headerRef = headerContainerRef ?? internalHeaderRef;
   useEffect(() => {
     if (horizontalContainerRef.current) {
       horizontalContainerRef.current.scrollTop = scrollY;
     }
-  }, [scrollY]);
+  }, [scrollY, horizontalContainerRef]);
 
   useEffect(() => {
     if (horizontalContainerRef.current) {
@@ -252,7 +254,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     if (headerRef.current) {
       headerRef.current.scrollLeft = horizontalScroll;
     }
-  }, [horizontalScroll]);
+  }, [horizontalScroll, horizontalContainerRef, headerRef]);
 
   return (
     <div ref={taskListRef}>
