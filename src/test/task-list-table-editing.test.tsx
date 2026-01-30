@@ -479,6 +479,147 @@ describe("TaskListTable cell editing", () => {
 
     expect(onUpdateTask).toHaveBeenCalledWith("task-1", { assignee: undefined });
   });
+
+  it("calls onUpdateTask when plannedStart date is changed", () => {
+    const onUpdateTask = jest.fn();
+    const propsWithPlanned = {
+      ...defaultProps,
+      visibleFields: ["name", "plannedStart"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
+    );
+
+    const plannedStartInput = screen.getByLabelText("予定開始");
+    fireEvent.change(plannedStartInput, { target: { value: "2026-04-01" } });
+
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", {
+      plannedStart: expect.any(Date),
+    });
+    
+    const callArgs = onUpdateTask.mock.calls[0][1] as any;
+    expect(callArgs.plannedStart.getFullYear()).toBe(2026);
+    expect(callArgs.plannedStart.getMonth()).toBe(3); // April (0-indexed: 0=Jan, 3=Apr)
+    expect(callArgs.plannedStart.getDate()).toBe(1);
+  });
+
+  it("calls onUpdateTask when plannedEnd date is changed", () => {
+    const onUpdateTask = jest.fn();
+    const propsWithPlanned = {
+      ...defaultProps,
+      visibleFields: ["name", "plannedEnd"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
+    );
+
+    const plannedEndInput = screen.getByLabelText("予定終了");
+    fireEvent.change(plannedEndInput, { target: { value: "2026-05-15" } });
+
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", {
+      plannedEnd: expect.any(Date),
+    });
+    
+    const callArgs = onUpdateTask.mock.calls[0][1] as any;
+    expect(callArgs.plannedEnd.getFullYear()).toBe(2026);
+    expect(callArgs.plannedEnd.getMonth()).toBe(4); // May (0-indexed: 0=Jan, 4=May)
+    expect(callArgs.plannedEnd.getDate()).toBe(15);
+  });
+
+  it("calls onUpdateTask when plannedEffort is changed", () => {
+    const onUpdateTask = jest.fn();
+    const propsWithEffort = {
+      ...defaultProps,
+      visibleFields: ["name", "plannedEffort"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+    );
+
+    const plannedEffortInput = screen.getByLabelText("予定工数（入力単位:時間）");
+    fireEvent.change(plannedEffortInput, { target: { value: "16" } });
+
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { plannedEffort: 16 });
+  });
+
+  it("calls onUpdateTask when actualEffort is changed", () => {
+    const onUpdateTask = jest.fn();
+    const propsWithEffort = {
+      ...defaultProps,
+      visibleFields: ["name", "actualEffort"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+    );
+
+    const actualEffortInput = screen.getByLabelText("実績工数（入力単位:時間）");
+    fireEvent.change(actualEffortInput, { target: { value: "8" } });
+
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { actualEffort: 8 });
+  });
+
+  it("calls onUpdateTask when status is changed", () => {
+    const onUpdateTask = jest.fn();
+    const taskWithStatus = createMockTask("task-1", "Task 1", { status: "未着手" });
+    const propsWithStatus = {
+      ...defaultProps,
+      tasks: [taskWithStatus],
+      visibleFields: ["name", "status"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithStatus} onUpdateTask={onUpdateTask} />
+    );
+
+    const statusSelect = screen.getByLabelText("ステータス");
+    fireEvent.change(statusSelect, { target: { value: "進行中" } });
+
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { status: "進行中" });
+  });
+
+  it("handles invalid plannedEffort input gracefully", () => {
+    const onUpdateTask = jest.fn();
+    const taskWithEffort = createMockTask("task-1", "Task 1", { plannedEffort: 8 });
+    const propsWithEffort = {
+      ...defaultProps,
+      tasks: [taskWithEffort],
+      visibleFields: ["name", "plannedEffort"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+    );
+
+    const plannedEffortInput = screen.getByLabelText("予定工数（入力単位:時間）");
+    fireEvent.change(plannedEffortInput, { target: { value: "" } });
+
+    // Should be called with undefined for empty input
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { plannedEffort: undefined });
+  });
+
+  it("handles invalid actualEffort input gracefully", () => {
+    const onUpdateTask = jest.fn();
+    const taskWithEffort = createMockTask("task-1", "Task 1", { actualEffort: 4 });
+    const propsWithEffort = {
+      ...defaultProps,
+      tasks: [taskWithEffort],
+      visibleFields: ["name", "actualEffort"] as VisibleField[],
+    };
+    
+    render(
+      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+    );
+
+    const actualEffortInput = screen.getByLabelText("実績工数（入力単位:時間）");
+    fireEvent.change(actualEffortInput, { target: { value: "-5" } });
+
+    // Should be called with undefined for negative input
+    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { actualEffort: undefined });
+  });
 });
 
 describe("TaskListTable editable fields", () => {
