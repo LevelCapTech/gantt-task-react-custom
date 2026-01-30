@@ -123,7 +123,7 @@ describe("Task/Schedule split handle", () => {
     const ganttPanel = await screen.findByTestId("gantt-panel");
     await waitFor(() => {
       expect(taskListPanel).toHaveStyle({ width: `${DEFAULT_TASK_LIST_WIDTH}px` });
-      expect(ganttPanel).toHaveStyle({ minWidth: `${MIN_PANE_WIDTH}px` });
     });
+    expect(ganttPanel).toHaveStyle({ minWidth: `${MIN_PANE_WIDTH}px` });
   });
 });

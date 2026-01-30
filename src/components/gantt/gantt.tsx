@@ -193,7 +193,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     milestoneBackgroundColor,
     milestoneBackgroundSelectedColor,
     rtl,
-    scrollX,
+    scrollXRight,
     onExpanderClick,
   ]);
 
@@ -339,18 +339,18 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           setScrollY(newScrollY);
           event.preventDefault();
         }
-        }
-      };
+      }
+    };
 
     // subscribe if scroll is necessary
-    wrapperRef.current?.addEventListener("wheel", handleWheel, {
+    const wrapperEl = wrapperRef.current;
+    wrapperEl?.addEventListener("wheel", handleWheel, {
       passive: false,
     });
     return () => {
-      wrapperRef.current?.removeEventListener("wheel", handleWheel);
+      wrapperEl?.removeEventListener("wheel", handleWheel);
     };
   }, [
-    wrapperRef,
     scrollY,
     scrollXRight,
     ganttHeight,
