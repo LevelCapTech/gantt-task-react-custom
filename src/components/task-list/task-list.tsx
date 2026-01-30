@@ -1,4 +1,11 @@
-import React, { SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  SyntheticEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { BarTask } from "../../types/bar-task";
 import {
   ColumnState,
@@ -7,6 +14,25 @@ import {
   Task,
   VisibleField,
 } from "../../types/public-types";
+
+type EditingTrigger = "dblclick" | "enter" | "key";
+type EditingMode = "viewing" | "selected" | "editing";
+type EditingState = {
+  mode: EditingMode;
+  rowId: string | null;
+  columnId: VisibleField | null;
+  trigger: EditingTrigger | null;
+  pending: boolean;
+};
+
+type EditingStateContextValue = {
+  editingState: EditingState;
+  selectCell: (rowId: string, columnId: VisibleField) => void;
+  startEditing: (rowId: string, columnId: VisibleField, trigger: EditingTrigger) => void;
+};
+
+export const TaskListEditingStateContext =
+  React.createContext<EditingStateContextValue | null>(null);
 
 export type TaskListProps = {
   headerHeight: number;
@@ -169,6 +195,56 @@ export const TaskList: React.FC<TaskListProps> = ({
     columnsState: visibleColumns,
   };
 
+  const [editingState, setEditingState] = useState<EditingState>({
+    mode: "viewing",
+    rowId: null,
+    columnId: null,
+    trigger: null,
+    pending: false,
+  });
+
+  const selectCell = useCallback((rowId: string, columnId: VisibleField) => {
+    console.debug("[TaskList] select cell", { rowId, columnId });
+    setEditingState({
+      mode: "selected",
+      rowId,
+      columnId,
+      trigger: null,
+      pending: false,
+    });
+  }, []);
+
+  const startEditing = useCallback(
+    (rowId: string, columnId: VisibleField, trigger: EditingTrigger) => {
+      if (editingState.pending) {
+        console.debug("[TaskList] ignore enter editing", {
+          reason: "pending",
+          rowId,
+          columnId,
+        });
+        return;
+      }
+      console.debug("[TaskList] enter editing", { rowId, columnId, trigger });
+      setEditingState({
+        mode: "editing",
+        rowId,
+        columnId,
+        trigger,
+        pending: false,
+      });
+    },
+    [editingState.pending]
+  );
+
+  const editingContextValue = useMemo(
+    () => ({
+      editingState,
+      selectCell,
+      startEditing,
+    }),
+    [editingState, selectCell, startEditing]
+  );
+
   useEffect(() => {
     if (horizontalContainerRef.current) {
       horizontalContainerRef.current.scrollLeft = horizontalScroll;
@@ -193,7 +269,9 @@ export const TaskList: React.FC<TaskListProps> = ({
         style={ganttHeight ? { height: ganttHeight } : {}}
         onScroll={onHorizontalScroll}
       >
-        <TaskListTable {...tableProps} />
+        <TaskListEditingStateContext.Provider value={editingContextValue}>
+          <TaskListTable {...tableProps} />
+        </TaskListEditingStateContext.Provider>
       </div>
     </div>
   );
