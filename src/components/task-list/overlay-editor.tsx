@@ -24,19 +24,18 @@ type OverlayEditorProps = {
   onRequestClose: () => void;
 };
 
+const NULL_CHAR_REGEX = new RegExp(String.fromCharCode(0), "g");
+
 const escapeSelectorValue = (value: string) => {
   if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
     return CSS.escape(value);
   }
-  const sanitized = value.replace(new RegExp(String.fromCharCode(0), "g"), "\uFFFD");
+  const sanitized = value.replace(NULL_CHAR_REGEX, "\uFFFD");
   return Array.from(sanitized)
     .map((char, index) => {
       const codePoint = char.codePointAt(0);
       if (codePoint === undefined) {
         return "";
-      }
-      if (char === "\u0000") {
-        return "\uFFFD";
       }
       if (
         (codePoint >= 0x1 && codePoint <= 0x1f) ||
