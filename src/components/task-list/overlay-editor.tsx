@@ -28,30 +28,33 @@ const escapeSelectorValue = (value: string) => {
   if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
     return CSS.escape(value);
   }
-  return value.replace(
-    /[\0-\x1f\x7f]|^-?\d|^-$|[^\w-]/g,
-    (char, offset) => {
+  const sanitized = value.replace(new RegExp(String.fromCharCode(0), "g"), "\uFFFD");
+  return Array.from(sanitized)
+    .map((char, index) => {
       const codePoint = char.codePointAt(0);
       if (codePoint === undefined) {
         return "";
       }
-      if (char === "\0") {
+      if (char === "\u0000") {
         return "\uFFFD";
       }
       if (
         (codePoint >= 0x1 && codePoint <= 0x1f) ||
         codePoint === 0x7f ||
-        (offset === 0 && codePoint >= 0x30 && codePoint <= 0x39) ||
-        (offset === 1 &&
+        (index === 0 && codePoint >= 0x30 && codePoint <= 0x39) ||
+        (index === 1 &&
           codePoint >= 0x30 &&
           codePoint <= 0x39 &&
-          value.charCodeAt(0) === 0x2d)
+          sanitized.charCodeAt(0) === 0x2d)
       ) {
         return `\\${codePoint.toString(16)} `;
       }
+      if (char === "-" || char === "_" || /[a-zA-Z0-9]/.test(char)) {
+        return char;
+      }
       return `\\${char}`;
-    }
-  );
+    })
+    .join("");
 };
 
 export const OverlayEditor: React.FC<OverlayEditorProps> = ({

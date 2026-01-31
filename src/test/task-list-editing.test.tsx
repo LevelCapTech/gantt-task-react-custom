@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { TaskList, TaskListEditingStateContext, EditingTrigger } from "../components/task-list/task-list";
 import { Task, VisibleField } from "../types/public-types";
@@ -76,7 +76,8 @@ describe("TaskList EditingStateContext", () => {
     expect(screen.getByTestId("editing-column")).toHaveTextContent("name");
   });
 
-  it("transitions from selected to editing when startEditing is called", () => {
+  it("transitions from selected to editing when startEditing is called", async () => {
+    const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     render(<TaskList {...defaultProps} />);
     
     fireEvent.click(screen.getByTestId("select-cell-btn"));
@@ -85,6 +86,14 @@ describe("TaskList EditingStateContext", () => {
     expect(screen.getByTestId("editing-mode")).toHaveTextContent("editing");
     expect(screen.getByTestId("editing-row")).toHaveTextContent("task-1");
     expect(screen.getByTestId("editing-column")).toHaveTextContent("name");
+    await waitFor(() =>
+      expect(logSpy).toHaveBeenCalledWith("[edit:start]", {
+        rowId: "task-1",
+        columnId: "name",
+        trigger: "enter",
+      })
+    );
+    logSpy.mockRestore();
   });
 
   it("does not allow startEditing when pending is true", () => {

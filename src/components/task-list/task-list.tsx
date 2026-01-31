@@ -205,6 +205,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     trigger: null,
     pending: false,
   });
+  const previousEditingStateRef = useRef<EditingState | null>(null);
 
   const closeEditing = useCallback(() => {
     setEditingState(prev => {
@@ -253,6 +254,34 @@ export const TaskList: React.FC<TaskListProps> = ({
     },
     [editingState.pending]
   );
+
+  useEffect(() => {
+    const previous = previousEditingStateRef.current;
+    if (previous) {
+      const logContext = {
+        rowId: editingState.rowId ?? previous.rowId,
+        columnId: editingState.columnId ?? previous.columnId,
+        trigger: editingState.trigger ?? previous.trigger,
+      };
+      if (previous.mode !== "editing" && editingState.mode === "editing") {
+        console.log("[edit:start]", logContext);
+      }
+      if (!previous.pending && editingState.pending) {
+        console.log("[commit:start]", logContext);
+      }
+      if (previous.pending && !editingState.pending) {
+        if (editingState.mode === "editing") {
+          console.log("[commit:reject]", logContext);
+        } else {
+          console.log("[commit:resolve]", logContext);
+        }
+      }
+      if (previous.mode === "editing" && editingState.mode !== "editing") {
+        console.log("[edit:end]", { ...logContext, to: editingState.mode });
+      }
+    }
+    previousEditingStateRef.current = editingState;
+  }, [editingState]);
 
   const editingContextValue = useMemo(
     () => ({
