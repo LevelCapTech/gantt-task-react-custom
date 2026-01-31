@@ -140,9 +140,9 @@ describe("OverlayEditor", () => {
 
     await waitFor(() => expect(rafSpy).toHaveBeenCalledTimes(1));
 
-    fireEvent.scroll(window);
-    fireEvent.scroll(window);
-    fireEvent.scroll(window);
+    for (let i = 0; i < 3; i += 1) {
+      fireEvent.scroll(window);
+    }
 
     expect(rafSpy).toHaveBeenCalledTimes(1);
     callbacks.forEach(callback => callback(0));

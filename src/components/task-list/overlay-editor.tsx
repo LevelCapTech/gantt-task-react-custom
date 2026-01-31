@@ -24,11 +24,34 @@ type OverlayEditorProps = {
   onRequestClose: () => void;
 };
 
-const resolveSelectorValue = (value: string) => {
+const escapeSelectorValue = (value: string) => {
   if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
     return CSS.escape(value);
   }
-  return value.replace(/[\\"]/g, match => `\\${match}`);
+  return value.replace(
+    /[\0-\x1f\x7f]|^-?\d|^-$|[^\w-]/g,
+    (char, offset) => {
+      const codePoint = char.codePointAt(0);
+      if (codePoint === undefined) {
+        return "";
+      }
+      if (char === "\0") {
+        return "\uFFFD";
+      }
+      if (
+        (codePoint >= 0x1 && codePoint <= 0x1f) ||
+        codePoint === 0x7f ||
+        (offset === 0 && codePoint >= 0x30 && codePoint <= 0x39) ||
+        (offset === 1 &&
+          codePoint >= 0x30 &&
+          codePoint <= 0x39 &&
+          value.charCodeAt(0) === 0x2d)
+      ) {
+        return `\\${codePoint.toString(16)} `;
+      }
+      return `\\${char}`;
+    }
+  );
 };
 
 export const OverlayEditor: React.FC<OverlayEditorProps> = ({
@@ -53,8 +76,8 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (!taskListRef.current || !editingState.rowId || !editingState.columnId) {
       return null;
     }
-    const rowId = resolveSelectorValue(editingState.rowId);
-    const columnId = resolveSelectorValue(editingState.columnId);
+    const rowId = escapeSelectorValue(editingState.rowId);
+    const columnId = escapeSelectorValue(editingState.columnId);
     return taskListRef.current.querySelector<HTMLElement>(
       `[data-row-id="${rowId}"][data-column-id="${columnId}"]`
     );
@@ -130,7 +153,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
         passive: true,
       })
     );
-    const RO =
+    const ResizeObserverConstructor =
       typeof window !== "undefined"
         ? (
             window as typeof window & {
@@ -141,7 +164,9 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
             }
           ).ResizeObserver
         : undefined;
-    const resizeObserver = RO ? new RO(() => scheduleRectUpdate()) : null;
+    const resizeObserver = ResizeObserverConstructor
+      ? new ResizeObserverConstructor(() => scheduleRectUpdate())
+      : null;
     const observedElements = [
       targetElement,
       taskListRef.current,
