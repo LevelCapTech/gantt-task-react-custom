@@ -21,6 +21,12 @@
   text-overflow: ellipsis;
   padding: 0 6px;
 }
+
+.overlayEditor {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: auto;
+}
 .taskListNameWrapper {
   display: flex;
   align-items: center;

@@ -14,6 +14,7 @@ import {
   Task,
   VisibleField,
 } from "../../types/public-types";
+import { OverlayEditor } from "./overlay-editor";
 
 export type EditingTrigger = "dblclick" | "enter" | "key";
 type EditingMode = "viewing" | "selected" | "editing";
@@ -205,6 +206,21 @@ export const TaskList: React.FC<TaskListProps> = ({
     pending: false,
   });
 
+  const closeEditing = useCallback(() => {
+    setEditingState(prev => {
+      if (prev.mode === "viewing") {
+        return prev;
+      }
+      return {
+        mode: "viewing",
+        rowId: null,
+        columnId: null,
+        trigger: null,
+        pending: false,
+      };
+    });
+  }, []);
+
   const selectCell = useCallback((rowId: string, columnId: VisibleField) => {
     console.debug("[TaskList] select cell", { rowId, columnId });
     setEditingState({
@@ -249,6 +265,13 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div ref={taskListRef}>
+      <OverlayEditor
+        editingState={editingState}
+        taskListRef={taskListRef}
+        headerContainerRef={headerRef}
+        bodyContainerRef={horizontalContainerRef}
+        onRequestClose={closeEditing}
+      />
       <div
         ref={headerRef}
         onScroll={onHorizontalScroll}
