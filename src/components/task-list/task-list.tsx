@@ -258,28 +258,19 @@ export const TaskList: React.FC<TaskListProps> = ({
   useEffect(() => {
     const previous = previousEditingStateRef.current;
     if (previous) {
+      const buildLogContext = () => ({
+        rowId: editingState.rowId ?? previous.rowId,
+        columnId: editingState.columnId ?? previous.columnId,
+        trigger: editingState.trigger ?? previous.trigger,
+      });
       if (previous.mode !== "editing" && editingState.mode === "editing") {
-        const logContext = {
-          rowId: editingState.rowId ?? previous.rowId,
-          columnId: editingState.columnId ?? previous.columnId,
-          trigger: editingState.trigger ?? previous.trigger,
-        };
-        console.log("[edit:start]", logContext);
+        console.log("[edit:start]", buildLogContext());
       }
       if (!previous.pending && editingState.pending) {
-        const logContext = {
-          rowId: editingState.rowId ?? previous.rowId,
-          columnId: editingState.columnId ?? previous.columnId,
-          trigger: editingState.trigger ?? previous.trigger,
-        };
-        console.log("[commit:start]", logContext);
+        console.log("[commit:start]", buildLogContext());
       }
       if (previous.pending && !editingState.pending) {
-        const logContext = {
-          rowId: editingState.rowId ?? previous.rowId,
-          columnId: editingState.columnId ?? previous.columnId,
-          trigger: editingState.trigger ?? previous.trigger,
-        };
+        const logContext = buildLogContext();
         if (editingState.mode === "editing") {
           console.log("[commit:reject]", logContext);
         } else {
@@ -287,12 +278,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         }
       }
       if (previous.mode === "editing" && editingState.mode !== "editing") {
-        const logContext = {
-          rowId: editingState.rowId ?? previous.rowId,
-          columnId: editingState.columnId ?? previous.columnId,
-          trigger: editingState.trigger ?? previous.trigger,
-        };
-        console.log("[edit:end]", { ...logContext, to: editingState.mode });
+        console.log("[edit:end]", { ...buildLogContext(), to: editingState.mode });
       }
     }
     previousEditingStateRef.current = editingState;

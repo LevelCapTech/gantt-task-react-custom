@@ -25,6 +25,7 @@ type OverlayEditorProps = {
 };
 
 const NULL_CHAR_REGEX = new RegExp(String.fromCharCode(0), "g");
+const ALPHANUMERIC_REGEX = /[a-zA-Z0-9]/;
 
 const escapeSelectorValue = (value: string) => {
   if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
@@ -48,7 +49,7 @@ const escapeSelectorValue = (value: string) => {
       ) {
         return `\\${codePoint.toString(16)} `;
       }
-      if (char === "-" || char === "_" || /[a-zA-Z0-9]/.test(char)) {
+      if (char === "-" || char === "_" || ALPHANUMERIC_REGEX.test(char)) {
         return char;
       }
       return `\\${char}`;
