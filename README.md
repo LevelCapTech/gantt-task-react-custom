@@ -62,9 +62,14 @@ You may handle actions
 
 ```
 cd ./example
+rm -rf node_modules
 npm install
 npm start
 ```
+
+Notes:
+- Do not use `npm link` or manual symlinks for this repo; it can create duplicate React instances and cause "Invalid hook call".
+- If you changed the root `package.json` or build config, follow `docs/REBUILD.md` for the full rebuild flow.
 
 ## Gantt Configuration
 

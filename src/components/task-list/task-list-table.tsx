@@ -485,6 +485,13 @@ export const TaskListTableDefault: React.FC<{
               const handleCellClick = (
                 event: React.MouseEvent<HTMLDivElement>
               ) => {
+                if (editingState?.mode === "editing") {
+                  const pending = editingState.pending;
+                  console.log("[edit:select]", { rowId: t.id, columnId, pending });
+                  if (pending) {
+                    return;
+                  }
+                }
                 if (selectCell) {
                   selectCell(t.id, columnId);
                 }

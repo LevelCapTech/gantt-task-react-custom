@@ -50,9 +50,13 @@ yarn install
 yarn start
 ```
 
-#### 一括で実行する婆
+※ `npm link` や手動 symlink は React の二重読み込みを誘発しやすいので避ける。  
+　使ってしまった場合は link を解除して `node_modules` を入れ直す。
+
+#### 一括で実行する場合
 
 ```bash
+cd example
 rm -rf node_modules && yarn install && yarn start
 ```
 

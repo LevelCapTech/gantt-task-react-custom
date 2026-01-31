@@ -62,6 +62,34 @@ describe("TaskListTable keyboard navigation", () => {
     effortDisplayUnit: "MH" as const,
   };
 
+  it("ignores cell selection when editing is pending", () => {
+    const selectCell = jest.fn();
+    const context = {
+      editingState: {
+        mode: "editing" as const,
+        rowId: "task-1",
+        columnId: "name" as VisibleField,
+        trigger: "enter" as const,
+        pending: true,
+      },
+      selectCell,
+      startEditing: jest.fn(),
+    };
+
+    render(
+      <TaskListEditingStateContext.Provider value={context}>
+        <TaskListTableDefault {...defaultProps} />
+      </TaskListEditingStateContext.Provider>
+    );
+
+    const nameCell = document.querySelector(
+      '[data-row-id="task-2"][data-column-id="name"]'
+    ) as HTMLElement;
+    fireEvent.click(nameCell);
+
+    expect(selectCell).not.toHaveBeenCalled();
+  });
+
   it("moves selection down with ArrowDown key", () => {
     const context = createEditingContext("selected", "task-1", "name");
     

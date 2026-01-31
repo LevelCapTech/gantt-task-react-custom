@@ -14,6 +14,7 @@ import {
   Task,
   VisibleField,
 } from "../../types/public-types";
+import { OverlayEditor } from "./overlay-editor";
 
 export type EditingTrigger = "dblclick" | "enter" | "key";
 type EditingMode = "viewing" | "selected" | "editing";
@@ -204,6 +205,22 @@ export const TaskList: React.FC<TaskListProps> = ({
     trigger: null,
     pending: false,
   });
+  const previousEditingStateRef = useRef<EditingState | null>(null);
+
+  const closeEditing = useCallback(() => {
+    setEditingState(prev => {
+      if (prev.mode === "viewing") {
+        return prev;
+      }
+      return {
+        mode: "viewing",
+        rowId: null,
+        columnId: null,
+        trigger: null,
+        pending: false,
+      };
+    });
+  }, []);
 
   const selectCell = useCallback((rowId: string, columnId: VisibleField) => {
     console.debug("[TaskList] select cell", { rowId, columnId });
@@ -238,6 +255,35 @@ export const TaskList: React.FC<TaskListProps> = ({
     [editingState.pending]
   );
 
+  useEffect(() => {
+    const previous = previousEditingStateRef.current;
+    if (previous) {
+      const buildLogContext = () => ({
+        rowId: editingState.rowId ?? previous.rowId,
+        columnId: editingState.columnId ?? previous.columnId,
+        trigger: editingState.trigger ?? previous.trigger,
+      });
+      if (previous.mode !== "editing" && editingState.mode === "editing") {
+        console.log("[edit:start]", buildLogContext());
+      }
+      if (!previous.pending && editingState.pending) {
+        console.log("[commit:start]", buildLogContext());
+      }
+      if (previous.pending && !editingState.pending) {
+        const logContext = buildLogContext();
+        if (editingState.mode === "editing") {
+          console.log("[commit:reject]", logContext);
+        } else {
+          console.log("[commit:resolve]", logContext);
+        }
+      }
+      if (previous.mode === "editing" && editingState.mode !== "editing") {
+        console.log("[edit:end]", { ...buildLogContext(), to: editingState.mode });
+      }
+    }
+    previousEditingStateRef.current = editingState;
+  }, [editingState]);
+
   const editingContextValue = useMemo(
     () => ({
       editingState,
@@ -249,6 +295,13 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div ref={taskListRef}>
+      <OverlayEditor
+        editingState={editingState}
+        taskListRef={taskListRef}
+        headerContainerRef={headerRef}
+        bodyContainerRef={horizontalContainerRef}
+        onRequestClose={closeEditing}
+      />
       <div
         ref={headerRef}
         onScroll={onHorizontalScroll}
