@@ -91,17 +91,7 @@
   - 編集確定後もセル表示が変わらない（`tasks` が更新されないため）。
 - 参考: `onTaskUpdate` は `setTasks` により状態更新するが、`onCellCommit` からは直接呼ばれていない（`example/src/App.tsx:L147-L150`）。
 
-### 8.7 仮説
-- H1: `onCellCommit` が no-op の場合、編集確定後に `tasks` が更新されずセル表示が更新されない。
-  - 編集は `onUpdateTask` と `onCellCommit` の両方が `undefined` ではない場合に有効化される。
-  - `onUpdateTask` は編集可否の判定に使われ、`onCellCommit` は確定処理のみを担う。
-  - そのため両者は直接連携しない（`src/components/task-list/task-list-table.tsx:L53-L55`, `src/components/task-list/task-list.tsx:L249-L275`）。
-- H2: 編集開始はダブルクリック/Enter/キー入力だが、コミット時の `CellCommitTrigger` が現状 `enter` のみのため、編集開始の起点の違いを `onCellCommit` 側で判別できない。
-  - `CellCommitTrigger` は型定義上 `enter` のみで、`OverlayEditor` も `enter` を送出（`src/types/public-types.ts:L18-L25`, `src/components/task-list/overlay-editor.tsx:L302-L311`）。
-- H3: `headerProps`/`tableProps` の再生成が頻繁な場合、スクロールや選択で再レンダーが増える可能性がある。
-  - props/columnIds は memo 化されていない（`src/components/task-list/task-list.tsx:L181-L206`, `src/components/task-list/task-list-table.tsx:L47-L74`）。
-
-### 8.8 推奨事項
-- 例: `onCellCommit` で `setTasks`/`onTaskUpdate` を呼び、編集値を反映する実装例をドキュメント化する。
-- 編集起点を識別したい場合は `CellCommitTrigger` を拡張し、`editingState.trigger` を `onCellCommit` に渡す設計を検討する。
-- 大規模データで性能問題が出る場合は `tableProps`/`columnIds` の `useMemo` 化や `React.memo` を検討する。
+### 8.7 onCellCommit API 契約（仕様）
+- `onCellCommit` は編集確定を通知するだけで、ライブラリ側で `tasks` や UI を更新しない。
+- ホストアプリは入力値の検証・永続化を行い、更新後の `tasks` を新しい props として渡す。
+- UI の表示更新はホスト側の `tasks` 更新に連動し、`tasks` が更新されない場合は表示も変わらない。

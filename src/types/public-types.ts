@@ -121,6 +121,8 @@ export interface EventOption {
   onTaskUpdate?: (taskId: string, updatedFields: Partial<Task>) => void;
   /**
    * Invokes when a task list cell edit is committed.
+   * Notification only; the library does not update tasks or UI.
+   * Host must validate/persist, update tasks, and pass new props for rerender.
    */
   onCellCommit?: (payload: CellCommitPayload) => Promise<void>;
 }
