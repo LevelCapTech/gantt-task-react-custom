@@ -282,19 +282,11 @@ export const TaskListTableDefault: React.FC<{
               return <span>{formatDate(t.plannedEnd)}</span>;
             case "plannedEffort":
               return (
-                <span>
-                  {allowEditing
-                    ? t.plannedEffort ?? ""
-                    : formatEffort(t.plannedEffort, effortDisplayUnit)}
-                </span>
+                <span>{formatEffort(t.plannedEffort, effortDisplayUnit)}</span>
               );
             case "actualEffort":
               return (
-                <span>
-                  {allowEditing
-                    ? t.actualEffort ?? ""
-                    : formatEffort(t.actualEffort, effortDisplayUnit)}
-                </span>
+                <span>{formatEffort(t.actualEffort, effortDisplayUnit)}</span>
               );
             case "status":
               return (
