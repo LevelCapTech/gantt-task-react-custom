@@ -4,13 +4,19 @@ import "@testing-library/jest-dom";
 import { OverlayEditor } from "../components/task-list/overlay-editor";
 import { VisibleField } from "../types/public-types";
 
-const editingState = {
+const baseEditingState = {
   mode: "editing" as const,
   rowId: "task-1",
   columnId: "name" as VisibleField,
   pending: false,
   errorMessage: null,
 };
+
+const createEditingState = (columnId: VisibleField, pending = false) => ({
+  ...baseEditingState,
+  columnId,
+  pending,
+});
 
 const createRefs = () => ({
   taskListRef: React.createRef<HTMLDivElement>(),
@@ -52,7 +58,7 @@ describe("OverlayEditor", () => {
           </div>
         </div>
           <OverlayEditor
-            editingState={editingState}
+            editingState={baseEditingState}
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
@@ -96,7 +102,7 @@ describe("OverlayEditor", () => {
         <div ref={headerRef} />
         <div ref={bodyRef} />
           <OverlayEditor
-            editingState={editingState}
+            editingState={baseEditingState}
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
@@ -136,7 +142,7 @@ describe("OverlayEditor", () => {
           </div>
         </div>
           <OverlayEditor
-            editingState={editingState}
+            editingState={baseEditingState}
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
@@ -155,6 +161,99 @@ describe("OverlayEditor", () => {
 
     expect(rafSpy).toHaveBeenCalledTimes(1);
     callbacks.forEach(callback => callback(0));
+
+    rectSpy.mockRestore();
+    rafSpy.mockRestore();
+  });
+
+  it.each([
+    ["name", "INPUT", "text", "タスク名"],
+    ["start", "INPUT", "date", "2026-01-01"],
+    ["plannedEffort", "INPUT", "number", 8],
+    ["process", "SELECT", "", "レビュー"],
+    ["status", "SELECT", "", "完了"],
+  ])(
+    "renders %s input as %s",
+    async (columnId, tagName, expectedType, cellValue) => {
+      const rectSpy = jest
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockReturnValue(rect as DOMRect);
+      const rafSpy = jest
+        .spyOn(window, "requestAnimationFrame")
+        .mockImplementation(callback => {
+          callback(0);
+          return 1;
+        });
+      const { taskListRef, headerRef, bodyRef } = createRefs();
+
+      render(
+        <div ref={taskListRef}>
+          <div ref={headerRef} />
+          <div ref={bodyRef}>
+            <div data-row-id="task-1" data-column-id={columnId}>
+              {cellValue}
+            </div>
+          </div>
+          <OverlayEditor
+            editingState={createEditingState(columnId as VisibleField)}
+            taskListRef={taskListRef}
+            headerContainerRef={headerRef}
+            bodyContainerRef={bodyRef}
+            onRequestClose={jest.fn()}
+            onCommit={jest.fn().mockResolvedValue(undefined)}
+            onCancel={jest.fn()}
+          />
+        </div>
+      );
+
+      const overlayInput = await screen.findByTestId("overlay-editor-input");
+
+      expect(overlayInput.tagName).toBe(tagName);
+      const actualType = overlayInput.getAttribute("type") ?? "";
+      expect(actualType).toBe(expectedType);
+      expect(overlayInput).toHaveValue(cellValue);
+
+      rectSpy.mockRestore();
+      rafSpy.mockRestore();
+    }
+  );
+
+  it("disables select input when pending", async () => {
+    const rectSpy = jest
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue(rect as DOMRect);
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+    const { taskListRef, headerRef, bodyRef } = createRefs();
+
+    render(
+      <div ref={taskListRef}>
+        <div ref={headerRef} />
+        <div ref={bodyRef}>
+          <div data-row-id="task-1" data-column-id="process">
+            レビュー
+          </div>
+        </div>
+        <OverlayEditor
+          editingState={createEditingState("process", true)}
+          taskListRef={taskListRef}
+          headerContainerRef={headerRef}
+          bodyContainerRef={bodyRef}
+          onRequestClose={jest.fn()}
+          onCommit={jest.fn().mockResolvedValue(undefined)}
+          onCancel={jest.fn()}
+        />
+      </div>
+    );
+
+    const overlayInput = await screen.findByTestId("overlay-editor-input");
+
+    expect(overlayInput.tagName).toBe("SELECT");
+    expect(overlayInput).toBeDisabled();
 
     rectSpy.mockRestore();
     rafSpy.mockRestore();
