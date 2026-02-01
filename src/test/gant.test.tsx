@@ -18,6 +18,7 @@ describe("gantt", () => {
             type: "task",
           },
         ]}
+        onCellCommit={async () => {}}
       />
     );
   });

@@ -32,13 +32,14 @@ const createEditingContext = (
   const startEditing = jest.fn();
   
   return {
-    editingState: {
-      mode,
-      rowId,
-      columnId,
-      trigger: null,
-      pending: false,
-    },
+      editingState: {
+        mode,
+        rowId,
+        columnId,
+        trigger: null,
+        pending: false,
+        errorMessage: null,
+      },
     selectCell,
     startEditing,
   };
@@ -60,6 +61,7 @@ describe("TaskListTable keyboard navigation", () => {
     onExpanderClick: jest.fn(),
     visibleFields: ["name", "start", "end"] as VisibleField[],
     effortDisplayUnit: "MH" as const,
+    onCellCommit: jest.fn().mockResolvedValue(undefined),
   };
 
   it("ignores cell selection when editing is pending", () => {
@@ -71,6 +73,7 @@ describe("TaskListTable keyboard navigation", () => {
         columnId: "name" as VisibleField,
         trigger: "enter" as const,
         pending: true,
+        errorMessage: null,
       },
       selectCell,
       startEditing: jest.fn(),
@@ -311,13 +314,14 @@ describe("TaskListTable cell editing", () => {
     onExpanderClick: jest.fn(),
     visibleFields: ["name", "start", "end", "process", "assignee"] as VisibleField[],
     effortDisplayUnit: "MH" as const,
+    onCellCommit: jest.fn().mockResolvedValue(undefined),
   };
 
   it("renders input for name field when editable", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const nameInput = screen.getByLabelText("タスク名");
@@ -329,7 +333,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const startInput = screen.getByLabelText("開始日");
@@ -341,7 +345,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const endInput = screen.getByLabelText("終了日");
@@ -353,7 +357,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const nameInput = screen.getByLabelText("タスク名");
@@ -366,7 +370,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const startInput = screen.getByLabelText("開始日");
@@ -386,7 +390,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const endInput = screen.getByLabelText("終了日");
@@ -406,7 +410,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const processSelect = screen.getByLabelText("工程");
@@ -423,7 +427,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithProcess} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithProcess} onUpdateTask={onUpdateTask} />
     );
 
     const processSelect = screen.getByLabelText("工程");
@@ -436,7 +440,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const assigneeInput = screen.getByLabelText("担当者");
@@ -448,7 +452,7 @@ describe("TaskListTable cell editing", () => {
     const onUpdateTask = jest.fn();
     
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
     );
 
     const assigneeInput = screen.getByLabelText("担当者");
@@ -459,7 +463,7 @@ describe("TaskListTable cell editing", () => {
 
   it("does not render inputs when not editable", () => {
     render(
-      <TaskListTableDefault {...defaultProps} />
+        <TaskListTableDefault {...defaultProps} />
     );
 
     // Should not have input elements
@@ -470,7 +474,7 @@ describe("TaskListTable cell editing", () => {
 
   it("renders static text for name when not editable", () => {
     render(
-      <TaskListTableDefault {...defaultProps} />
+        <TaskListTableDefault {...defaultProps} />
     );
 
     expect(screen.getByText("Task 1")).toBeInTheDocument();
@@ -516,7 +520,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
     );
 
     const plannedStartInput = screen.getByLabelText("予定開始");
@@ -540,7 +544,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
     );
 
     const plannedEndInput = screen.getByLabelText("予定終了");
@@ -564,7 +568,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
     );
 
     const plannedEffortInput = screen.getByLabelText("予定工数（入力単位:時間）");
@@ -581,7 +585,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
     );
 
     const actualEffortInput = screen.getByLabelText("実績工数（入力単位:時間）");
@@ -600,7 +604,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithStatus} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithStatus} onUpdateTask={onUpdateTask} />
     );
 
     const statusSelect = screen.getByLabelText("ステータス");
@@ -619,7 +623,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
     );
 
     const plannedEffortInput = screen.getByLabelText("予定工数（入力単位:時間）");
@@ -639,7 +643,7 @@ describe("TaskListTable cell editing", () => {
     };
     
     render(
-      <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
+        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
     );
 
     const actualEffortInput = screen.getByLabelText("実績工数（入力単位:時間）");
@@ -675,9 +679,12 @@ describe("TaskListTable editable fields", () => {
       ] as VisibleField[],
       effortDisplayUnit: "MH" as const,
       onUpdateTask: jest.fn(),
+      onCellCommit: jest.fn().mockResolvedValue(undefined),
     };
 
-    render(<TaskListTableDefault {...props} />);
+    render(
+      <TaskListTableDefault {...props} />
+    );
 
     // All editable fields should have inputs or selects
     expect(screen.getByLabelText("タスク名")).toBeInTheDocument();

@@ -207,6 +207,7 @@ const App = () => {
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
+        onCellCommit={async () => {}}
         effortDisplayUnit={effortUnit}
       />
       <h3>高さ制限ありのガントチャート</h3>
@@ -227,6 +228,7 @@ const App = () => {
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
+        onCellCommit={async () => {}}
         effortDisplayUnit={effortUnit}
       />
     </div>

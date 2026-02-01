@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./task-list-table.module.css";
-import { VisibleField } from "../../types/public-types";
+import { CellCommitTrigger, VisibleField } from "../../types/public-types";
 
 type EditingState = {
   mode: "viewing" | "selected" | "editing";
   rowId: string | null;
   columnId: VisibleField | null;
+  pending: boolean;
+  errorMessage: string | null;
 };
 
 type OverlayRect = {
@@ -21,7 +23,8 @@ type OverlayEditorProps = {
   taskListRef: React.RefObject<HTMLDivElement>;
   headerContainerRef?: React.RefObject<HTMLDivElement>;
   bodyContainerRef?: React.RefObject<HTMLDivElement>;
-  onRequestClose: () => void;
+  onCommit: (value: string, trigger: CellCommitTrigger) => Promise<void>;
+  onCancel: (reason: "escape" | "nochange-blur" | "unmounted") => void;
 };
 
 const NULL_CHAR_REGEX = new RegExp(String.fromCharCode(0), "g");
@@ -62,10 +65,14 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   taskListRef,
   headerContainerRef,
   bodyContainerRef,
-  onRequestClose,
+  onCommit,
+  onCancel,
 }) => {
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const defaultValueRef = useRef("");
+  const compositionRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
 
   const portalRoot = useMemo(() => {
@@ -73,6 +80,17 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
       return null;
     }
     return document.body;
+  }, []);
+
+  const resolveDefaultValue = useCallback((target: HTMLElement) => {
+    const input = target.querySelector("input, textarea, select");
+    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+      return input.value;
+    }
+    if (input instanceof HTMLSelectElement) {
+      return input.value;
+    }
+    return (target.textContent ?? "").trim();
   }, []);
 
   const findTargetElement = useCallback(() => {
@@ -96,10 +114,15 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (!target) {
       setRect(null);
       setTargetElement(null);
-      onRequestClose();
+      onCancel("unmounted");
       return;
     }
     if (targetElement !== target) {
+      const nextDefaultValue = resolveDefaultValue(target);
+      defaultValueRef.current = nextDefaultValue;
+      if (inputRef.current) {
+        inputRef.current.value = nextDefaultValue;
+      }
       setTargetElement(target);
     }
     const nextRect = target.getBoundingClientRect();
@@ -109,7 +132,13 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
       width: Math.round(nextRect.width),
       height: Math.round(nextRect.height),
     });
-  }, [editingState.mode, findTargetElement, onRequestClose, targetElement]);
+  }, [
+    editingState.mode,
+    findTargetElement,
+    onCancel,
+    resolveDefaultValue,
+    targetElement,
+  ]);
 
   const scheduleRectUpdate = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -123,6 +152,8 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
 
   useEffect(() => {
     if (editingState.mode !== "editing") {
+      defaultValueRef.current = "";
+      compositionRef.current = false;
       setRect(null);
       setTargetElement(null);
       return;
@@ -208,13 +239,95 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (editingState.mode !== "editing") {
+      return;
+    }
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    if (editingState.pending) {
+      input.focus();
+      return;
+    }
+    input.focus();
+    input.select();
+  }, [editingState.mode, editingState.pending]);
+
+  const handleCommit = useCallback(async () => {
+    if (editingState.pending) {
+      return;
+    }
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    await onCommit(input.value, "enter");
+  }, [editingState.pending, onCommit]);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (editingState.pending) {
+        if (event.key === "Escape" || event.key === "Enter") {
+          event.preventDefault();
+        }
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        void handleCommit();
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel("escape");
+      }
+    },
+    [editingState.pending, handleCommit, onCancel]
+  );
+
+  const handleBlur = useCallback(() => {
+    if (editingState.pending || compositionRef.current) {
+      return;
+    }
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    if (input.value === defaultValueRef.current) {
+      onCancel("nochange-blur");
+    }
+  }, [editingState.pending, onCancel]);
+
+  const handleInput = useCallback(
+    (event: React.FormEvent<HTMLInputElement>) => {
+      if (!editingState.pending) {
+        return;
+      }
+      const input = event.currentTarget;
+      input.value = defaultValueRef.current;
+    },
+    [editingState.pending]
+  );
+
+  const handleCompositionStart = () => {
+    compositionRef.current = true;
+  };
+
+  const handleCompositionEnd = () => {
+    compositionRef.current = false;
+  };
+
   if (editingState.mode !== "editing" || !rect || !portalRoot) {
     return null;
   }
 
   return createPortal(
     <div
-      className={styles.overlayEditor}
+      className={`${styles.overlayEditor} ${
+        editingState.pending ? styles.overlayEditorPending : ""
+      }`}
       data-testid="overlay-editor"
       style={{
         top: rect.top,
@@ -228,9 +341,22 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
         data-testid="overlay-editor-input"
         type="text"
         aria-label="セル編集"
-        defaultValue=""
+        defaultValue={defaultValueRef.current}
         style={{ height: "100%" }}
+        ref={inputRef}
+        readOnly={editingState.pending}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        onInput={handleInput}
+        onChange={handleInput}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
       />
+      {editingState.errorMessage && (
+        <div className={styles.overlayEditorError} role="alert">
+          {editingState.errorMessage}
+        </div>
+      )}
     </div>,
     portalRoot
   );

@@ -36,6 +36,12 @@ export const TaskListTableDefault: React.FC<{
   onExpanderClick: (task: Task) => void;
   visibleFields: VisibleField[];
   onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+  onCellCommit?: (payload: {
+    rowId: string;
+    columnId: VisibleField;
+    value: string;
+    trigger: "enter";
+  }) => Promise<void>;
   effortDisplayUnit: EffortUnit;
   columnsState?: ColumnsState;
 }> = ({
@@ -47,6 +53,7 @@ export const TaskListTableDefault: React.FC<{
   onExpanderClick,
   visibleFields,
   onUpdateTask,
+  onCellCommit,
   effortDisplayUnit,
   columnsState,
 }) => {
@@ -57,6 +64,8 @@ export const TaskListTableDefault: React.FC<{
       width: getDefaultWidth(field, rowWidth),
     }));
   const isEditable = !!onUpdateTask;
+  const isCommitEnabled = !!onCellCommit;
+  const allowEditing = isEditable && isCommitEnabled;
   const editingContext = React.useContext(TaskListEditingStateContext);
   const editingState = editingContext?.editingState;
   const editableFields = new Set<VisibleField>([
@@ -79,7 +88,7 @@ export const TaskListTableDefault: React.FC<{
     (typeof column === "string" ? column : column.id) as VisibleField;
 
   const isCellEditable = (task: Task, columnId: VisibleField) => {
-    const tableEditable = isEditable;
+    const tableEditable = allowEditing;
     const columnEditable = editableFields.has(columnId);
     const rowEditable = task.isDisabled !== true;
     const cellEditableByRule = true;
@@ -254,24 +263,39 @@ export const TaskListTableDefault: React.FC<{
         const processValue = normalizeProcess(t.process);
         const statusValue = normalizeStatus(t.status);
         const handleStatusChange = (value: string) => {
+          if (!allowEditing) {
+            return;
+          }
           const nextStatus = normalizeStatus(value as TaskStatus);
           onUpdateTask?.(t.id, { status: nextStatus });
         };
 
         const handleProcessChange = (value: string) => {
+          if (!allowEditing) {
+            return;
+          }
           const nextProcess = normalizeProcess(value as TaskProcess);
           onUpdateTask?.(t.id, { process: nextProcess });
         };
 
         const handleAssigneeChange = (value: string) => {
+          if (!allowEditing) {
+            return;
+          }
           onUpdateTask?.(t.id, { assignee: value || undefined });
         };
 
         const handleNameChange = (value: string) => {
+          if (!allowEditing) {
+            return;
+          }
           onUpdateTask?.(t.id, { name: value });
         };
 
         const handleDateChange = (field: "start" | "end", value: string) => {
+          if (!allowEditing) {
+            return;
+          }
           const parsed = parseDateFromInput(value);
           onUpdateTask?.(t.id, { [field]: parsed });
         };
@@ -280,6 +304,9 @@ export const TaskListTableDefault: React.FC<{
           field: "plannedStart" | "plannedEnd",
           value: string
         ) => {
+          if (!allowEditing) {
+            return;
+          }
           const parsed = parseDateFromInput(value);
           onUpdateTask?.(t.id, { [field]: parsed });
         };
@@ -288,6 +315,9 @@ export const TaskListTableDefault: React.FC<{
           field: "plannedEffort" | "actualEffort",
           value: string
         ) => {
+          if (!allowEditing) {
+            return;
+          }
           const parsed = sanitizeEffortInput(value);
           onUpdateTask?.(t.id, { [field]: parsed });
         };
@@ -307,7 +337,7 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {expanderSymbol}
                   </div>
-                  {isEditable ? (
+                  {allowEditing ? (
                     <input
                       className={styles.taskListInput}
                       type="text"
@@ -322,7 +352,7 @@ export const TaskListTableDefault: React.FC<{
                 </div>
               );
             case "start":
-              return isEditable ? (
+              return allowEditing ? (
                 <input
                   className={styles.taskListInput}
                   type="date"
@@ -334,7 +364,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{formatDate(t.start)}</span>
               );
             case "end":
-              return isEditable ? (
+              return allowEditing ? (
                 <input
                   className={styles.taskListInput}
                   type="date"
@@ -346,7 +376,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{formatDate(t.end)}</span>
               );
             case "process":
-              return isEditable ? (
+              return allowEditing ? (
                 <select
                   className={styles.taskListSelect}
                   aria-label="工程"
@@ -363,7 +393,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{processValue}</span>
               );
             case "assignee":
-              return isEditable ? (
+              return allowEditing ? (
                 <input
                   className={styles.taskListInput}
                   type="text"
@@ -376,7 +406,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{t.assignee || ""}</span>
               );
             case "plannedStart":
-              return isEditable ? (
+              return allowEditing ? (
                 <input
                   className={styles.taskListInput}
                   type="date"
@@ -390,7 +420,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{formatDate(t.plannedStart)}</span>
               );
             case "plannedEnd":
-              return isEditable ? (
+              return allowEditing ? (
                 <input
                   className={styles.taskListInput}
                   type="date"
@@ -404,7 +434,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{formatDate(t.plannedEnd)}</span>
               );
             case "plannedEffort":
-              return isEditable ? (
+              return allowEditing ? (
                 <input
                   className={styles.taskListInput}
                   type="number"
@@ -448,7 +478,7 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {getStatusBadgeText(statusValue)}
                   </span>
-                  {isEditable ? (
+                  {allowEditing ? (
                     <select
                       className={styles.taskListSelect}
                       aria-label="ステータス"

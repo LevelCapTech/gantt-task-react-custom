@@ -53,7 +53,7 @@ describe("Task/Schedule split handle", () => {
   });
 
   it("renders split handle with default task width", async () => {
-    render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
+    render(<Gantt tasks={[baseTask]} listCellWidth="140px" onCellCommit={async () => {}} />);
     const taskListPanel = await screen.findByTestId("task-list-panel");
     await waitFor(() => {
       expect(taskListPanel).toHaveStyle({ width: `${DEFAULT_TASK_LIST_WIDTH}px` });
@@ -62,7 +62,7 @@ describe("Task/Schedule split handle", () => {
   });
 
   it("clamps task pane width to minimum on drag", async () => {
-    render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
+    render(<Gantt tasks={[baseTask]} listCellWidth="140px" onCellCommit={async () => {}} />);
     const taskListPanel = await screen.findByTestId("task-list-panel");
     const splitHandle = screen.getByTestId("pane-splitter");
 
@@ -76,7 +76,7 @@ describe("Task/Schedule split handle", () => {
   });
 
   it("clamps task pane width to maximum to keep schedule minimum", async () => {
-    render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
+    render(<Gantt tasks={[baseTask]} listCellWidth="140px" onCellCommit={async () => {}} />);
     const taskListPanel = await screen.findByTestId("task-list-panel");
     const splitHandle = screen.getByTestId("pane-splitter");
 
@@ -94,7 +94,7 @@ describe("Task/Schedule split handle", () => {
     const PointerEventMock = class PointerEvent extends MouseEvent {};
     global.PointerEvent = PointerEventMock;
     window.PointerEvent = PointerEventMock;
-    render(<Gantt tasks={[baseTask]} listCellWidth="140px" />);
+    render(<Gantt tasks={[baseTask]} listCellWidth="140px" onCellCommit={async () => {}} />);
     const taskListPanel = await screen.findByTestId("task-list-panel");
     const splitHandle = screen.getByTestId("pane-splitter");
 
@@ -117,6 +117,7 @@ describe("Task/Schedule split handle", () => {
           },
         ]}
         listCellWidth={LONG_LIST_CELL_WIDTH}
+        onCellCommit={async () => {}}
       />
     );
     const taskListPanel = await screen.findByTestId("task-list-panel");

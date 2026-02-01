@@ -8,6 +8,8 @@ const editingState = {
   mode: "editing" as const,
   rowId: "task-1",
   columnId: "name" as VisibleField,
+  pending: false,
+  errorMessage: null,
 };
 
 const createRefs = () => ({
@@ -49,13 +51,15 @@ describe("OverlayEditor", () => {
             Task
           </div>
         </div>
-        <OverlayEditor
-          editingState={editingState}
-          taskListRef={taskListRef}
-          headerContainerRef={headerRef}
-          bodyContainerRef={bodyRef}
-          onRequestClose={jest.fn()}
-        />
+          <OverlayEditor
+            editingState={editingState}
+            taskListRef={taskListRef}
+            headerContainerRef={headerRef}
+            bodyContainerRef={bodyRef}
+            onRequestClose={jest.fn()}
+            onCommit={jest.fn().mockResolvedValue(undefined)}
+            onCancel={jest.fn()}
+          />
       </div>
     );
 
@@ -84,23 +88,26 @@ describe("OverlayEditor", () => {
         return 1;
       });
     const onRequestClose = jest.fn();
+    const onCancel = jest.fn();
     const { taskListRef, headerRef, bodyRef } = createRefs();
 
     render(
       <div ref={taskListRef}>
         <div ref={headerRef} />
         <div ref={bodyRef} />
-        <OverlayEditor
-          editingState={editingState}
-          taskListRef={taskListRef}
-          headerContainerRef={headerRef}
-          bodyContainerRef={bodyRef}
-          onRequestClose={onRequestClose}
-        />
+          <OverlayEditor
+            editingState={editingState}
+            taskListRef={taskListRef}
+            headerContainerRef={headerRef}
+            bodyContainerRef={bodyRef}
+            onRequestClose={onRequestClose}
+            onCommit={jest.fn().mockResolvedValue(undefined)}
+            onCancel={onCancel}
+          />
       </div>
     );
 
-    await waitFor(() => expect(onRequestClose).toHaveBeenCalled());
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
     expect(screen.queryByTestId("overlay-editor")).toBeNull();
 
     rectSpy.mockRestore();
@@ -128,13 +135,15 @@ describe("OverlayEditor", () => {
             Task
           </div>
         </div>
-        <OverlayEditor
-          editingState={editingState}
-          taskListRef={taskListRef}
-          headerContainerRef={headerRef}
-          bodyContainerRef={bodyRef}
-          onRequestClose={jest.fn()}
-        />
+          <OverlayEditor
+            editingState={editingState}
+            taskListRef={taskListRef}
+            headerContainerRef={headerRef}
+            bodyContainerRef={bodyRef}
+            onRequestClose={jest.fn()}
+            onCommit={jest.fn().mockResolvedValue(undefined)}
+            onCancel={jest.fn()}
+          />
       </div>
     );
 
