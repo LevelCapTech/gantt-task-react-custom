@@ -54,7 +54,6 @@
   cursor: pointer;
 }
 
-
 .taskListEmptyExpander {
   font-size: 0.6rem;
   padding-left: 1rem;
@@ -96,7 +95,6 @@
   font-size: 12px;
   line-height: 1;
 }
-
 
 .statusText {
   font-size: 13px;

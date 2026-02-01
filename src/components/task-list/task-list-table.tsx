@@ -41,8 +41,8 @@ export const TaskListTableDefault: React.FC<{
   visibleFields,
   onUpdateTask,
   onCellCommit,
-  columnsState,
   effortDisplayUnit,
+  columnsState,
 }) => {
   const columns =
     columnsState?.filter(column => column.visible !== false) ??
