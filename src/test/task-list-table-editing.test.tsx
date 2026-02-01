@@ -186,6 +186,23 @@ describe("TaskListTable keyboard navigation", () => {
     expect(context.selectCell).toHaveBeenCalledWith("task-3", "name");
   });
 
+  it("ignores key events from input elements", () => {
+    const context = createEditingContext("selected", "task-1", "name");
+
+    const { container } = render(
+      <TaskListEditingStateContext.Provider value={context}>
+        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+      </TaskListEditingStateContext.Provider>
+    );
+
+    const input = document.createElement("input");
+    const wrapper = container.firstChild as HTMLElement;
+    wrapper.appendChild(input);
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(context.selectCell).not.toHaveBeenCalled();
+  });
+
   it("starts editing with Enter key on selected cell", () => {
     const context = createEditingContext("selected", "task-1", "name");
     
@@ -264,23 +281,6 @@ describe("TaskListTable keyboard navigation", () => {
     expect(context.selectCell).not.toHaveBeenCalled();
   });
 
-  it("ignores key events from input elements", () => {
-    const context = createEditingContext("selected", "task-1", "name");
-    
-    render(
-      <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
-      </TaskListEditingStateContext.Provider>
-    );
-
-    // Find an input element
-    const input = screen.getAllByRole("textbox")[0];
-    fireEvent.keyDown(input, { key: "ArrowDown" });
-
-    // Should not call selectCell when event comes from input
-    expect(context.selectCell).not.toHaveBeenCalled();
-  });
-
   it("does not start editing on disabled task", () => {
     const disabledTask = createMockTask("task-1", "Disabled Task", { isDisabled: true });
     const propsWithDisabled = {
@@ -302,400 +302,66 @@ describe("TaskListTable keyboard navigation", () => {
   });
 });
 
-describe("TaskListTable cell editing", () => {
+describe("TaskListTable cell display", () => {
   const defaultProps = {
     rowHeight: 40,
     rowWidth: "155px",
     fontFamily: "Arial",
     fontSize: "14px",
-    tasks: [createMockTask("task-1", "Task 1")],
+    tasks: [
+      createMockTask("task-1", "Task 1", {
+        process: "開発",
+        assignee: "田中太郎",
+        plannedStart: new Date(2026, 1, 1),
+        plannedEnd: new Date(2026, 1, 15),
+        plannedEffort: 12,
+        actualEffort: 5,
+        status: "進行中",
+      }),
+    ],
     selectedTaskId: "",
     setSelectedTask: jest.fn(),
     onExpanderClick: jest.fn(),
-    visibleFields: ["name", "start", "end", "process", "assignee"] as VisibleField[],
+    visibleFields: [
+      "name",
+      "start",
+      "end",
+      "process",
+      "assignee",
+      "plannedStart",
+      "plannedEnd",
+      "plannedEffort",
+      "actualEffort",
+      "status",
+    ] as VisibleField[],
     effortDisplayUnit: "MH" as const,
     onCellCommit: jest.fn().mockResolvedValue(undefined),
   };
 
-  it("renders input for name field when editable", () => {
-    const onUpdateTask = jest.fn();
-    
+  it("renders label-only text for editable fields", () => {
     render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const nameInput = screen.getByLabelText("タスク名");
-    expect(nameInput).toBeInTheDocument();
-    expect(nameInput).toHaveAttribute("type", "text");
-  });
-
-  it("renders input for start date field when editable", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const startInput = screen.getByLabelText("開始日");
-    expect(startInput).toBeInTheDocument();
-    expect(startInput).toHaveAttribute("type", "date");
-  });
-
-  it("renders input for end date field when editable", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const endInput = screen.getByLabelText("終了日");
-    expect(endInput).toBeInTheDocument();
-    expect(endInput).toHaveAttribute("type", "date");
-  });
-
-  it("calls onUpdateTask when name is changed", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const nameInput = screen.getByLabelText("タスク名");
-    fireEvent.change(nameInput, { target: { value: "Updated Task Name" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { name: "Updated Task Name" });
-  });
-
-  it("calls onUpdateTask when start date is changed", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const startInput = screen.getByLabelText("開始日");
-    fireEvent.change(startInput, { target: { value: "2026-02-15" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", {
-      start: expect.any(Date),
-    });
-    
-    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
-    expect(callArgs.start?.getFullYear()).toBe(2026);
-    expect(callArgs.start?.getMonth()).toBe(1); // February (0-indexed: 0=Jan, 1=Feb)
-    expect(callArgs.start?.getDate()).toBe(15);
-  });
-
-  it("calls onUpdateTask when end date is changed", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const endInput = screen.getByLabelText("終了日");
-    fireEvent.change(endInput, { target: { value: "2026-03-20" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", {
-      end: expect.any(Date),
-    });
-    
-    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
-    expect(callArgs.end?.getFullYear()).toBe(2026);
-    expect(callArgs.end?.getMonth()).toBe(2); // March (0-indexed: 0=Jan, 1=Feb, 2=Mar)
-    expect(callArgs.end?.getDate()).toBe(20);
-  });
-
-  it("renders select for process field when editable", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const processSelect = screen.getByLabelText("工程");
-    expect(processSelect).toBeInTheDocument();
-    expect(processSelect.tagName).toBe("SELECT");
-  });
-
-  it("calls onUpdateTask when process is changed", () => {
-    const onUpdateTask = jest.fn();
-    const taskWithProcess = createMockTask("task-1", "Task 1", { process: "設計" });
-    const propsWithProcess = {
-      ...defaultProps,
-      tasks: [taskWithProcess],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithProcess} onUpdateTask={onUpdateTask} />
-    );
-
-    const processSelect = screen.getByLabelText("工程");
-    fireEvent.change(processSelect, { target: { value: "開発" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { process: "開発" });
-  });
-
-  it("renders input for assignee field when editable", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const assigneeInput = screen.getByLabelText("担当者");
-    expect(assigneeInput).toBeInTheDocument();
-    expect(assigneeInput).toHaveAttribute("type", "text");
-  });
-
-  it("calls onUpdateTask when assignee is changed", () => {
-    const onUpdateTask = jest.fn();
-    
-    render(
-        <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
-    );
-
-    const assigneeInput = screen.getByLabelText("担当者");
-    fireEvent.change(assigneeInput, { target: { value: "田中太郎" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { assignee: "田中太郎" });
-  });
-
-  it("does not render inputs when not editable", () => {
-    render(
-        <TaskListTableDefault {...defaultProps} />
-    );
-
-    // Should not have input elements
-    expect(screen.queryByLabelText("タスク名")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("開始日")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("終了日")).not.toBeInTheDocument();
-  });
-
-  it("renders static text for name when not editable", () => {
-    render(
-        <TaskListTableDefault {...defaultProps} />
+      <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
     );
 
     expect(screen.getByText("Task 1")).toBeInTheDocument();
+    expect(screen.getByText("2026-01-01")).toBeInTheDocument();
+    expect(screen.getByText("2026-01-10")).toBeInTheDocument();
+    expect(screen.getByText("開発")).toBeInTheDocument();
+    expect(screen.getByText("田中太郎")).toBeInTheDocument();
+    expect(screen.getByText("2026-02-01")).toBeInTheDocument();
+    expect(screen.getByText("2026-02-15")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.getByText("進行中")).toBeInTheDocument();
   });
 
-  it("handles invalid date input gracefully", () => {
-    const onUpdateTask = jest.fn();
-    
+  it("does not render edit inputs or selects when editable", () => {
     render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={onUpdateTask} />
+      <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
     );
 
-    const startInput = screen.getByLabelText("開始日");
-    fireEvent.change(startInput, { target: { value: "2026-02-30" } }); // Invalid date
-
-    // Should be called but with undefined since date is invalid
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { start: undefined });
-  });
-
-  it("clears assignee when empty string is provided", () => {
-    const onUpdateTask = jest.fn();
-    const taskWithAssignee = createMockTask("task-1", "Task 1", { assignee: "田中太郎" });
-    const propsWithAssignee = {
-      ...defaultProps,
-      tasks: [taskWithAssignee],
-    };
-    
-    render(
-      <TaskListTableDefault {...propsWithAssignee} onUpdateTask={onUpdateTask} />
-    );
-
-    const assigneeInput = screen.getByLabelText("担当者");
-    fireEvent.change(assigneeInput, { target: { value: "" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { assignee: undefined });
-  });
-
-  it("calls onUpdateTask when plannedStart date is changed", () => {
-    const onUpdateTask = jest.fn();
-    const propsWithPlanned = {
-      ...defaultProps,
-      visibleFields: ["name", "plannedStart"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
-    );
-
-    const plannedStartInput = screen.getByLabelText("予定開始");
-    fireEvent.change(plannedStartInput, { target: { value: "2026-04-01" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", {
-      plannedStart: expect.any(Date),
-    });
-    
-    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
-    expect(callArgs.plannedStart?.getFullYear()).toBe(2026);
-    expect(callArgs.plannedStart?.getMonth()).toBe(3); // April (0-indexed: 0=Jan, 3=Apr)
-    expect(callArgs.plannedStart?.getDate()).toBe(1);
-  });
-
-  it("calls onUpdateTask when plannedEnd date is changed", () => {
-    const onUpdateTask = jest.fn();
-    const propsWithPlanned = {
-      ...defaultProps,
-      visibleFields: ["name", "plannedEnd"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithPlanned} onUpdateTask={onUpdateTask} />
-    );
-
-    const plannedEndInput = screen.getByLabelText("予定終了");
-    fireEvent.change(plannedEndInput, { target: { value: "2026-05-15" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", {
-      plannedEnd: expect.any(Date),
-    });
-    
-    const callArgs = onUpdateTask.mock.calls[0][1] as Partial<Task>;
-    expect(callArgs.plannedEnd?.getFullYear()).toBe(2026);
-    expect(callArgs.plannedEnd?.getMonth()).toBe(4); // May (0-indexed: 0=Jan, 4=May)
-    expect(callArgs.plannedEnd?.getDate()).toBe(15);
-  });
-
-  it("calls onUpdateTask when plannedEffort is changed", () => {
-    const onUpdateTask = jest.fn();
-    const propsWithEffort = {
-      ...defaultProps,
-      visibleFields: ["name", "plannedEffort"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
-    );
-
-    const plannedEffortInput = screen.getByLabelText("予定工数（入力単位:時間）");
-    fireEvent.change(plannedEffortInput, { target: { value: "16" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { plannedEffort: 16 });
-  });
-
-  it("calls onUpdateTask when actualEffort is changed", () => {
-    const onUpdateTask = jest.fn();
-    const propsWithEffort = {
-      ...defaultProps,
-      visibleFields: ["name", "actualEffort"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
-    );
-
-    const actualEffortInput = screen.getByLabelText("実績工数（入力単位:時間）");
-    fireEvent.change(actualEffortInput, { target: { value: "8" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { actualEffort: 8 });
-  });
-
-  it("calls onUpdateTask when status is changed", () => {
-    const onUpdateTask = jest.fn();
-    const taskWithStatus = createMockTask("task-1", "Task 1", { status: "未着手" });
-    const propsWithStatus = {
-      ...defaultProps,
-      tasks: [taskWithStatus],
-      visibleFields: ["name", "status"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithStatus} onUpdateTask={onUpdateTask} />
-    );
-
-    const statusSelect = screen.getByLabelText("ステータス");
-    fireEvent.change(statusSelect, { target: { value: "進行中" } });
-
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { status: "進行中" });
-  });
-
-  it("handles invalid plannedEffort input gracefully", () => {
-    const onUpdateTask = jest.fn();
-    const taskWithEffort = createMockTask("task-1", "Task 1", { plannedEffort: 8 });
-    const propsWithEffort = {
-      ...defaultProps,
-      tasks: [taskWithEffort],
-      visibleFields: ["name", "plannedEffort"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
-    );
-
-    const plannedEffortInput = screen.getByLabelText("予定工数（入力単位:時間）");
-    fireEvent.change(plannedEffortInput, { target: { value: "" } });
-
-    // Should be called with undefined for empty input
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { plannedEffort: undefined });
-  });
-
-  it("handles invalid actualEffort input gracefully", () => {
-    const onUpdateTask = jest.fn();
-    const taskWithEffort = createMockTask("task-1", "Task 1", { actualEffort: 4 });
-    const propsWithEffort = {
-      ...defaultProps,
-      tasks: [taskWithEffort],
-      visibleFields: ["name", "actualEffort"] as VisibleField[],
-    };
-    
-    render(
-        <TaskListTableDefault {...propsWithEffort} onUpdateTask={onUpdateTask} />
-    );
-
-    const actualEffortInput = screen.getByLabelText("実績工数（入力単位:時間）");
-    fireEvent.change(actualEffortInput, { target: { value: "-5" } });
-
-    // Should be called with undefined for negative input
-    expect(onUpdateTask).toHaveBeenCalledWith("task-1", { actualEffort: undefined });
-  });
-});
-
-describe("TaskListTable editable fields", () => {
-  it("renders input elements for all editable fields when table is editable", () => {
-    const props = {
-      rowHeight: 40,
-      rowWidth: "155px",
-      fontFamily: "Arial",
-      fontSize: "14px",
-      tasks: [createMockTask("task-1", "Task 1")],
-      selectedTaskId: "",
-      setSelectedTask: jest.fn(),
-      onExpanderClick: jest.fn(),
-      visibleFields: [
-        "name",
-        "start",
-        "end",
-        "process",
-        "assignee",
-        "plannedStart",
-        "plannedEnd",
-        "plannedEffort",
-        "actualEffort",
-        "status",
-      ] as VisibleField[],
-      effortDisplayUnit: "MH" as const,
-      onUpdateTask: jest.fn(),
-      onCellCommit: jest.fn().mockResolvedValue(undefined),
-    };
-
-    render(
-      <TaskListTableDefault {...props} />
-    );
-
-    // All editable fields should have inputs or selects
-    expect(screen.getByLabelText("タスク名")).toBeInTheDocument();
-    expect(screen.getByLabelText("開始日")).toBeInTheDocument();
-    expect(screen.getByLabelText("終了日")).toBeInTheDocument();
-    expect(screen.getByLabelText("工程")).toBeInTheDocument();
-    expect(screen.getByLabelText("担当者")).toBeInTheDocument();
-    expect(screen.getByLabelText("予定開始")).toBeInTheDocument();
-    expect(screen.getByLabelText("予定終了")).toBeInTheDocument();
-    expect(screen.getByLabelText("予定工数（入力単位:時間）")).toBeInTheDocument();
-    expect(screen.getByLabelText("実績工数（入力単位:時間）")).toBeInTheDocument();
-    expect(screen.getByLabelText("ステータス")).toBeInTheDocument();
+    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+    expect(screen.queryAllByRole("combobox")).toHaveLength(0);
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
   });
 });

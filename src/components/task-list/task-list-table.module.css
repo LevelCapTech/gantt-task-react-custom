@@ -53,6 +53,11 @@
   user-select: none;
   cursor: pointer;
 }
+
+.taskListExpander::before {
+  content: attr(data-symbol);
+}
+
 .taskListEmptyExpander {
   font-size: 0.6rem;
   padding-left: 1rem;
@@ -93,6 +98,10 @@
   color: #fff;
   font-size: 12px;
   line-height: 1;
+}
+
+.statusBadge::before {
+  content: attr(data-status-badge);
 }
 
 .statusText {
