@@ -262,8 +262,9 @@ export const TaskListTableDefault: React.FC<{
                         : styles.taskListEmptyExpander
                     }
                     onClick={() => onExpanderClick(t)}
-                    data-symbol={expanderSymbol || undefined}
-                  />
+                  >
+                    {expanderSymbol}
+                  </div>
                   <div>{t.name}</div>
                 </div>
               );
@@ -301,8 +302,8 @@ export const TaskListTableDefault: React.FC<{
                   <span
                     className={styles.statusBadge}
                     style={{ backgroundColor: getStatusColor(statusValue) }}
-                    data-status-badge={getStatusBadgeText(statusValue)}
                   >
+                    {getStatusBadgeText(statusValue)}
                   </span>
                   <span className={styles.statusText}>{statusValue}</span>
                 </div>

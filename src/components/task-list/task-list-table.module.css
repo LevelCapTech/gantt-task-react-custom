@@ -54,9 +54,6 @@
   cursor: pointer;
 }
 
-.taskListExpander::before {
-  content: attr(data-symbol);
-}
 
 .taskListEmptyExpander {
   font-size: 0.6rem;
@@ -100,9 +97,6 @@
   line-height: 1;
 }
 
-.statusBadge::before {
-  content: attr(data-status-badge);
-}
 
 .statusText {
   font-size: 13px;

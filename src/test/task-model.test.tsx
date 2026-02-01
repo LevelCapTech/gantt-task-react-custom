@@ -36,10 +36,10 @@ describe("Task data model extensions", () => {
 
     expect(screen.getByText("開発")).toBeInTheDocument();
     expect(screen.getByText("田中")).toBeInTheDocument();
-    expect(screen.getAllByText("2026-01-01").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("2026-01-03").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("16").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("8").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2026-01-01")).not.toHaveLength(0);
+    expect(screen.getAllByText("2026-01-03")).not.toHaveLength(0);
+    expect(screen.getAllByText("16")).not.toHaveLength(0);
+    expect(screen.getAllByText("8")).not.toHaveLength(0);
     expect(screen.getByText("進行中")).toBeInTheDocument();
   });
 
