@@ -61,6 +61,7 @@ describe("TaskListTable keyboard navigation", () => {
     onExpanderClick: jest.fn(),
     visibleFields: ["name", "start", "end"] as VisibleField[],
     effortDisplayUnit: "MH" as const,
+    onCellCommit: jest.fn().mockResolvedValue(undefined),
   };
 
   it("ignores cell selection when editing is pending", () => {
@@ -313,6 +314,7 @@ describe("TaskListTable cell editing", () => {
     onExpanderClick: jest.fn(),
     visibleFields: ["name", "start", "end", "process", "assignee"] as VisibleField[],
     effortDisplayUnit: "MH" as const,
+    onCellCommit: jest.fn().mockResolvedValue(undefined),
   };
 
   it("renders input for name field when editable", () => {
@@ -677,6 +679,7 @@ describe("TaskListTable editable fields", () => {
       ] as VisibleField[],
       effortDisplayUnit: "MH" as const,
       onUpdateTask: jest.fn(),
+      onCellCommit: jest.fn().mockResolvedValue(undefined),
     };
 
     render(

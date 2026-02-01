@@ -395,7 +395,6 @@ export const TaskList: React.FC<TaskListProps> = ({
         taskListRef={taskListRef}
         headerContainerRef={headerRef}
         bodyContainerRef={horizontalContainerRef}
-        onRequestClose={closeEditing}
         onCommit={commitEditing}
         onCancel={cancelEditing}
       />
