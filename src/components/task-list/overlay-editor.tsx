@@ -297,7 +297,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (input instanceof HTMLInputElement) {
       input.select();
     }
-  }, [editingState.mode, editingState.pending]);
+  }, [editingState.mode, editingState.pending, targetElement]);
 
   const handleCommit = useCallback(async () => {
     if (editingState.pending) {
