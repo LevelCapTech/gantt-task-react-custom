@@ -339,7 +339,7 @@ describe("TaskListTable cell display", () => {
     expect(screen.getByText("進行中")).toBeInTheDocument();
   });
 
-  it("does not render edit inputs or selects when editable", () => {
+  it("renders label-only display without form controls", () => {
     render(
       <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
     );

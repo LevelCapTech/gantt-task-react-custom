@@ -50,9 +50,8 @@ export const TaskListTableDefault: React.FC<{
       id: field,
       width: getDefaultWidth(field, rowWidth),
     }));
-  const isEditable = !!onUpdateTask;
   const isCommitEnabled = !!onCellCommit;
-  const allowEditing = isEditable && isCommitEnabled;
+  const allowEditing = !!onUpdateTask && isCommitEnabled;
   const editingContext = React.useContext(TaskListEditingStateContext);
   const editingState = editingContext?.editingState;
   const editableFields = new Set<VisibleField>([
