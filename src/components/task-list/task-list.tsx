@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { BarTask } from "../../types/bar-task";
 import {
+  CellCommitPayload,
   ColumnState,
   ColumnsState,
   EffortUnit,
@@ -17,6 +18,7 @@ import {
 import { OverlayEditor } from "./overlay-editor";
 
 export type EditingTrigger = "dblclick" | "enter" | "key";
+type CommitTrigger = CellCommitPayload["trigger"];
 type EditingMode = "viewing" | "selected" | "editing";
 type EditingState = {
   mode: EditingMode;
@@ -24,6 +26,7 @@ type EditingState = {
   columnId: VisibleField | null;
   trigger: EditingTrigger | null;
   pending: boolean;
+  errorMessage: string | null;
 };
 
 type EditingStateContextValue = {
@@ -56,6 +59,7 @@ export type TaskListProps = {
   onExpanderClick: (task: Task) => void;
   onHorizontalScroll?: (event: SyntheticEvent<HTMLDivElement>) => void;
   onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+  onCellCommit?: (payload: CellCommitPayload) => Promise<void>;
   TaskListHeader: React.FC<{
     headerHeight: number;
     rowWidth: string;
@@ -78,6 +82,7 @@ export type TaskListProps = {
     onExpanderClick: (task: Task) => void;
     visibleFields: VisibleField[];
     onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+    onCellCommit?: (payload: CellCommitPayload) => Promise<void>;
     effortDisplayUnit: EffortUnit;
     columnsState?: ColumnsState;
   }>;
@@ -109,6 +114,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   TaskListTable,
   visibleFields,
   onUpdateTask,
+  onCellCommit,
   effortDisplayUnit,
   enableColumnDrag = true,
   onHorizontalScroll,
@@ -194,6 +200,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     onExpanderClick,
     visibleFields,
     onUpdateTask,
+    onCellCommit,
     effortDisplayUnit,
     columnsState: visibleColumns,
   };
@@ -204,6 +211,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     columnId: null,
     trigger: null,
     pending: false,
+    errorMessage: null,
   });
   const previousEditingStateRef = useRef<EditingState | null>(null);
 
@@ -218,9 +226,94 @@ export const TaskList: React.FC<TaskListProps> = ({
         columnId: null,
         trigger: null,
         pending: false,
+        errorMessage: null,
       };
     });
   }, []);
+
+  const cancelEditing = useCallback(
+    (reason: "escape" | "nochange-blur" | "unmounted") => {
+      if (editingState.mode !== "editing") {
+        return;
+      }
+      console.log("[edit:cancel]", {
+        rowId: editingState.rowId,
+        columnId: editingState.columnId,
+        reason,
+      });
+      closeEditing();
+    },
+    [closeEditing, editingState.columnId, editingState.mode, editingState.rowId]
+  );
+
+  const commitEditing = useCallback(
+    async (value: string, trigger: CommitTrigger) => {
+      if (!onCellCommit) {
+        return;
+      }
+      if (editingState.mode !== "editing" || editingState.pending) {
+        return;
+      }
+      if (!editingState.rowId || !editingState.columnId) {
+        return;
+      }
+      const rowId = editingState.rowId;
+      const columnId = editingState.columnId;
+      setEditingState(prev => {
+        if (
+          prev.mode !== "editing" ||
+          prev.pending ||
+          prev.rowId !== rowId ||
+          prev.columnId !== columnId
+        ) {
+          return prev;
+        }
+        return { ...prev, pending: true, errorMessage: null };
+      });
+      try {
+        await onCellCommit({ rowId, columnId, value, trigger });
+        setEditingState(prev => {
+          if (
+            prev.mode !== "editing" ||
+            prev.rowId !== rowId ||
+            prev.columnId !== columnId
+          ) {
+            return prev;
+          }
+          return {
+            mode: "viewing",
+            rowId: null,
+            columnId: null,
+            trigger: null,
+            pending: false,
+            errorMessage: null,
+          };
+        });
+      } catch (error) {
+        console.error("[commit:error]", {
+          rowId,
+          columnId,
+          trigger,
+          message: error instanceof Error ? error.message : "unknown",
+        });
+        setEditingState(prev => {
+          if (
+            prev.mode !== "editing" ||
+            prev.rowId !== rowId ||
+            prev.columnId !== columnId
+          ) {
+            return prev;
+          }
+          return {
+            ...prev,
+            pending: false,
+            errorMessage: "更新に失敗しました。再試行してください。",
+          };
+        });
+      }
+    },
+    [editingState, onCellCommit]
+  );
 
   const selectCell = useCallback((rowId: string, columnId: VisibleField) => {
     console.debug("[TaskList] select cell", { rowId, columnId });
@@ -230,6 +323,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       columnId,
       trigger: null,
       pending: false,
+      errorMessage: null,
     });
   }, []);
 
@@ -250,6 +344,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         columnId,
         trigger,
         pending: false,
+        errorMessage: null,
       });
     },
     [editingState.pending]
@@ -301,6 +396,8 @@ export const TaskList: React.FC<TaskListProps> = ({
         headerContainerRef={headerRef}
         bodyContainerRef={horizontalContainerRef}
         onRequestClose={closeEditing}
+        onCommit={commitEditing}
+        onCancel={cancelEditing}
       />
       <div
         ref={headerRef}

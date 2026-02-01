@@ -29,6 +29,7 @@ describe("Task data model extensions", () => {
       <Gantt
         tasks={[baseTask]}
         onTaskUpdate={onTaskUpdate}
+        onCellCommit={async () => {}}
         listCellWidth="140px"
         effortDisplayUnit="MH"
       />
@@ -52,7 +53,12 @@ describe("Task data model extensions", () => {
   it("fires onTaskUpdate when status dropdown changes", async () => {
     const onTaskUpdate = jest.fn();
     render(
-      <Gantt tasks={[baseTask]} onTaskUpdate={onTaskUpdate} listCellWidth="140px" />
+      <Gantt
+        tasks={[baseTask]}
+        onTaskUpdate={onTaskUpdate}
+        onCellCommit={async () => {}}
+        listCellWidth="140px"
+      />
     );
     const statusSelect = screen.getByDisplayValue("進行中");
     await userEvent.selectOptions(statusSelect, "完了");
@@ -65,7 +71,12 @@ describe("Task data model extensions", () => {
   it("fires onTaskUpdate when process dropdown changes", async () => {
     const onTaskUpdate = jest.fn();
     render(
-      <Gantt tasks={[baseTask]} onTaskUpdate={onTaskUpdate} listCellWidth="140px" />
+      <Gantt
+        tasks={[baseTask]}
+        onTaskUpdate={onTaskUpdate}
+        onCellCommit={async () => {}}
+        listCellWidth="140px"
+      />
     );
     const processSelect = screen.getByLabelText("工程");
     await userEvent.selectOptions(processSelect, "レビュー");
@@ -78,7 +89,12 @@ describe("Task data model extensions", () => {
   it("fires onTaskUpdate when assignee and planned dates change", async () => {
     const onTaskUpdate = jest.fn();
     render(
-      <Gantt tasks={[baseTask]} onTaskUpdate={onTaskUpdate} listCellWidth="140px" />
+      <Gantt
+        tasks={[baseTask]}
+        onTaskUpdate={onTaskUpdate}
+        onCellCommit={async () => {}}
+        listCellWidth="140px"
+      />
     );
 
     const assigneeInput = screen.getByLabelText("担当者");

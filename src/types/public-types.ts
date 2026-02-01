@@ -15,6 +15,15 @@ export type VisibleField =
   | "actualEffort"
   | "status";
 
+export type CellCommitTrigger = "enter";
+
+export type CellCommitPayload = {
+  rowId: string;
+  columnId: VisibleField;
+  value: string;
+  trigger: CellCommitTrigger;
+};
+
 export type ColumnState = {
   id: VisibleField;
   label: string;
@@ -110,6 +119,10 @@ export interface EventOption {
    * Invokes when task list fields are updated (process, status, planned dates, assignee, effort).
    */
   onTaskUpdate?: (taskId: string, updatedFields: Partial<Task>) => void;
+  /**
+   * Invokes when a task list cell edit is committed.
+   */
+  onCellCommit?: (payload: CellCommitPayload) => Promise<void>;
 }
 
 export interface DisplayOption {
