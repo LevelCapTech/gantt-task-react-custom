@@ -329,6 +329,7 @@ describe("TaskListTable cell display", () => {
     );
 
     expect(screen.getByText("Task 1")).toBeInTheDocument();
+    // start and plannedStart share the same date for this fixture
     expect(screen.getAllByText("2026-02-01")).toHaveLength(2);
     expect(screen.getByText("2026-02-10")).toBeInTheDocument();
     expect(screen.getByText("開発")).toBeInTheDocument();

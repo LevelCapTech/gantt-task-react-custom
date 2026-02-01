@@ -285,7 +285,8 @@ export const TaskListTableDefault: React.FC<{
                 <span>{formatEffort(t.actualEffort, effortDisplayUnit)}</span>
               );
             case "status":
-              const statusValue = normalizeStatus(t.status);
+              {
+                const statusValue = normalizeStatus(t.status);
               return (
                 <div className={styles.statusWrapper}>
                   <span
@@ -297,6 +298,7 @@ export const TaskListTableDefault: React.FC<{
                   <span className={styles.statusText}>{statusValue}</span>
                 </div>
               );
+              }
             default:
               return null;
           }
