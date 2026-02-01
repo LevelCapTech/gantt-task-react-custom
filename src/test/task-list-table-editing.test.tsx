@@ -329,11 +329,10 @@ describe("TaskListTable cell display", () => {
     );
 
     expect(screen.getByText("Task 1")).toBeInTheDocument();
-    expect(screen.getAllByText("2026-02-01")).not.toHaveLength(0);
+    expect(screen.getAllByText("2026-02-01")).toHaveLength(2);
     expect(screen.getByText("2026-02-10")).toBeInTheDocument();
     expect(screen.getByText("開発")).toBeInTheDocument();
     expect(screen.getByText("田中太郎")).toBeInTheDocument();
-    expect(screen.getAllByText("2026-02-01")).not.toHaveLength(0);
     expect(screen.getByText("2026-02-15")).toBeInTheDocument();
     expect(screen.getByText("12MH")).toBeInTheDocument();
     expect(screen.getByText("5MH")).toBeInTheDocument();
