@@ -247,9 +247,6 @@ export const TaskListTableDefault: React.FC<{
           expanderSymbol = "▶";
         }
 
-        const processValue = normalizeProcess(t.process);
-        const statusValue = normalizeStatus(t.status);
-
         const renderCell = (field: VisibleField) => {
           switch (field) {
             case "name":
@@ -273,7 +270,7 @@ export const TaskListTableDefault: React.FC<{
             case "end":
               return <span>{formatDate(t.end)}</span>;
             case "process":
-              return <span>{processValue}</span>;
+              return <span>{normalizeProcess(t.process)}</span>;
             case "assignee":
               return <span>{t.assignee || ""}</span>;
             case "plannedStart":
@@ -289,6 +286,7 @@ export const TaskListTableDefault: React.FC<{
                 <span>{formatEffort(t.actualEffort, effortDisplayUnit)}</span>
               );
             case "status":
+              const statusValue = normalizeStatus(t.status);
               return (
                 <div className={styles.statusWrapper}>
                   <span
