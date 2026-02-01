@@ -74,10 +74,18 @@
 - `OverlayEditor` は pending 中に入力を固定し、値が変わらない場合は blur で編集キャンセル、エラー時はメッセージを表示する（`src/components/task-list/overlay-editor.tsx:L334-L355`, `L373-L431`）。
 
 ### 8.6 最小再現手順（example App）
-- 前提: example では `onCellCommit={async () => {}}` が no-op で渡されている（`example/src/App.tsx:L193-L233`）。
+- 前提:
+  - example では `onCellCommit={async () => {}}` が no-op で渡されている（`example/src/App.tsx:L193-L233`）。
+  - example は `@levelcaptech/gantt-task-react-custom/dist/index.css` を import しており、`dist/` は `.gitignore` 対象のため、クリーン環境では先にリポジトリルートでビルド（または watch）して `dist` を生成しておく必要がある。
 - 手順:
-  - `cd example && npm ci && npm start` で App を起動する。
-  - `package-lock.json` がない場合は `npm install` を利用する。
+  - （リポジトリルート）依存導入:
+    - `npm install` を実行する（`package-lock.json` がある場合は `npm ci` を利用する）。
+  - （リポジトリルート）ライブラリのビルド / watch:
+    - 一度だけビルドする場合: `npm run build`。
+    - 開発中に watch する場合: `npm run start`。
+  - （example ディレクトリ）example App の起動:
+    - `cd example && npm install && npm start` で App を起動する。
+    - 他のパッケージマネージャを利用している場合は、実際に採用している lockfile に合わせてコマンドを読み替える（例: `yarn install && yarn start`, `pnpm install && pnpm start`）。
   - Node.js はリポジトリルートの `package.json` に `engines` 記載がある場合はそれを満たすものを利用する。
   - タスクリストのセルをダブルクリックで編集 → Enter で確定する。
   - 編集確定後もセル表示が変わらない（`tasks` が更新されないため）。
