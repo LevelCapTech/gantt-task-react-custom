@@ -4,6 +4,7 @@ import {
   Task,
   ViewMode,
   VisibleField,
+  GanttProps,
   Gantt,
   formatEffort,
   formatDate,
@@ -22,13 +23,6 @@ import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 const tooltipStyles = {
   tooltipDefaultContainer: "TooltipContainer",
   tooltipDefaultContainerParagraph: "TooltipParagraph",
-};
-
-type CellCommitPayload = {
-  rowId: string;
-  columnId: VisibleField;
-  value: string;
-  trigger: "enter";
 };
 
 const JapaneseTooltip: React.FC<{
@@ -103,16 +97,26 @@ const JapaneseTooltip: React.FC<{
   );
 };
 
-const resolveCellCommitValue = (columnId: VisibleField, value: string) => {
+type TaskFieldValue = Task[VisibleField];
+
+const resolveCellCommitValue = (
+  columnId: VisibleField,
+  value: string,
+  fallbackValue: TaskFieldValue
+) => {
   switch (columnId) {
     case "start":
     case "end":
     case "plannedStart":
-    case "plannedEnd":
-      return new Date(value);
+    case "plannedEnd": {
+      const parsedDate = new Date(value);
+      return Number.isNaN(parsedDate.getTime()) ? fallbackValue : parsedDate;
+    }
     case "plannedEffort":
-    case "actualEffort":
-      return Number(value);
+    case "actualEffort": {
+      const parsedNumber = Number(value);
+      return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
+    }
     default:
       return value;
   }
@@ -171,14 +175,24 @@ const App = () => {
     );
   };
 
-  const handleCellCommit = async ({
+  const handleCellCommit: NonNullable<GanttProps["onCellCommit"]> = async ({
     rowId,
     columnId,
     value,
-  }: CellCommitPayload) => {
-    const updatedValue = resolveCellCommitValue(columnId, value);
-    const updatedFields = { [columnId]: updatedValue } as Partial<Task>;
-    handleTaskUpdate(rowId, updatedFields);
+  }) => {
+    setTasks(prev =>
+      prev.map(task => {
+        if (task.id !== rowId) {
+          return task;
+        }
+        const updatedValue = resolveCellCommitValue(
+          columnId,
+          value,
+          task[columnId]
+        );
+        return { ...task, [columnId]: updatedValue };
+      })
+    );
   };
 
   const handleDblClick = (task: Task) => {

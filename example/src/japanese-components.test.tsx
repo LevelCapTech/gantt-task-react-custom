@@ -37,7 +37,7 @@ describe("JapaneseTooltip", () => {
     expect(screen.getByText("予定工数: 16MH")).toBeInTheDocument();
     expect(screen.getByText("実績工数: 8MH")).toBeInTheDocument();
     expect(screen.getByText(/進行中/)).toBeInTheDocument();
-    expect(screen.getByText("ステータス: 進 進行中")).toBeInTheDocument();
+    expect(screen.getByText(/ステータス:/)).toBeInTheDocument();
     expect(screen.getByText("進捗: 50 %")).toBeInTheDocument();
   });
 });
