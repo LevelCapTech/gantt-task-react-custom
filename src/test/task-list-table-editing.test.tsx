@@ -188,10 +188,10 @@ describe("TaskListTable keyboard navigation", () => {
 
   it("starts editing with Enter key on selected cell", () => {
     const context = createEditingContext("selected", "task-1", "name");
-    
+
     const { container } = render(
       <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+        <TaskListTableDefault {...defaultProps} />
       </TaskListEditingStateContext.Provider>
     );
 
@@ -203,10 +203,10 @@ describe("TaskListTable keyboard navigation", () => {
 
   it("starts editing with printable key on selected cell", () => {
     const context = createEditingContext("selected", "task-1", "name");
-    
+
     const { container } = render(
       <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+        <TaskListTableDefault {...defaultProps} />
       </TaskListEditingStateContext.Provider>
     );
 
@@ -216,12 +216,16 @@ describe("TaskListTable keyboard navigation", () => {
     expect(context.startEditing).toHaveBeenCalledWith("task-1", "name", "key");
   });
 
-  it("does not start editing without onUpdateTask prop", () => {
+  it("does not start editing without onCellCommit prop", () => {
     const context = createEditingContext("selected", "task-1", "name");
-    
+    const propsWithoutCommit = {
+      ...defaultProps,
+      onCellCommit: undefined,
+    };
+
     const { container } = render(
       <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} />
+        <TaskListTableDefault {...propsWithoutCommit} />
       </TaskListEditingStateContext.Provider>
     );
 
@@ -233,10 +237,10 @@ describe("TaskListTable keyboard navigation", () => {
 
   it("starts editing with double-click on cell", () => {
     const context = createEditingContext("viewing", null, null);
-    
+
     render(
       <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+        <TaskListTableDefault {...defaultProps} />
       </TaskListEditingStateContext.Provider>
     );
 
@@ -274,7 +278,7 @@ describe("TaskListTable keyboard navigation", () => {
     
     const { container } = render(
       <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...propsWithDisabled} onUpdateTask={jest.fn()} />
+        <TaskListTableDefault {...propsWithDisabled} />
       </TaskListEditingStateContext.Provider>
     );
 
@@ -324,9 +328,7 @@ describe("TaskListTable cell display", () => {
   };
 
   it("renders label-only text for editable fields", () => {
-    render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
-    );
+    render(<TaskListTableDefault {...defaultProps} />);
 
     expect(screen.getByText("Task 1")).toBeInTheDocument();
     // start and plannedStart share the same date for this fixture
@@ -341,9 +343,7 @@ describe("TaskListTable cell display", () => {
   });
 
   it("renders label-only display without form controls", () => {
-    render(
-      <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
-    );
+    render(<TaskListTableDefault {...defaultProps} />);
 
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     expect(screen.queryAllByRole("combobox")).toHaveLength(0);
@@ -355,7 +355,7 @@ describe("TaskListTable cell display", () => {
 
     render(
       <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+        <TaskListTableDefault {...defaultProps} />
       </TaskListEditingStateContext.Provider>
     );
 
