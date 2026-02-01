@@ -218,6 +218,45 @@ describe("OverlayEditor", () => {
     }
   );
 
+  it("focuses the input when editing starts", async () => {
+    const rectSpy = jest
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue(rect as DOMRect);
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+    const { taskListRef, headerRef, bodyRef } = createRefs();
+
+    render(
+      <div ref={taskListRef}>
+        <div ref={headerRef} />
+        <div ref={bodyRef}>
+          <div data-row-id="task-1" data-column-id="name">
+            Task
+          </div>
+        </div>
+        <OverlayEditor
+          editingState={baseEditingState}
+          taskListRef={taskListRef}
+          headerContainerRef={headerRef}
+          bodyContainerRef={bodyRef}
+          onCommit={jest.fn().mockResolvedValue(undefined)}
+          onCancel={jest.fn()}
+        />
+      </div>
+    );
+
+    const overlayInput = await screen.findByTestId("overlay-editor-input");
+
+    await waitFor(() => expect(overlayInput).toHaveFocus());
+
+    rectSpy.mockRestore();
+    rafSpy.mockRestore();
+  });
+
   it("disables select input when pending", async () => {
     const rectSpy = jest
       .spyOn(HTMLElement.prototype, "getBoundingClientRect")

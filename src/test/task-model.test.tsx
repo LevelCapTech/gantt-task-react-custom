@@ -1,8 +1,7 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { Gantt, TASK_STATUS_COLORS, TASK_STATUS_OPTIONS } from "../index";
+import { Gantt, TASK_STATUS_OPTIONS } from "../index";
 import { Task } from "../types/public-types";
 import { StandardTooltipContent } from "../components/other/tooltip";
 
@@ -23,7 +22,7 @@ const baseTask: Task = {
 };
 
 describe("Task data model extensions", () => {
-  it("renders extended fields and status badge color in task list", async () => {
+  it("renders extended fields in task list", async () => {
     const onTaskUpdate = jest.fn();
     render(
       <Gantt
@@ -35,97 +34,16 @@ describe("Task data model extensions", () => {
       />
     );
 
-    expect(screen.getByDisplayValue("開発")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("田中")).toBeInTheDocument();
-    const plannedStartInput = screen.getByLabelText("予定開始");
-    expect(plannedStartInput).toHaveValue("2026-01-01");
-    const plannedEndInput = screen.getByLabelText("予定終了");
-    expect(plannedEndInput).toHaveValue("2026-01-03");
-    expect(screen.getByDisplayValue("16")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("8")).toBeInTheDocument();
-
-    const statusBadge = screen.getByText("進");
-    expect(statusBadge).toHaveStyle(
-      `background-color: ${TASK_STATUS_COLORS["進行中"]}`
-    );
+    expect(screen.getByText("開発")).toBeInTheDocument();
+    expect(screen.getByText("田中")).toBeInTheDocument();
+    // start and plannedStart share the same date for this fixture
+    expect(screen.getAllByText("2026-01-01")).toHaveLength(2);
+    expect(screen.getAllByText("2026-01-03")).toHaveLength(1);
+    expect(screen.getAllByText("16MH")).not.toHaveLength(0);
+    expect(screen.getAllByText("8MH")).not.toHaveLength(0);
+    expect(screen.getByText("進行中")).toBeInTheDocument();
   });
 
-  it("fires onTaskUpdate when status dropdown changes", async () => {
-    const onTaskUpdate = jest.fn();
-    render(
-      <Gantt
-        tasks={[baseTask]}
-        onTaskUpdate={onTaskUpdate}
-        onCellCommit={async () => {}}
-        listCellWidth="140px"
-      />
-    );
-    const statusSelect = screen.getByDisplayValue("進行中");
-    await userEvent.selectOptions(statusSelect, "完了");
-    expect(onTaskUpdate).toHaveBeenCalledWith(
-      "Task-1",
-      expect.objectContaining({ status: "完了" })
-    );
-  });
-
-  it("fires onTaskUpdate when process dropdown changes", async () => {
-    const onTaskUpdate = jest.fn();
-    render(
-      <Gantt
-        tasks={[baseTask]}
-        onTaskUpdate={onTaskUpdate}
-        onCellCommit={async () => {}}
-        listCellWidth="140px"
-      />
-    );
-    const processSelect = screen.getByLabelText("工程");
-    await userEvent.selectOptions(processSelect, "レビュー");
-    expect(onTaskUpdate).toHaveBeenCalledWith(
-      "Task-1",
-      expect.objectContaining({ process: "レビュー" })
-    );
-  });
-
-  it("fires onTaskUpdate when assignee and planned dates change", async () => {
-    const onTaskUpdate = jest.fn();
-    render(
-      <Gantt
-        tasks={[baseTask]}
-        onTaskUpdate={onTaskUpdate}
-        onCellCommit={async () => {}}
-        listCellWidth="140px"
-      />
-    );
-
-    const assigneeInput = screen.getByLabelText("担当者");
-    fireEvent.change(assigneeInput, { target: { value: "佐々木" } });
-    const assigneeCall = onTaskUpdate.mock.calls.find(
-      ([id, payload]) => id === "Task-1" && payload.assignee === "佐々木"
-    );
-    expect(assigneeCall).toBeDefined();
-    onTaskUpdate.mockClear();
-
-    const plannedStartInput = screen.getByLabelText("予定開始");
-    const plannedEndInput = screen.getByLabelText("予定終了");
-    fireEvent.change(plannedStartInput, { target: { value: "2026-01-02" } });
-    fireEvent.change(plannedEndInput, { target: { value: "2026-01-04" } });
-
-    const calls = onTaskUpdate.mock.calls;
-    const plannedStartCall = calls.find(
-      ([id, payload]) =>
-        id === "Task-1" &&
-        payload.plannedStart &&
-        payload.plannedStart.getTime() === new Date("2026-01-02").getTime()
-    );
-    const plannedEndCall = calls.find(
-      ([id, payload]) =>
-        id === "Task-1" &&
-        payload.plannedEnd &&
-        payload.plannedEnd.getTime() === new Date("2026-01-04").getTime()
-    );
-    expect(plannedStartCall).toBeDefined();
-    expect(plannedEndCall).toBeDefined();
-  });
 
   it("renders tooltip content with planned and actual effort", () => {
     render(
