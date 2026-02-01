@@ -4,6 +4,7 @@ import {
   Task,
   ViewMode,
   VisibleField,
+  GanttProps,
   Gantt,
   formatEffort,
   formatDate,
@@ -23,7 +24,6 @@ const tooltipStyles = {
   tooltipDefaultContainer: "TooltipContainer",
   tooltipDefaultContainerParagraph: "TooltipParagraph",
 };
-
 
 const JapaneseTooltip: React.FC<{
   task: Task;
@@ -97,6 +97,31 @@ const JapaneseTooltip: React.FC<{
   );
 };
 
+type TaskFieldValue = Task[VisibleField];
+
+const resolveCellCommitValue = (
+  columnId: VisibleField,
+  value: string,
+  fallbackValue: TaskFieldValue
+) => {
+  switch (columnId) {
+    case "start":
+    case "end":
+    case "plannedStart":
+    case "plannedEnd": {
+      const parsedDate = new Date(value);
+      return Number.isNaN(parsedDate.getTime()) ? fallbackValue : parsedDate;
+    }
+    case "plannedEffort":
+    case "actualEffort": {
+      const parsedNumber = Number(value);
+      return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
+    }
+    default:
+      return value;
+  }
+};
+
 // 初期化
 const App = () => {
   const [view, setView] = React.useState<ViewMode>(ViewMode.Day);
@@ -147,6 +172,26 @@ const App = () => {
   const handleTaskUpdate = (taskId: string, updatedFields: Partial<Task>) => {
     setTasks(prev =>
       prev.map(t => (t.id === taskId ? { ...t, ...updatedFields } : t))
+    );
+  };
+
+  const handleCellCommit: NonNullable<GanttProps["onCellCommit"]> = async ({
+    rowId,
+    columnId,
+    value,
+  }) => {
+    setTasks(prev =>
+      prev.map(task => {
+        if (task.id !== rowId) {
+          return task;
+        }
+        const updatedValue = resolveCellCommitValue(
+          columnId,
+          value,
+          task[columnId]
+        );
+        return { ...task, [columnId]: updatedValue };
+      })
     );
   };
 
@@ -207,7 +252,7 @@ const App = () => {
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
-        onCellCommit={async () => {}}
+        onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
       />
       <h3>高さ制限ありのガントチャート</h3>
@@ -228,7 +273,7 @@ const App = () => {
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
-        onCellCommit={async () => {}}
+        onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
       />
     </div>
