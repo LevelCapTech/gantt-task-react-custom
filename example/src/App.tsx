@@ -24,6 +24,12 @@ const tooltipStyles = {
   tooltipDefaultContainerParagraph: "TooltipParagraph",
 };
 
+type CellCommitPayload = {
+  rowId: string;
+  columnId: VisibleField;
+  value: string;
+  trigger: "enter";
+};
 
 const JapaneseTooltip: React.FC<{
   task: Task;
@@ -97,6 +103,21 @@ const JapaneseTooltip: React.FC<{
   );
 };
 
+const resolveCellCommitValue = (columnId: VisibleField, value: string) => {
+  switch (columnId) {
+    case "start":
+    case "end":
+    case "plannedStart":
+    case "plannedEnd":
+      return new Date(value);
+    case "plannedEffort":
+    case "actualEffort":
+      return Number(value);
+    default:
+      return value;
+  }
+};
+
 // 初期化
 const App = () => {
   const [view, setView] = React.useState<ViewMode>(ViewMode.Day);
@@ -148,6 +169,16 @@ const App = () => {
     setTasks(prev =>
       prev.map(t => (t.id === taskId ? { ...t, ...updatedFields } : t))
     );
+  };
+
+  const handleCellCommit = async ({
+    rowId,
+    columnId,
+    value,
+  }: CellCommitPayload) => {
+    const updatedValue = resolveCellCommitValue(columnId, value);
+    const updatedFields = { [columnId]: updatedValue } as Partial<Task>;
+    handleTaskUpdate(rowId, updatedFields);
   };
 
   const handleDblClick = (task: Task) => {
@@ -207,7 +238,7 @@ const App = () => {
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
-        onCellCommit={async () => {}}
+        onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
       />
       <h3>高さ制限ありのガントチャート</h3>
@@ -228,7 +259,7 @@ const App = () => {
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
-        onCellCommit={async () => {}}
+        onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
       />
     </div>
