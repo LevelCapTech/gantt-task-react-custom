@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./task-list-table.module.css";
+import {
+  TASK_PROCESS_OPTIONS,
+  TASK_STATUS_OPTIONS,
+} from "../../constants/taskOptions";
 import { CellCommitTrigger, VisibleField } from "../../types/public-types";
 
 type EditingState = {
@@ -27,8 +31,32 @@ type OverlayEditorProps = {
   onCancel: (reason: "escape" | "nochange-blur" | "unmounted") => void;
 };
 
+type OverlayInputType = "text" | "date" | "number" | "select";
+
 const NULL_CHAR_REGEX = new RegExp(String.fromCharCode(0), "g");
 const ALPHANUMERIC_REGEX = /[a-zA-Z0-9]/;
+
+const resolveOverlayInputType = (
+  columnId: VisibleField | null
+): OverlayInputType => {
+  switch (columnId) {
+    case "start":
+    case "end":
+    case "plannedStart":
+    case "plannedEnd":
+      return "date";
+    case "plannedEffort":
+    case "actualEffort":
+      return "number";
+    case "process":
+    case "status":
+      return "select";
+    case "name":
+    case "assignee":
+    default:
+      return "text";
+  }
+};
 
 const escapeSelectorValue = (value: string) => {
   if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
@@ -70,10 +98,24 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
 }) => {
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
   const defaultValueRef = useRef("");
   const compositionRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
+
+  const inputType = useMemo(
+    () => resolveOverlayInputType(editingState.columnId),
+    [editingState.columnId]
+  );
+  const selectOptions = useMemo<readonly string[]>(() => {
+    if (editingState.columnId === "process") {
+      return TASK_PROCESS_OPTIONS;
+    }
+    if (editingState.columnId === "status") {
+      return TASK_STATUS_OPTIONS;
+    }
+    return [];
+  }, [editingState.columnId]);
 
   const portalRoot = useMemo(() => {
     if (typeof document === "undefined") {
@@ -252,7 +294,9 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
       return;
     }
     input.focus();
-    input.select();
+    if (input instanceof HTMLInputElement) {
+      input.select();
+    }
   }, [editingState.mode, editingState.pending]);
 
   const handleCommit = useCallback(async () => {
@@ -267,7 +311,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   }, [editingState.pending, onCommit]);
 
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
+    (event: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
       if (editingState.pending) {
         if (event.key === "Escape" || event.key === "Enter") {
           event.preventDefault();
@@ -301,7 +345,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   }, [editingState.pending, onCancel]);
 
   const handleInput = useCallback(
-    (event: React.FormEvent<HTMLInputElement>) => {
+    (event: React.FormEvent<HTMLInputElement | HTMLSelectElement>) => {
       if (!editingState.pending) {
         return;
       }
@@ -318,6 +362,13 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   const handleCompositionEnd = () => {
     compositionRef.current = false;
   };
+
+  const setInputElement = useCallback(
+    (element: HTMLInputElement | HTMLSelectElement | null) => {
+      inputRef.current = element;
+    },
+    []
+  );
 
   if (editingState.mode !== "editing" || !rect || !portalRoot) {
     return null;
@@ -336,22 +387,44 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
         height: rect.height,
       }}
     >
-      <input
-        className={styles.taskListInput}
-        data-testid="overlay-editor-input"
-        type="text"
-        aria-label="セル編集"
-        defaultValue={defaultValueRef.current}
-        style={{ height: "100%" }}
-        ref={inputRef}
-        readOnly={editingState.pending}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        onInput={handleInput}
-        onChange={handleInput}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
-      />
+      {inputType === "select" ? (
+        <select
+          className={styles.taskListSelect}
+          data-testid="overlay-editor-input"
+          aria-label="セル編集"
+          defaultValue={defaultValueRef.current}
+          style={{ height: "100%" }}
+          ref={setInputElement}
+          disabled={editingState.pending}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onInput={handleInput}
+          onChange={handleInput}
+        >
+          {selectOptions.map(option => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          className={styles.taskListInput}
+          data-testid="overlay-editor-input"
+          type={inputType}
+          aria-label="セル編集"
+          defaultValue={defaultValueRef.current}
+          style={{ height: "100%" }}
+          ref={setInputElement}
+          readOnly={editingState.pending}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onInput={handleInput}
+          onChange={handleInput}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+        />
+      )}
       {editingState.errorMessage && (
         <div className={styles.overlayEditorError} role="alert">
           {editingState.errorMessage}
