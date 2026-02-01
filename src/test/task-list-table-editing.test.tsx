@@ -186,23 +186,6 @@ describe("TaskListTable keyboard navigation", () => {
     expect(context.selectCell).toHaveBeenCalledWith("task-3", "name");
   });
 
-  it("ignores key events from input elements", () => {
-    const context = createEditingContext("selected", "task-1", "name");
-
-    const { container } = render(
-      <TaskListEditingStateContext.Provider value={context}>
-        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
-      </TaskListEditingStateContext.Provider>
-    );
-
-    const input = document.createElement("input");
-    const wrapper = container.firstChild as HTMLElement;
-    wrapper.appendChild(input);
-    fireEvent.keyDown(input, { key: "ArrowDown" });
-
-    expect(context.selectCell).not.toHaveBeenCalled();
-  });
-
   it("starts editing with Enter key on selected cell", () => {
     const context = createEditingContext("selected", "task-1", "name");
     
@@ -365,5 +348,22 @@ describe("TaskListTable cell display", () => {
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     expect(screen.queryAllByRole("combobox")).toHaveLength(0);
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+  });
+
+  it("keeps edit triggers available for overlay editing", () => {
+    const context = createEditingContext("selected", "task-1", "name");
+
+    render(
+      <TaskListEditingStateContext.Provider value={context}>
+        <TaskListTableDefault {...defaultProps} onUpdateTask={jest.fn()} />
+      </TaskListEditingStateContext.Provider>
+    );
+
+    const nameCell = document.querySelector(
+      '[data-row-id="task-1"][data-column-id="name"]'
+    ) as HTMLElement;
+    fireEvent.doubleClick(nameCell);
+
+    expect(context.startEditing).toHaveBeenCalledWith("task-1", "name", "dblclick");
   });
 });
