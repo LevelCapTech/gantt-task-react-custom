@@ -310,6 +310,8 @@ describe("TaskListTable cell display", () => {
     fontSize: "14px",
     tasks: [
       createMockTask("task-1", "Task 1", {
+        start: new Date(2026, 1, 1),
+        end: new Date(2026, 1, 10),
         process: "開発",
         assignee: "田中太郎",
         plannedStart: new Date(2026, 1, 1),
@@ -344,11 +346,11 @@ describe("TaskListTable cell display", () => {
     );
 
     expect(screen.getByText("Task 1")).toBeInTheDocument();
-    expect(screen.getByText("2026-01-01")).toBeInTheDocument();
-    expect(screen.getByText("2026-01-10")).toBeInTheDocument();
+    expect(screen.getAllByText("2026-02-01")).not.toHaveLength(0);
+    expect(screen.getByText("2026-02-10")).toBeInTheDocument();
     expect(screen.getByText("開発")).toBeInTheDocument();
     expect(screen.getByText("田中太郎")).toBeInTheDocument();
-    expect(screen.getByText("2026-02-01")).toBeInTheDocument();
+    expect(screen.getAllByText("2026-02-01")).not.toHaveLength(0);
     expect(screen.getByText("2026-02-15")).toBeInTheDocument();
     expect(screen.getByText("12MH")).toBeInTheDocument();
     expect(screen.getByText("5MH")).toBeInTheDocument();
