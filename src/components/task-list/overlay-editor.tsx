@@ -98,7 +98,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
 }) => {
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
-  const [inputElement, setInputElementState] = useState<
+  const [inputElement, setInputElement] = useState<
     HTMLInputElement | HTMLSelectElement | null
   >(null);
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
@@ -366,16 +366,10 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     compositionRef.current = false;
   };
 
-  const setInputElement = useCallback(
+  const handleInputElementRef = useCallback(
     (element: HTMLInputElement | HTMLSelectElement | null) => {
       inputRef.current = element;
-      if (element && editingState.mode === "editing") {
-        setInputElementState(element);
-        return;
-      }
-      if (!element) {
-        setInputElementState(null);
-      }
+      setInputElement(element && editingState.mode === "editing" ? element : null);
     },
     [editingState.mode]
   );
@@ -404,7 +398,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
           aria-label="セル編集"
           defaultValue={defaultValueRef.current}
           style={{ height: "100%" }}
-          ref={setInputElement}
+          ref={handleInputElementRef}
           disabled={editingState.pending}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
@@ -425,7 +419,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
           aria-label="セル編集"
           defaultValue={defaultValueRef.current}
           style={{ height: "100%" }}
-          ref={setInputElement}
+          ref={handleInputElementRef}
           readOnly={editingState.pending}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
