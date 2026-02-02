@@ -98,6 +98,9 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
 }) => {
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
+  const [inputElement, setInputElementState] = useState<
+    HTMLInputElement | HTMLSelectElement | null
+  >(null);
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
   const defaultValueRef = useRef("");
   const compositionRef = useRef(false);
@@ -285,7 +288,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (editingState.mode !== "editing") {
       return;
     }
-    const input = inputRef.current;
+    const input = inputElement;
     if (!input) {
       return;
     }
@@ -297,7 +300,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (input instanceof HTMLInputElement) {
       input.select();
     }
-  }, [editingState.mode, editingState.pending, targetElement]);
+  }, [editingState.mode, editingState.pending, inputElement]);
 
   const handleCommit = useCallback(async () => {
     if (editingState.pending) {
@@ -366,15 +369,9 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   const setInputElement = useCallback(
     (element: HTMLInputElement | HTMLSelectElement | null) => {
       inputRef.current = element;
-      if (!element || editingState.mode !== "editing") {
-        return;
-      }
-      element.focus();
-      if (!editingState.pending && element instanceof HTMLInputElement) {
-        element.select();
-      }
+      setInputElementState(element);
     },
-    [editingState.mode, editingState.pending]
+    []
   );
 
   if (editingState.mode !== "editing" || !rect || !portalRoot) {
