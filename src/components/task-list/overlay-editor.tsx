@@ -369,9 +369,9 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   const handleInputElementRef = useCallback(
     (element: HTMLInputElement | HTMLSelectElement | null) => {
       inputRef.current = element;
-      setInputElement(element && editingState.mode === "editing" ? element : null);
+      setInputElement(element);
     },
-    [editingState.mode]
+    []
   );
 
   if (editingState.mode !== "editing" || !rect || !portalRoot) {
