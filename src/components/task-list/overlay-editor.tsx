@@ -98,9 +98,6 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
 }) => {
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
-  const [inputElement, setInputElement] = useState<
-    HTMLInputElement | HTMLSelectElement | null
-  >(null);
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
   const defaultValueRef = useRef("");
   const compositionRef = useRef(false);
@@ -288,7 +285,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (editingState.mode !== "editing") {
       return;
     }
-    const input = inputElement;
+    const input = inputRef.current;
     if (!input) {
       return;
     }
@@ -300,7 +297,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (input instanceof HTMLInputElement) {
       input.select();
     }
-  }, [editingState.mode, editingState.pending, inputElement, targetElement]);
+  }, [editingState.mode, editingState.pending, targetElement]);
 
   const handleCommit = useCallback(async () => {
     if (editingState.pending) {
@@ -369,7 +366,6 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   const handleInputElementRef = useCallback(
     (element: HTMLInputElement | HTMLSelectElement | null) => {
       inputRef.current = element;
-      setInputElement(element);
     },
     []
   );
