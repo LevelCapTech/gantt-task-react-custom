@@ -300,7 +300,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     if (input instanceof HTMLInputElement) {
       input.select();
     }
-  }, [editingState.mode, editingState.pending, inputElement]);
+  }, [editingState.mode, editingState.pending, inputElement, targetElement]);
 
   const handleCommit = useCallback(async () => {
     if (editingState.pending) {
@@ -369,9 +369,15 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
   const setInputElement = useCallback(
     (element: HTMLInputElement | HTMLSelectElement | null) => {
       inputRef.current = element;
-      setInputElementState(element);
+      if (element && editingState.mode === "editing") {
+        setInputElementState(element);
+        return;
+      }
+      if (!element) {
+        setInputElementState(null);
+      }
     },
-    []
+    [editingState.mode]
   );
 
   if (editingState.mode !== "editing" || !rect || !portalRoot) {
