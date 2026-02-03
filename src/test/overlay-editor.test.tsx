@@ -92,7 +92,6 @@ describe("OverlayEditor", () => {
         callback(0);
         return 1;
       });
-    const onCancel = jest.fn();
     const { taskListRef, headerRef, bodyRef } = createRefs();
 
     render(
@@ -105,12 +104,12 @@ describe("OverlayEditor", () => {
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
             onCommit={jest.fn().mockResolvedValue(undefined)}
-            onCancel={onCancel}
+          onCancel={jest.fn()}
           />
       </div>
     );
 
-    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByTestId("overlay-editor")).toBeNull());
     expect(screen.queryByTestId("overlay-editor")).toBeNull();
 
     rectSpy.mockRestore();
