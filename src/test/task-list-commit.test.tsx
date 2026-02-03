@@ -108,8 +108,7 @@ describe("TaskList onCellCommit", () => {
     await waitFor(() => expect(onCellCommit).toHaveBeenCalledTimes(1));
     expect(input).toHaveAttribute("readonly");
 
-    input.value = "Changed";
-    fireEvent.input(input);
+    fireEvent.change(input, { target: { value: "Changed" } });
     expect(input).toHaveValue("Task 1");
 
     fireEvent.keyDown(input, { key: "Enter" });
