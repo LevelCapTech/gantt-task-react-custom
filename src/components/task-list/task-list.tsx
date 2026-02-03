@@ -230,13 +230,19 @@ export const TaskList: React.FC<TaskListProps> = ({
       };
     });
   }, []);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const cancelEditing = useCallback(
     (reason: "escape" | "nochange-blur" | "unmounted") => {
       if (editingState.mode !== "editing") {
         return;
       }
-      console.log("[edit:cancel]", {
+      console.debug("[edit:cancel]", {
         rowId: editingState.rowId,
         columnId: editingState.columnId,
         reason,
@@ -272,6 +278,9 @@ export const TaskList: React.FC<TaskListProps> = ({
       });
       try {
         await onCellCommit({ rowId, columnId, value, trigger });
+        if (!mountedRef.current) {
+          return;
+        }
         setEditingState(prev => {
           if (
             prev.mode !== "editing" ||
@@ -296,6 +305,9 @@ export const TaskList: React.FC<TaskListProps> = ({
           trigger,
           message: error instanceof Error ? error.message : "unknown",
         });
+        if (!mountedRef.current) {
+          return;
+        }
         setEditingState(prev => {
           if (
             prev.mode !== "editing" ||
@@ -307,7 +319,7 @@ export const TaskList: React.FC<TaskListProps> = ({
           return {
             ...prev,
             pending: false,
-            errorMessage: "更新に失敗しました。再試行してください。",
+            errorMessage: "Commit failed. Please retry.",
           };
         });
       }

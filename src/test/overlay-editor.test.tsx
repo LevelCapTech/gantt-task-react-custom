@@ -62,7 +62,6 @@ describe("OverlayEditor", () => {
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
-            onRequestClose={jest.fn()}
             onCommit={jest.fn().mockResolvedValue(undefined)}
             onCancel={jest.fn()}
           />
@@ -93,7 +92,6 @@ describe("OverlayEditor", () => {
         callback(0);
         return 1;
       });
-    const onRequestClose = jest.fn();
     const onCancel = jest.fn();
     const { taskListRef, headerRef, bodyRef } = createRefs();
 
@@ -106,7 +104,6 @@ describe("OverlayEditor", () => {
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
-            onRequestClose={onRequestClose}
             onCommit={jest.fn().mockResolvedValue(undefined)}
             onCancel={onCancel}
           />
@@ -146,7 +143,6 @@ describe("OverlayEditor", () => {
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
-            onRequestClose={jest.fn()}
             onCommit={jest.fn().mockResolvedValue(undefined)}
             onCancel={jest.fn()}
           />
@@ -199,7 +195,6 @@ describe("OverlayEditor", () => {
             taskListRef={taskListRef}
             headerContainerRef={headerRef}
             bodyContainerRef={bodyRef}
-            onRequestClose={jest.fn()}
             onCommit={jest.fn().mockResolvedValue(undefined)}
             onCancel={jest.fn()}
           />
@@ -282,7 +277,6 @@ describe("OverlayEditor", () => {
           taskListRef={taskListRef}
           headerContainerRef={headerRef}
           bodyContainerRef={bodyRef}
-          onRequestClose={jest.fn()}
           onCommit={jest.fn().mockResolvedValue(undefined)}
           onCancel={jest.fn()}
         />
@@ -293,6 +287,46 @@ describe("OverlayEditor", () => {
 
     expect(overlayInput.tagName).toBe("SELECT");
     expect(overlayInput).toBeDisabled();
+
+    rectSpy.mockRestore();
+    rafSpy.mockRestore();
+  });
+
+  it("sets input to readOnly when pending", async () => {
+    const rectSpy = jest
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue(rect as DOMRect);
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+    const { taskListRef, headerRef, bodyRef } = createRefs();
+
+    render(
+      <div ref={taskListRef}>
+        <div ref={headerRef} />
+        <div ref={bodyRef}>
+          <div data-row-id="task-1" data-column-id="name">
+            Task
+          </div>
+        </div>
+        <OverlayEditor
+          editingState={createEditingState("name", true)}
+          taskListRef={taskListRef}
+          headerContainerRef={headerRef}
+          bodyContainerRef={bodyRef}
+          onCommit={jest.fn().mockResolvedValue(undefined)}
+          onCancel={jest.fn()}
+        />
+      </div>
+    );
+
+    const overlayInput = await screen.findByTestId("overlay-editor-input");
+
+    expect(overlayInput.tagName).toBe("INPUT");
+    expect(overlayInput).toHaveAttribute("readonly");
 
     rectSpy.mockRestore();
     rafSpy.mockRestore();

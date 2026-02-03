@@ -341,8 +341,10 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     }
     if (input.value === defaultValueRef.current) {
       onCancel("nochange-blur");
+      return;
     }
-  }, [editingState.pending, onCancel]);
+    void onCommit(input.value, "enter");
+  }, [editingState.pending, onCancel, onCommit]);
 
   const handleInput = useCallback(
     (event: React.FormEvent<HTMLInputElement | HTMLSelectElement>) => {
