@@ -110,7 +110,6 @@ describe("OverlayEditor", () => {
     );
 
     await waitFor(() => expect(screen.queryByTestId("overlay-editor")).toBeNull());
-    expect(screen.queryByTestId("overlay-editor")).toBeNull();
 
     rectSpy.mockRestore();
     rafSpy.mockRestore();
