@@ -1,18 +1,7 @@
 import React from "react";
 import styles from "./task-list-table.module.css";
-import {
-  ColumnsState,
-  EffortUnit,
-  Task,
-  TaskProcess,
-  TaskStatus,
-  VisibleField,
-} from "../../types/public-types";
+import { ColumnsState, EffortUnit, Task, VisibleField } from "../../types/public-types";
 import { getDefaultWidth, TaskListEditingStateContext } from "./task-list";
-import {
-  TASK_PROCESS_OPTIONS,
-  TASK_STATUS_OPTIONS,
-} from "../../constants/taskOptions";
 import {
   formatDate,
   formatEffort,
@@ -20,9 +9,7 @@ import {
   getStatusColor,
   normalizeProcess,
   normalizeStatus,
-  parseDateFromInput,
   resolveVisibleFields,
-  sanitizeEffortInput,
 } from "../../helpers/task-helper";
 
 export const TaskListTableDefault: React.FC<{
@@ -36,6 +23,12 @@ export const TaskListTableDefault: React.FC<{
   onExpanderClick: (task: Task) => void;
   visibleFields: VisibleField[];
   onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
+  onCellCommit?: (payload: {
+    rowId: string;
+    columnId: VisibleField;
+    value: string;
+    trigger: "enter";
+  }) => Promise<void>;
   effortDisplayUnit: EffortUnit;
   columnsState?: ColumnsState;
 }> = ({
@@ -46,7 +39,7 @@ export const TaskListTableDefault: React.FC<{
   fontSize,
   onExpanderClick,
   visibleFields,
-  onUpdateTask,
+  onCellCommit,
   effortDisplayUnit,
   columnsState,
 }) => {
@@ -56,7 +49,8 @@ export const TaskListTableDefault: React.FC<{
       id: field,
       width: getDefaultWidth(field, rowWidth),
     }));
-  const isEditable = !!onUpdateTask;
+  const isCommitEnabled = !!onCellCommit;
+  const allowEditing = isCommitEnabled;
   const editingContext = React.useContext(TaskListEditingStateContext);
   const editingState = editingContext?.editingState;
   const editableFields = new Set<VisibleField>([
@@ -79,7 +73,7 @@ export const TaskListTableDefault: React.FC<{
     (typeof column === "string" ? column : column.id) as VisibleField;
 
   const isCellEditable = (task: Task, columnId: VisibleField) => {
-    const tableEditable = isEditable;
+    const tableEditable = allowEditing;
     const columnEditable = editableFields.has(columnId);
     const rowEditable = task.isDisabled !== true;
     const cellEditableByRule = true;
@@ -251,47 +245,6 @@ export const TaskListTableDefault: React.FC<{
           expanderSymbol = "▶";
         }
 
-        const processValue = normalizeProcess(t.process);
-        const statusValue = normalizeStatus(t.status);
-        const handleStatusChange = (value: string) => {
-          const nextStatus = normalizeStatus(value as TaskStatus);
-          onUpdateTask?.(t.id, { status: nextStatus });
-        };
-
-        const handleProcessChange = (value: string) => {
-          const nextProcess = normalizeProcess(value as TaskProcess);
-          onUpdateTask?.(t.id, { process: nextProcess });
-        };
-
-        const handleAssigneeChange = (value: string) => {
-          onUpdateTask?.(t.id, { assignee: value || undefined });
-        };
-
-        const handleNameChange = (value: string) => {
-          onUpdateTask?.(t.id, { name: value });
-        };
-
-        const handleDateChange = (field: "start" | "end", value: string) => {
-          const parsed = parseDateFromInput(value);
-          onUpdateTask?.(t.id, { [field]: parsed });
-        };
-
-        const handlePlannedDateChange = (
-          field: "plannedStart" | "plannedEnd",
-          value: string
-        ) => {
-          const parsed = parseDateFromInput(value);
-          onUpdateTask?.(t.id, { [field]: parsed });
-        };
-
-        const handleEffortChange = (
-          field: "plannedEffort" | "actualEffort",
-          value: string
-        ) => {
-          const parsed = sanitizeEffortInput(value);
-          onUpdateTask?.(t.id, { [field]: parsed });
-        };
-
         const renderCell = (field: VisibleField) => {
           switch (field) {
             case "name":
@@ -307,139 +260,32 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {expanderSymbol}
                   </div>
-                  {isEditable ? (
-                    <input
-                      className={styles.taskListInput}
-                      type="text"
-                      aria-label="タスク名"
-                      value={t.name}
-                      onChange={event => handleNameChange(event.target.value)}
-                      placeholder="タスク名"
-                    />
-                  ) : (
-                    <div>{t.name}</div>
-                  )}
+                  <div>{t.name}</div>
                 </div>
               );
             case "start":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="date"
-                  aria-label="開始日"
-                  value={formatDate(t.start)}
-                  onChange={event => handleDateChange("start", event.target.value)}
-                />
-              ) : (
-                <span>{formatDate(t.start)}</span>
-              );
+              return <span>{formatDate(t.start)}</span>;
             case "end":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="date"
-                  aria-label="終了日"
-                  value={formatDate(t.end)}
-                  onChange={event => handleDateChange("end", event.target.value)}
-                />
-              ) : (
-                <span>{formatDate(t.end)}</span>
-              );
+              return <span>{formatDate(t.end)}</span>;
             case "process":
-              return isEditable ? (
-                <select
-                  className={styles.taskListSelect}
-                  aria-label="工程"
-                  value={processValue}
-                  onChange={event => handleProcessChange(event.target.value)}
-                >
-                  {TASK_PROCESS_OPTIONS.map(option => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span>{processValue}</span>
-              );
+              return <span>{normalizeProcess(t.process)}</span>;
             case "assignee":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="text"
-                  aria-label="担当者"
-                  value={t.assignee || ""}
-                  onChange={event => handleAssigneeChange(event.target.value)}
-                  placeholder="担当者"
-                />
-              ) : (
-                <span>{t.assignee || ""}</span>
-              );
+              return <span>{t.assignee || ""}</span>;
             case "plannedStart":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="date"
-                  aria-label="予定開始"
-                  value={formatDate(t.plannedStart)}
-                  onChange={event =>
-                    handlePlannedDateChange("plannedStart", event.target.value)
-                  }
-                />
-              ) : (
-                <span>{formatDate(t.plannedStart)}</span>
-              );
+              return <span>{formatDate(t.plannedStart)}</span>;
             case "plannedEnd":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="date"
-                  aria-label="予定終了"
-                  value={formatDate(t.plannedEnd)}
-                  onChange={event =>
-                    handlePlannedDateChange("plannedEnd", event.target.value)
-                  }
-                />
-              ) : (
-                <span>{formatDate(t.plannedEnd)}</span>
-              );
+              return <span>{formatDate(t.plannedEnd)}</span>;
             case "plannedEffort":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="number"
-                  min={0}
-                  step="0.5"
-                  aria-label="予定工数（入力単位:時間）"
-                  value={t.plannedEffort ?? ""}
-                  onChange={event =>
-                    handleEffortChange("plannedEffort", event.target.value)
-                  }
-                  placeholder="時間(MH)"
-                  title="入力単位: 時間(MH)"
-                />
-              ) : (
+              return (
                 <span>{formatEffort(t.plannedEffort, effortDisplayUnit)}</span>
               );
             case "actualEffort":
-              return isEditable ? (
-                <input
-                  className={styles.taskListInput}
-                  type="number"
-                  min={0}
-                  step="0.5"
-                  aria-label="実績工数（入力単位:時間）"
-                  value={t.actualEffort ?? ""}
-                  onChange={event =>
-                    handleEffortChange("actualEffort", event.target.value)
-                  }
-                  placeholder="時間(MH)"
-                  title="入力単位: 時間(MH)"
-                />
-              ) : (
+              return (
                 <span>{formatEffort(t.actualEffort, effortDisplayUnit)}</span>
               );
             case "status":
+              {
+                const statusValue = normalizeStatus(t.status);
               return (
                 <div className={styles.statusWrapper}>
                   <span
@@ -448,24 +294,10 @@ export const TaskListTableDefault: React.FC<{
                   >
                     {getStatusBadgeText(statusValue)}
                   </span>
-                  {isEditable ? (
-                    <select
-                      className={styles.taskListSelect}
-                      aria-label="ステータス"
-                      value={statusValue}
-                      onChange={event => handleStatusChange(event.target.value)}
-                    >
-                      {TASK_STATUS_OPTIONS.map(option => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className={styles.statusText}>{statusValue}</span>
-                  )}
+                  <span className={styles.statusText}>{statusValue}</span>
                 </div>
               );
+              }
             default:
               return null;
           }

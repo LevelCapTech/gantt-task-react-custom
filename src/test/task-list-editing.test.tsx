@@ -55,6 +55,7 @@ describe("TaskList EditingStateContext", () => {
     selectedTask: undefined,
     setSelectedTask: jest.fn(),
     onExpanderClick: jest.fn(),
+    onCellCommit: jest.fn().mockResolvedValue(undefined),
     TaskListHeader: MockTaskListHeader,
     TaskListTable: MockTaskListTable,
   };
@@ -105,12 +106,14 @@ describe("TaskList EditingStateContext", () => {
         columnId: VisibleField | null;
         trigger: EditingTrigger | null;
         pending: boolean;
+        errorMessage: string | null;
       }>({
         mode: "viewing",
         rowId: null,
         columnId: null,
         trigger: null,
         pending: false,
+        errorMessage: null,
       });
 
       const selectCell = jest.fn((rowId: string, columnId: VisibleField) => {
@@ -120,6 +123,7 @@ describe("TaskList EditingStateContext", () => {
           columnId,
           trigger: null,
           pending: false,
+          errorMessage: null,
         });
       });
 
@@ -134,6 +138,7 @@ describe("TaskList EditingStateContext", () => {
           columnId,
           trigger,
           pending: true, // Set pending to true
+          errorMessage: null,
         });
       });
 

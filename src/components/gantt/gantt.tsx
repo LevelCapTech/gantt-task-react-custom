@@ -82,6 +82,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   onSelect,
   onExpanderClick,
   onTaskUpdate,
+  onCellCommit,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
@@ -422,6 +423,17 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
    * Handles arrow keys events and transform it to new scroll
    */
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (target instanceof HTMLElement) {
+      if (
+        target.isContentEditable ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT"
+      ) {
+        return;
+      }
+    }
     event.preventDefault();
     let newScrollY = scrollY;
     let newScrollX = scrollXRight;
@@ -626,6 +638,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     TaskListTable,
     visibleFields,
     onUpdateTask: onTaskUpdate,
+    onCellCommit,
     effortDisplayUnit,
     enableColumnDrag,
   };
