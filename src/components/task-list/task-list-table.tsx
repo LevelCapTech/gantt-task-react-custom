@@ -39,7 +39,6 @@ export const TaskListTableDefault: React.FC<{
   fontSize,
   onExpanderClick,
   visibleFields,
-  onUpdateTask,
   onCellCommit,
   effortDisplayUnit,
   columnsState,
@@ -51,7 +50,7 @@ export const TaskListTableDefault: React.FC<{
       width: getDefaultWidth(field, rowWidth),
     }));
   const isCommitEnabled = !!onCellCommit;
-  const allowEditing = !!onUpdateTask && isCommitEnabled;
+  const allowEditing = isCommitEnabled;
   const editingContext = React.useContext(TaskListEditingStateContext);
   const editingState = editingContext?.editingState;
   const editableFields = new Set<VisibleField>([
