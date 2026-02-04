@@ -1,28 +1,28 @@
 # gantt-task-react
 
-## License
+## ライセンス
 MIT
 
-Originally based on:
+元になったプロジェクト:
 https://github.com/MaTeMaTuK/gantt-task-react
 
-## Interactive Gantt Chart for React with TypeScript.
+## TypeScript を用いた React 向けのインタラクティブなガントチャート。
 
 ![example](https://user-images.githubusercontent.com/26743903/88215863-f35d5f00-cc64-11ea-81db-e829e6e9b5c8.png)
 
-## [Live Demo](https://matematuk.github.io/gantt-task-react/)
+## [ライブデモ](https://matematuk.github.io/gantt-task-react/)
 
-## Install
+## インストール
 
 ```
 npm install gantt-task-react
 ```
 
-## DevContainer (npm publish-ready)
+## DevContainer（npm publish 対応）
 
 VS Code Dev Containers で npmjs.com への publish を行う環境を用意しています。セットアップと利用方法は [docs/DEVCONTAINER.md](docs/DEVCONTAINER.md) を参照してください。
 
-## How to use it
+## 使い方
 
 ```javascript
 import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from 'gantt-task-react';
@@ -44,7 +44,7 @@ let tasks: Task[] = [
 <Gantt tasks={tasks} />
 ```
 
-You may handle actions
+次のアクションを処理できます
 
 ```javascript
 <Gantt
@@ -58,7 +58,7 @@ You may handle actions
 />
 ```
 
-## How to run example
+## example の起動方法
 
 ```
 cd ./example
@@ -67,71 +67,71 @@ npm install
 npm start
 ```
 
-Notes:
-- Do not use `npm link` or manual symlinks for this repo; it can create duplicate React instances and cause "Invalid hook call".
-- If you changed the root `package.json` or build config, follow `docs/REBUILD.md` for the full rebuild flow.
+注意:
+- このリポジトリでは `npm link` や手動 symlink を使用しないでください。React の二重読み込みが発生し、「Invalid hook call」を引き起こす可能性があります。
+- ルートの `package.json` やビルド設定を変更した場合は、`docs/REBUILD.md` に従って全体のリビルド手順を実施してください。
 
-## Gantt Configuration
+## Gantt 設定
 
 ### GanttProps
 
-| Parameter Name                  | Type          | Description                                        |
+| パラメーター名                  | 型            | 説明                                               |
 | :------------------------------ | :------------ | :------------------------------------------------- |
-| tasks\*                         | [Task](#Task) | Tasks array.                                       |
-| [EventOption](#EventOption)     | interface     | Specifies gantt events.                            |
-| [DisplayOption](#DisplayOption) | interface     | Specifies view type and display timeline language. |
-| [StylingOption](#StylingOption) | interface     | Specifies chart and global tasks styles            |
+| tasks\*                         | [Task](#Task) | タスク配列。                                       |
+| [EventOption](#EventOption)     | interface     | ガントのイベントを指定します。                     |
+| [DisplayOption](#DisplayOption) | interface     | 表示タイプとタイムライン表示言語を指定します。     |
+| [StylingOption](#StylingOption) | interface     | チャートとタスクのグローバルスタイルを指定します。 |
 
 ### EventOption
 
-| Parameter Name     | Type                                                                          | Description                                                                             |
+| パラメーター名     | 型                                                                            | 説明                                                                                    |
 | :----------------- | :---------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- |
-| onSelect           | (task: Task, isSelected: boolean) => void                                     | Specifies the function to be executed on the taskbar select or unselect event.          |
-| onDoubleClick      | (task: Task) => void                                                          | Specifies the function to be executed on the taskbar onDoubleClick event.               |
-| onClick            | (task: Task) => void                                                          | Specifies the function to be executed on the taskbar onClick event.                     |
-| onDelete\*         | (task: Task) => void/boolean/Promise<void>/Promise<boolean>                   | Specifies the function to be executed on the taskbar on Delete button press event.      |
-| onDateChange\*     | (task: Task, children: Task[]) => void/boolean/Promise<void>/Promise<boolean> | Specifies the function to be executed when drag taskbar event on timeline has finished. |
-| onProgressChange\* | (task: Task, children: Task[]) => void/boolean/Promise<void>/Promise<boolean> | Specifies the function to be executed when drag taskbar progress event has finished.    |
-| onExpanderClick\*  | onExpanderClick: (task: Task) => void;                                        | Specifies the function to be executed on the table expander click                       |
-| onCellCommit       | (payload: CellCommitPayload) => Promise<void>                                 | Notifies cell edits; host validates/persists and updates tasks, then passes new props so UI rerenders. |
-| timeStep           | number                                                                        | A time step value for onDateChange. Specify in milliseconds.                            |
+| onSelect           | (task: Task, isSelected: boolean) => void                                     | タスクバーの選択/選択解除時に実行する関数を指定します。                                 |
+| onDoubleClick      | (task: Task) => void                                                          | タスクバーの onDoubleClick イベント時に実行する関数を指定します。                        |
+| onClick            | (task: Task) => void                                                          | タスクバーの onClick イベント時に実行する関数を指定します。                              |
+| onDelete\*         | (task: Task) => void/boolean/Promise<void>/Promise<boolean>                   | タスクバーの削除ボタン押下時に実行する関数を指定します。                                 |
+| onDateChange\*     | (task: Task, children: Task[]) => void/boolean/Promise<void>/Promise<boolean> | タイムライン上でタスクバーをドラッグした後に実行する関数を指定します。                    |
+| onProgressChange\* | (task: Task, children: Task[]) => void/boolean/Promise<void>/Promise<boolean> | タスクバーの進捗をドラッグした後に実行する関数を指定します。                             |
+| onExpanderClick\*  | onExpanderClick: (task: Task) => void;                                        | テーブルの展開クリック時に実行する関数を指定します。                                     |
+| onCellCommit       | (payload: CellCommitPayload) => Promise<void>                                 | セル編集を通知します。ホスト側で検証/保存し、タスクを更新して新しい props を渡すと UI が再描画されます。 |
+| timeStep           | number                                                                        | onDateChange の時間ステップ値です。ミリ秒で指定します。                                  |
 
-\* Chart undoes operation if method return false or error. Parameter children returns one level deep records.
+\* メソッドが false を返すかエラーの場合、チャートは操作を取り消します。パラメーター children は 1 階層分のレコードを返します。
 
 ### DisplayOption
 
-| Parameter Name | Type    | Description                                                                                                 |
+| パラメーター名 | 型      | 説明                                                                                                         |
 | :------------- | :------ | :---------------------------------------------------------------------------------------------------------- |
-| viewMode       | enum    | Specifies the time scale. Hour, Quarter Day, Half Day, Day, Week(ISO-8601, 1st day is Monday), Month, QuarterYear, Year. |
-| viewDate       | date    | Specifies display date and time for display.                                                                |
-| preStepsCount  | number  | Specifies empty space before the fist task                                                                  |
-| locale         | string  | Specifies the month name language. Able formats: ISO 639-2, Java Locale.                                    |
-| rtl            | boolean | Sets rtl mode.                                                                                              |
+| viewMode       | enum    | 時間スケールを指定します。Hour, Quarter Day, Half Day, Day, Week(ISO-8601 で 1 日目は月曜), Month, QuarterYear, Year。 |
+| viewDate       | date    | 表示に使用する日時を指定します。                                                                            |
+| preStepsCount  | number  | 最初のタスクの前の空白を指定します。                                                                         |
+| locale         | string  | 月名の言語を指定します。利用可能な形式: ISO 639-2, Java Locale。                                              |
+| rtl            | boolean | rtl モードを設定します。                                                                                    |
 
 ### StylingOption
 
-| Parameter Name             | Type   | Description                                                                                    |
+| パラメーター名             | 型     | 説明                                                                                           |
 | :------------------------- | :----- | :--------------------------------------------------------------------------------------------- |
-| headerHeight               | number | Specifies the header height.                                                                   |
-| ganttHeight                | number | Specifies the gantt chart height without header. Default is 0. It`s mean no height limitation. |
-| columnWidth                | number | Specifies the time period width.                                                               |
-| listCellWidth              | string | Specifies the task list cell width. Empty string is mean "no display".                         |
-| rowHeight                  | number | Specifies the task row height.                                                                 |
-| barCornerRadius            | number | Specifies the taskbar corner rounding.                                                         |
-| barFill                    | number | Specifies the taskbar occupation. Sets in percent from 0 to 100.                               |
-| handleWidth                | number | Specifies width the taskbar drag event control for start and end dates.                        |
-| fontFamily                 | string | Specifies the application font.                                                                |
-| fontSize                   | string | Specifies the application font size.                                                           |
-| barProgressColor           | string | Specifies the taskbar progress fill color globally.                                            |
-| barProgressSelectedColor   | string | Specifies the taskbar progress fill color globally on select.                                  |
-| barBackgroundColor         | string | Specifies the taskbar background fill color globally.                                          |
-| barBackgroundSelectedColor | string | Specifies the taskbar background fill color globally on select.                                |
-| arrowColor                 | string | Specifies the relationship arrow fill color.                                                   |
-| arrowIndent                | number | Specifies the relationship arrow right indent. Sets in px                                      |
-| todayColor                 | string | Specifies the current period column fill color.                                                |
-| TooltipContent             |        | Specifies the Tooltip view for selected taskbar.                                               |
-| TaskListHeader             |        | Specifies the task list Header view                                                            |
-| TaskListTable              |        | Specifies the task list Table view                                                             |
+| headerHeight               | number | ヘッダーの高さを指定します。                                                                   |
+| ganttHeight                | number | ヘッダーを除いたガントチャートの高さを指定します。既定は 0 で、高さ制限なしを意味します。        |
+| columnWidth                | number | 時間期間の幅を指定します。                                                                     |
+| listCellWidth              | string | タスクリストセルの幅を指定します。空文字列は「表示なし」を意味します。                           |
+| rowHeight                  | number | タスク行の高さを指定します。                                                                   |
+| barCornerRadius            | number | タスクバーの角丸を指定します。                                                                 |
+| barFill                    | number | タスクバーの占有率を指定します。0〜100 のパーセントで設定します。                               |
+| handleWidth                | number | 開始・終了日のドラッグ操作に使うタスクバーのハンドル幅を指定します。                             |
+| fontFamily                 | string | アプリケーションのフォントを指定します。                                                       |
+| fontSize                   | string | アプリケーションのフォントサイズを指定します。                                                 |
+| barProgressColor           | string | タスクバーの進捗塗り色をグローバルに指定します。                                                 |
+| barProgressSelectedColor   | string | 選択時のタスクバー進捗塗り色をグローバルに指定します。                                           |
+| barBackgroundColor         | string | タスクバー背景の塗り色をグローバルに指定します。                                                 |
+| barBackgroundSelectedColor | string | 選択時のタスクバー背景の塗り色をグローバルに指定します。                                         |
+| arrowColor                 | string | 関係線の矢印の塗り色を指定します。                                                             |
+| arrowIndent                | number | 関係線の矢印の右インデントを指定します。px で設定します。                                        |
+| todayColor                 | string | 現在期間の列の塗り色を指定します。                                                             |
+| TooltipContent             |        | 選択したタスクバー用の Tooltip ビューを指定します。                                              |
+| TaskListHeader             |        | タスクリストの Header ビューを指定します。                                                     |
+| TaskListTable              |        | タスクリストの Table ビューを指定します。                                                      |
 
 - TooltipContent: [`React.FC<{ task: Task; fontSize: string; fontFamily: string; }>;`](https://github.com/MaTeMaTuK/gantt-task-react/blob/main/src/components/other/tooltip.tsx#L56)
 - TaskListHeader: `React.FC<{ headerHeight: number; rowWidth: string; fontFamily: string; fontSize: string;}>;`
@@ -139,27 +139,27 @@ Notes:
 
 ### Task
 
-| Parameter Name | Type     | Description                                                                                           |
+| パラメーター名 | 型       | 説明                                                                                                  |
 | :------------- | :------- | :---------------------------------------------------------------------------------------------------- |
-| id\*           | string   | Task id.                                                                                              |
-| name\*         | string   | Task display name.                                                                                    |
-| type\*         | string   | Task display type: **task**, **milestone**, **project**                                               |
-| start\*        | Date     | Task start date.                                                                                      |
-| end\*          | Date     | Task end date.                                                                                        |
-| progress\*     | number   | Task progress. Sets in percent from 0 to 100.                                                         |
-| dependencies   | string[] | Specifies the parent dependencies ids.                                                                |
-| styles         | object   | Specifies the taskbar styling settings locally. Object is passed with the following attributes:       |
-|                |          | - **backgroundColor**: String. Specifies the taskbar background fill color locally.                   |
-|                |          | - **backgroundSelectedColor**: String. Specifies the taskbar background fill color locally on select. |
-|                |          | - **progressColor**: String. Specifies the taskbar progress fill color locally.                       |
-|                |          | - **progressSelectedColor**: String. Specifies the taskbar progress fill color globally on select.    |
-| isDisabled     | bool     | Disables all action for current task.                                                                 |
-| fontSize       | string   | Specifies the taskbar font size locally.                                                              |
-| project        | string   | Task project name                                                                                     |
-| hideChildren   | bool     | Hide children items. Parameter works with project type only                                           |
+| id\*           | string   | タスク ID。                                                                                            |
+| name\*         | string   | タスクの表示名。                                                                                        |
+| type\*         | string   | タスクの表示タイプ: **task**, **milestone**, **project**                                               |
+| start\*        | Date     | タスク開始日。                                                                                          |
+| end\*          | Date     | タスク終了日。                                                                                          |
+| progress\*     | number   | タスクの進捗。0〜100 のパーセントで設定します。                                                         |
+| dependencies   | string[] | 親依存関係の ID を指定します。                                                                          |
+| styles         | object   | タスクバーのローカルスタイル設定を指定します。次の属性を持つオブジェクトを渡します:                       |
+|                |          | - **backgroundColor**: String。タスクバー背景の塗り色をローカルに指定します。                            |
+|                |          | - **backgroundSelectedColor**: String。選択時のタスクバー背景の塗り色をローカルに指定します。            |
+|                |          | - **progressColor**: String。タスクバー進捗の塗り色をローカルに指定します。                              |
+|                |          | - **progressSelectedColor**: String。選択時のタスクバー進捗の塗り色をグローバルに指定します。             |
+| isDisabled     | bool     | 現在のタスクの全操作を無効にします。                                                                    |
+| fontSize       | string   | タスクバーのフォントサイズをローカルに指定します。                                                      |
+| project        | string   | タスクのプロジェクト名                                                                                  |
+| hideChildren   | bool     | 子要素を非表示にします。パラメーターは project タイプのときのみ有効です。                                |
 
-\*Required
+\*必須
 
-## License
+## ライセンス
 
 [MIT](https://oss.ninja/mit/jaredpalmer/)
