@@ -19,6 +19,7 @@
 - ワークフローは `.github/workflows/npm-publish.yml` を使用します。
 - `permissions` に `id-token: write` を付与し、OIDC Token を発行できるようにします。
 - npm registry は `https://registry.npmjs.org` を指定します。
+- GitHub Secrets に npm トークンを登録する必要はありません。
 
 ## タグ駆動リリース手順
 
