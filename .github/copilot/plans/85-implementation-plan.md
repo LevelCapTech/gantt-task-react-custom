@@ -58,7 +58,7 @@
 
 # 7. オープンな課題 / ADR 要否
 - 未確定事項:
-  - Node.js は `.travis.yml` に合わせて 10/12 系を優先し、実装 Issue では 12.x を指定する方針で確定する。
+  - Node.js は React 18 に合わせて 18.x を指定する方針で確定する。
   - GitHub Pages の公開ブランチ設定はリポジトリ管理者が行う（設定項目として明記）。
 - ADR に残すべき判断:
   - ADR は不要。理由: 設計は運用手順の整理であり、公開 API や実装仕様の変更を伴わないため。
@@ -66,12 +66,13 @@
 # 8. 実装 Issue への引き渡し事項
 - GitHub Actions workflow 設計:
   - トリガー: `main` push と `workflow_dispatch`。
-  - 実行環境: `ubuntu-latest`、Node.js 12.x、npm 使用。
+  - 実行環境: `ubuntu-latest`、Node.js 18.x（React 18 対応）、npm 使用。
   - Build 手順:
     1. `actions/checkout@<pin>` でリポジトリ取得。
-    2. `actions/setup-node@<pin>` で Node.js 12.x を設定。
-    3. `cd example && npm ci` を実行。
-    4. `npm run build` で `example/build/` を生成。
+    2. `actions/setup-node@<pin>` で Node.js 18.x を設定。
+    3. ルートで `npm ci` を実行し、本体を `npm run build` でビルドして `dist/` を生成。
+    4. `cd example && npm ci` を実行。
+    5. `npm run build` で `example/build/` を生成。
   - Deploy 手順:
     1. `gh-pages` ブランチを checkout し、成果物以外を削除。
     2. `example/build/` をリポジトリ直下へ配置。
@@ -81,7 +82,9 @@
     - `concurrency` で同一 workflow の同時実行を抑止する。
 - `example` ビルド前提:
   - `example/package.json` に `homepage: "https://levelcaptech.github.io/gantt-task-react-custom/"` を設定する。
-  - build コマンドは `cd example && npm ci && npm run build` を基本とする。
+  - 事前に本体を `npm ci && npm run build` でビルドし、`dist/` を生成する。
+  - example の build コマンドは `cd example && npm ci && npm run build` を基本とする。
+  - React は `react` / `react-dom` ともに 18 系を前提とする。
   - ローカル検証では `npm start` を使用し、`homepage` 設定は本番ビルドのパス解決にのみ影響するため開発サーバーの動作には影響しない。
 - `gh-pages` ブランチ運用方針:
   - build 失敗時は `gh-pages` を更新しない。
