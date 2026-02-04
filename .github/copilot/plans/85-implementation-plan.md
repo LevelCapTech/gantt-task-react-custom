@@ -1,15 +1,16 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - `example/` の React アプリを GitHub Actions でビルドし、成果物を `gh-pages` ブランチへデプロイする設計を確定する。
-  - GitHub Pages 公開 URL を `https://levelcaptech.github.io/gantt-task-react-custom/` とし、README から辿れる前提を明記する。
-  - build / deploy 失敗時は `gh-pages` を更新しない運用方針を明文化する。
+  - GitHub Actions で `main` 更新時に `example/` を production build し、成果物を `gh-pages` ブランチへ配置できること。
+  - GitHub Pages の公開 URL を `https://levelcaptech.github.io/gantt-task-react-custom/` として公開できること。
+  - build / deploy 失敗時に `gh-pages` を更新せず、直前の公開状態を保持できること。
 - 非機能要件:
   - Secrets を扱わず、`GITHUB_TOKEN` のみを利用する前提とする。
   - 既存のライブラリ本体や example UI の挙動変更は行わない。
 
 # 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）:
-  - 新規: `.github/copilot/plans/85-implementation-plan.md`（本計画書のみ）。
+  - 公開対象: `example/build/` の静的成果物（HTML / JS / CSS / assets）。
+  - 公開ブランチ: `gh-pages`（成果物のみを配置）。
 - 影響範囲・互換性リスク:
   - 設計ドキュメントのみの追加で、実装・挙動には影響しない。
 - 外部依存・Secrets の扱い:
@@ -18,20 +19,29 @@
 # 3. 設計方針
 - 責務分離 / データフロー（必要なら Mermaid 1 枚）:
   - デプロイ責務は GitHub Actions、配信責務は GitHub Pages に分離する設計とする。
-  - データフローは既存 Issue の mermaid 図を踏襲し、実装 Issue で workflow 化する。
+  - データフロー（GitHub Pages 自動公開）:
+    ```mermaid
+    flowchart LR
+      Dev[Developer push] --> GA[GitHub Actions]
+      GA --> Build[example build]
+      Build --> GHP[gh-pages branch]
+      GHP --> Pages[GitHub Pages]
+      Pages --> User[Browser]
+    ```
 - エッジケース / 例外系 / リトライ方針:
   - build 失敗時は workflow を fail し、`gh-pages` を更新しない。
   - deploy 失敗時も `gh-pages` を更新せず、Actions ログに原因を残す。
+  - 成果物が空の場合は deploy しない（`example/build/` の生成失敗を検知して fail）。
 - ログと観測性（漏洩防止を含む）:
   - `GITHUB_TOKEN` のみを利用し、ログに Secrets/PII を出力しない。
 
 # 4. テスト戦略
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
-  - 設計フェーズのためテスト実装は行わない。実装 Issue で build / deploy の確認を行う。
+  - 設計レビュー観点として、workflow の dry-run（手動実行）で build と deploy が通ることを確認する。
 - モック / フィクスチャ方針:
-  - 実装 Issue で必要に応じて検討する。
+  - 設計ドキュメントでは不要。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
-  - 実装 Issue で `npm run build` / `npm run test` を検討する。
+  - `cd example && npm ci && npm run build`（workflow と同一条件で確認）。
 
 # 5. CI 品質ゲート
 - 実行コマンド（format / lint / typecheck / test / security）:
@@ -55,9 +65,20 @@
 
 # 8. 実装 Issue への引き渡し事項
 - GitHub Actions workflow 設計:
-  - `main` push トリガーで example を build し、`gh-pages` に成果物を配置する（`gh-pages` ブランチへ直接 push）。
-  - `permissions` は `contents: write` を明示し、`GITHUB_TOKEN` のみを利用する。
-  - `concurrency` を設定して二重実行を防止する。
+  - トリガー: `main` push と `workflow_dispatch`。
+  - 実行環境: `ubuntu-latest`、Node.js 12.x、npm 使用。
+  - Build 手順:
+    1. `actions/checkout@<pin>` でリポジトリ取得。
+    2. `actions/setup-node@<pin>` で Node.js 12.x を設定。
+    3. `cd example && npm ci` を実行。
+    4. `npm run build` で `example/build/` を生成。
+  - Deploy 手順:
+    1. `gh-pages` ブランチを checkout し、成果物以外を削除。
+    2. `example/build/` をリポジトリ直下へ配置。
+    3. `git commit` → `git push` で `gh-pages` を更新。
+  - 権限/制御:
+    - `permissions: { contents: write }` を明示し、`GITHUB_TOKEN` のみを利用する。
+    - `concurrency` で同一 workflow の同時実行を抑止する。
 - `example` ビルド前提:
   - `example/package.json` に `homepage: "https://levelcaptech.github.io/gantt-task-react-custom/"` を設定する。
   - build コマンドは `cd example && npm ci && npm run build` を基本とする。
