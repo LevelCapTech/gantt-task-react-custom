@@ -1,0 +1,60 @@
+name: gh-pages-deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+      - name: Install root dependencies
+        run: npm ci
+      - name: Build library
+        run: npm run build
+      - name: Install example dependencies
+        run: |
+          cd example
+          npm ci --install-links
+      - name: Build example
+        run: |
+          cd example
+          npm run build
+      - name: Validate build output
+        run: |
+          if [ ! -d example/build ] || [ -z "$(ls -A example/build)" ]; then
+            echo "example/build is missing or empty." >&2
+            exit 1
+          fi
+      - name: Deploy to gh-pages
+        run: |
+          git fetch origin gh-pages || true
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout -B gh-pages origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+          fi
+          git rm -rf . || true
+          cp -R example/build/. .
+          touch .nojekyll
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m "Deploy example to GitHub Pages"
+          git push origin gh-pages
