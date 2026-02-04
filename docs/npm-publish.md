@@ -12,7 +12,10 @@
 - ルートの `package.json` に `build` スクリプトが存在し、`npm run build` が成功すること。
 
 ## npm 側設定手順
-- 対象パッケージの設定で「Trusted Publishing」を有効にし、GitHub リポジトリと連携します。
+- npm にログインし、対象パッケージの Settings を開きます。
+- Settings の「Trusted Publishing」で「Add a provider」を選び、GitHub を指定します。
+- Owner は `LevelCapTech`、Repository は `gantt-task-react-custom`、Workflow は `npm-publish.yml`、Environment は空欄で登録します。
+- 登録後は「このリポジトリのこのワークフローからの OIDC トークンのみ publish 許可」という設定になります。
 - npm の設定にトークンを保存しません（`.npmrc` にトークンは書かない）。
 
 ## GitHub 側設定手順（OIDC）
