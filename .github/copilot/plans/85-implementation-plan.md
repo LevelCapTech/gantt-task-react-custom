@@ -82,6 +82,7 @@
 - `example` ビルド前提:
   - `example/package.json` に `homepage: "https://levelcaptech.github.io/gantt-task-react-custom/"` を設定する。
   - build コマンドは `cd example && npm ci && npm run build` を基本とする。
+  - ローカル検証では `npm start` を使用し、`homepage` 設定は本番ビルドのパス解決にのみ影響するため開発サーバーの動作には影響しない。
 - `gh-pages` ブランチ運用方針:
   - build 失敗時は `gh-pages` を更新しない。
   - gh-pages は成果物のみを保持し、手動変更は行わない。
