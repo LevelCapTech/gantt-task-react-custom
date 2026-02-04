@@ -47,15 +47,15 @@
 
 # 7. オープンな課題 / ADR 要否
 - 未確定事項:
-  - Node.js / npm の固定バージョン（`example/package.json` または既存 CI を参照して実装 Issue で決定）。
+  - Node.js は `.travis.yml` に合わせて 10/12 系を優先し、実装 Issue では 12.x を指定する方針で確定する。
   - GitHub Pages の公開ブランチ設定はリポジトリ管理者が行う（設定項目として明記）。
 - ADR に残すべき判断:
   - ADR は不要。理由: 設計は運用手順の整理であり、公開 API や実装仕様の変更を伴わないため。
 
 # 8. 実装 Issue への引き渡し事項
 - GitHub Actions workflow 設計:
-  - `main` push トリガーで example を build し、`gh-pages` に成果物を配置する。
-  - `permissions` は `contents: write` を明示し、`GITHUB_TOKEN` のみを利用する。`deploy-pages` を採用する場合は `pages: write` と `id-token: write` を追加する。
+  - `main` push トリガーで example を build し、`gh-pages` に成果物を配置する（`gh-pages` ブランチへ直接 push）。
+  - `permissions` は `contents: write` を明示し、`GITHUB_TOKEN` のみを利用する。
   - `concurrency` を設定して二重実行を防止する。
 - `example` ビルド前提:
   - `example/package.json` に `homepage` として上記 URL を設定する。
