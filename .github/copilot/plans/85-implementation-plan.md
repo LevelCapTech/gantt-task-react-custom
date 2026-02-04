@@ -55,10 +55,10 @@
 # 8. 実装 Issue への引き渡し事項
 - GitHub Actions workflow 設計:
   - `main` push トリガーで example を build し、`gh-pages` に成果物を配置する。
-  - `permissions` は最小権限（`contents: write` 程度）を明示し、`GITHUB_TOKEN` のみを利用する。
+  - `permissions` は `contents: write` を明示し、`GITHUB_TOKEN` のみを利用する。`deploy-pages` を採用する場合は `pages: write` と `id-token: write` を追加する。
   - `concurrency` を設定して二重実行を防止する。
 - `example` ビルド前提:
-  - `example/package.json` に `homepage: "https://levelcaptech.github.io/gantt-task-react-custom/"` を設定する。
+  - `example/package.json` に `homepage` として上記 URL を設定する。
   - build コマンドは `cd example && npm ci && npm run build` を基本とする。
 - `gh-pages` ブランチ運用方針:
   - build 失敗時は `gh-pages` を更新しない。
