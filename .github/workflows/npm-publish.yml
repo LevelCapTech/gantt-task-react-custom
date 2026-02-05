@@ -31,7 +31,15 @@ jobs:
           fi
       - run: npm run build
       # package.json の version は別途管理し、release タグと一致させる
-      - name: Publish to npm with provenance
+      - name: Validate tag version matches package.json
+        run: |
+          EXPECTED_VERSION="${GITHUB_REF#refs/tags/release/v}"
+          ACTUAL_VERSION=$(node -p "require('./package.json').version")
+          if [ "$EXPECTED_VERSION" != "$ACTUAL_VERSION" ]; then
+            echo "Version mismatch: tag=${EXPECTED_VERSION}, package.json=${ACTUAL_VERSION}"
+            exit 1
+          fi
+      - name: Publish to npm
         run: npm publish --access public --provenance
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.0.6
