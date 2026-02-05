@@ -15,8 +15,15 @@ https://github.com/MaTeMaTuK/gantt-task-react
 ## インストール
 
 ```
-npm install gantt-task-react
+npm install @levelcaptech/gantt-task-react-custom
 ```
+
+## Requirements
+
+- React: 18.x（必須）
+  - 本プロジェクトは `react` / `react-dom` の peerDependencies として `^18.0.0` を指定しています。
+  - **React 18 系のみを正式サポート**しています。
+  - React 17 / 16 は非サポートです。
 
 ## DevContainer（npm publish 対応）
 
@@ -25,8 +32,8 @@ VS Code Dev Containers で npmjs.com への publish を行う環境を用意し�
 ## 使い方
 
 ```javascript
-import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
+import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from '@levelcaptech/gantt-task-react-custom';
+import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 
 let tasks: Task[] = [
     {
