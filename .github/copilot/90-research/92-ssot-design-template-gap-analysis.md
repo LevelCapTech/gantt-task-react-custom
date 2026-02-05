@@ -78,5 +78,5 @@
   - テンプレート追加項目案（仕様定義、決定事項、未確定事項、Issue ゴールとの差分）。
   - Review チェックリスト案（機能要件/スコープ/設計詳細の具体度）。
 
-付記（Issue 受入条件の引用）:
+付記 (Issue 受入条件の引用):
 .github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
