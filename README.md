@@ -15,7 +15,7 @@ https://github.com/MaTeMaTuK/gantt-task-react
 ## インストール
 
 ```
-npm install gantt-task-react
+npm install @levelcaptech/gantt-task-react-custom
 ```
 
 ## Requirements
@@ -32,8 +32,8 @@ VS Code Dev Containers で npmjs.com への publish を行う環境を用意し�
 ## 使い方
 
 ```javascript
-import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
+import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from '@levelcaptech/gantt-task-react-custom';
+import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 
 let tasks: Task[] = [
     {
