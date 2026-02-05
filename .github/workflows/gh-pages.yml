@@ -22,6 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18.x
+          cache: npm
       - name: Install root dependencies
         run: npm ci
       - name: Build library
@@ -29,6 +30,7 @@ jobs:
       - name: Install example dependencies
         run: |
           cd example
+          # file: 依存を symlink として扱い React 二重読み込みを避けるために必要
           npm ci --install-links
       - name: Build example
         run: |
@@ -48,6 +50,8 @@ jobs:
           else
             git checkout --orphan gh-pages
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git rm -rf . || true
           cp -R example/build/. .
           touch .nojekyll
@@ -56,5 +60,5 @@ jobs:
             echo "No changes to deploy."
             exit 0
           fi
-          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m "Deploy example to GitHub Pages"
+          git commit -m "Deploy example to GitHub Pages"
           git push origin gh-pages
