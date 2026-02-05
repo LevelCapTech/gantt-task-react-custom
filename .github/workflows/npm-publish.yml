@@ -30,6 +30,7 @@ jobs:
             npm install
           fi
       - run: npm run build
+      # package.json の version は別途管理し、release タグと一致させる
       - name: Publish to npm with provenance
         run: npm publish --access public --provenance
       - name: Create GitHub Release
