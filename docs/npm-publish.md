@@ -33,6 +33,8 @@
 
 ### 人間が行う操作
 ```bash
+npm version 1.2.3
+git push
 git tag release/v1.2.3
 git push origin release/v1.2.3
 ```
