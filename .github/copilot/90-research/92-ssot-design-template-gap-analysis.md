@@ -1,5 +1,4 @@
 # SSOT 設計書テンプレートのギャップ分析（RESEARCH）
-.github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
 
 ## 1. 機能要件 / 非機能要件
 - 機能要件:
@@ -11,6 +10,9 @@
   - SSOT とテンプレートは変更しない（調査のみ）。
   - Secrets/PII を記載しない。
   - 事実と推測を分離し、根拠を明示する。
+
+補足（Issue 要件）:
+.github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
 
 ## 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）:
@@ -54,11 +56,11 @@
 - モック / フィクスチャ方針:
   - 該当なし。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
-  - `npm test`
+  - ドキュメント変更のみだが、リポジトリの品質ゲート遵守のため `npm test` を実行する。
 
 ## 5. CI 品質ゲート
 - 実行コマンド（format / lint / typecheck / test / security）:
-  - `npm test`
+  - ドキュメント変更のみだが、既存の品質ゲートに合わせて `npm test` を実行する。
 - 通過基準と失敗時の対応:
   - 既存の lint / test / build が成功すること。失敗時は調査作業を中断し、原因を切り分ける。
 
