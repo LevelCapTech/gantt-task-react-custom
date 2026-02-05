@@ -11,9 +11,6 @@
   - Secrets/PII を記載しない。
   - 事実と推測を分離し、根拠を明示する。
 
-補足（Issue 要件）:
-.github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
-
 ## 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）:
   - 新規: `.github/copilot/90-research/92-ssot-design-template-gap-analysis.md`
@@ -56,11 +53,11 @@
 - モック / フィクスチャ方針:
   - 該当なし。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
-  - ドキュメント変更のみだが、リポジトリの品質ゲート遵守のため `npm test` を実行する。
+  - 追加テストなし。既存テストとして `npm test` を実行済み。
 
 ## 5. CI 品質ゲート
 - 実行コマンド（format / lint / typecheck / test / security）:
-  - ドキュメント変更のみだが、既存の品質ゲートに合わせて `npm test` を実行する。
+  - `npm test`
 - 通過基準と失敗時の対応:
   - 既存の lint / test / build が成功すること。失敗時は調査作業を中断し、原因を切り分ける。
 
@@ -80,3 +77,6 @@
   - 追記すべき SSOT 項目案（Issue/plan の優先順位、未記載は未確定、補完禁止ルール）。
   - テンプレート追加項目案（仕様定義、決定事項、未確定事項、Issue ゴールとの差分）。
   - Review チェックリスト案（機能要件/スコープ/設計詳細の具体度）。
+
+付記（Issue 受入条件の引用）:
+.github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
