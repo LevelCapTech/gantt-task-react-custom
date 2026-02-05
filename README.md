@@ -18,6 +18,13 @@ https://github.com/MaTeMaTuK/gantt-task-react
 npm install gantt-task-react
 ```
 
+## Requirements
+
+- React: 18.x（必須）
+  - 本プロジェクトは `react` / `react-dom` の peerDependencies として `^18.0.0` を指定しています。
+  - **React 18 系のみを正式サポート**しています。
+  - React 17 / 16 は非サポートです。
+
 ## DevContainer（npm publish 対応）
 
 VS Code Dev Containers で npmjs.com への publish を行う環境を用意しています。セットアップと利用方法は [docs/DEVCONTAINER.md](docs/DEVCONTAINER.md) を参照してください。
