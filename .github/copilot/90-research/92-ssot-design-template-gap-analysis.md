@@ -1,5 +1,7 @@
 # SSOT 設計書テンプレートのギャップ分析（RESEARCH）
 
+本ドキュメントは [RESEARCH] Issue における調査結果をまとめたものです。仕様の入口は [00-index.md](../00-index.md) を参照してください。
+
 ## 1. 機能要件 / 非機能要件
 - 機能要件:
   - SSOT 上の設計書テンプレート記載内容を項目単位で整理し、情報不足や曖昧箇所を特定する。
@@ -20,6 +22,8 @@
   - 追加の外部依存なし。Secrets/PII の記載は行わない。
 
 ## 3. 設計方針
+- 責務分離 / データフロー（必要なら Mermaid 1 枚）:
+  - Issue のゴール、plan の仕様、DESIGN/IMPLEMENT の参照関係を整理し、補完禁止の境界を示す（Mermaid 不要）。
 - 事実と根拠:
   - `80-templates/implementation-plan.md` は 1〜7 の見出しと空欄の箇条書きのみで、要件やスコープの具体度を強制する欄がない。
   - `20-architecture.md` では Phase B が「確定 plan の範囲で実装」と記述される一方、Issue のゴール文を無視する明示ルールはない。
@@ -77,6 +81,5 @@
   - 追記すべき SSOT 項目案（Issue/plan の優先順位、未記載は未確定、補完禁止ルール）。
   - テンプレート追加項目案（仕様定義、決定事項、未確定事項、Issue ゴールとの差分）。
   - Review チェックリスト案（機能要件/スコープ/設計詳細の具体度）。
-
-### 7.1 付記 (Issue 受入条件の引用)
-.github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
+- Issue 受入条件の引用:
+  - .github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
