@@ -3,7 +3,7 @@ name: npm-publish (Trusted)
 on:
   push:
     tags:
-      - "release/v*.*.*"
+      - "release_levelcaptech/v*.*.*"
 
 permissions:
   contents: write
@@ -33,10 +33,10 @@ jobs:
       # package.json の version は別途管理し、release タグと一致させる
       - name: Validate tag version matches package.json
         run: |
-          EXPECTED_VERSION="${GITHUB_REF#refs/tags/release/v}"
+          EXPECTED_VERSION="${GITHUB_REF#refs/tags/release_levelcaptech/v}"
           VERSION_PATTERN="^[0-9]+\.[0-9]+\.[0-9]+$"
           if [[ ! "${EXPECTED_VERSION}" =~ ${VERSION_PATTERN} ]]; then
-            echo "Invalid tag format: ${GITHUB_REF}. Expected release/vX.Y.Z (e.g., release/v1.2.3)"
+            echo "Invalid tag format: ${GITHUB_REF}. Expected release_levelcaptech/vX.Y.Z (e.g., release_levelcaptech/v1.2.3)"
             exit 1
           fi
           ACTUAL_VERSION=$(node -p "require('./package.json').version")
