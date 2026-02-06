@@ -36,7 +36,7 @@ jobs:
           EXPECTED_VERSION="${GITHUB_REF#refs/tags/release/v}"
           VERSION_PATTERN="^[0-9]+\\.[0-9]+\\.[0-9]+$"
           if [[ ! "${EXPECTED_VERSION}" =~ ${VERSION_PATTERN} ]]; then
-            echo "Invalid tag format: ${GITHUB_REF}"
+            echo "Invalid tag format: ${GITHUB_REF}. Expected release/vX.Y.Z (e.g., release/v1.2.3)"
             exit 1
           fi
           ACTUAL_VERSION=$(node -p "require('./package.json').version")
