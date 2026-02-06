@@ -28,17 +28,37 @@
 
 ### タグとバージョン番号の関係（必須定義）
 - npm リリース対象タグは `release/vMAJOR.MINOR.PATCH` の形式のみです。
-- `release/v1.2.3` の場合、`package.json` の version は `1.2.3` に上書きされます。
-- 上記形式に一致しないタグは、ワークフロー内でエラーとして停止します。
+- `release/v1.2.3` の場合、`package.json` の version は `1.2.3` に設定しておきます。
+- タグと `package.json` の version が一致しない場合は、ワークフロー内でエラーとして停止します。
 
 ### 人間が行う操作
 ```bash
+npm version 1.2.3
+git push
 git tag release/v1.2.3
 git push origin release/v1.2.3
 ```
 
+#### 緊急時の差し戻し操作
+
+1. GitHub Actions を止める
+2. 下記コマンドを実行する
+
+```bash
+git tag -d release/v1.2.3
+git push origin :refs/tags/release/v1.2.3
+```
+
+3. npm側の確認
+
+```
+npm view @levelcaptech/gantt-task-react-custom versions
+```
+
+反映されていたら、バージョンを上げて上書きするのが唯一の操作です
+
 ### 自動で発生する処理
-- `package.json` の version 上書き
+- タグと `package.json` の version 整合性チェック
 - `npm publish --provenance`
 - GitHub Release 作成
 
