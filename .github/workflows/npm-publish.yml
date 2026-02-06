@@ -34,7 +34,7 @@ jobs:
       - name: Validate tag version matches package.json
         run: |
           EXPECTED_VERSION="${GITHUB_REF#refs/tags/release/v}"
-          VERSION_PATTERN="^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          VERSION_PATTERN="^[0-9]+\.[0-9]+\.[0-9]+$"
           if [[ ! "${EXPECTED_VERSION}" =~ ${VERSION_PATTERN} ]]; then
             echo "Invalid tag format: ${GITHUB_REF}. Expected release/vX.Y.Z (e.g., release/v1.2.3)"
             exit 1
