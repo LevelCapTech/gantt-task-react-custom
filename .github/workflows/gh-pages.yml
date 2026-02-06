@@ -43,6 +43,7 @@ jobs:
             exit 1
           fi
       - name: Deploy to gh-pages
+        working-directory: .
         run: |
           git fetch origin gh-pages || true
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
