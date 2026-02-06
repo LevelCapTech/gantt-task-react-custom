@@ -23,7 +23,7 @@
 
 ## 3. 設計方針
 - 責務分離 / データフロー（必要なら Mermaid 1 枚）:
-  - Issue のゴール、plan の仕様、DESIGN/IMPLEMENT の参照関係を整理し、補完禁止の境界を示す（Mermaid 不要）。
+  - Issue のゴール、plan の仕様、DESIGN/IMPLEMENT の参照関係を整理し、必要に応じて Mermaid で補足する。
 - 事実と根拠:
   - `80-templates/implementation-plan.md` は 1〜7 の見出しと空欄の箇条書きのみで、要件やスコープの具体度を強制する欄がない。
   - `20-architecture.md` では Phase B が「確定 plan の範囲で実装」と記述される一方、Issue のゴール文を無視する明示ルールはない。
