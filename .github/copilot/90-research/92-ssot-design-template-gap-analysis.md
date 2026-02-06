@@ -23,7 +23,7 @@
 
 ## 3. 設計方針
 - 責務分離 / データフロー（必要なら Mermaid 1 枚）:
-  - Issue のゴール、plan の仕様、DESIGN/IMPLEMENT の参照関係を整理し、必要に応じて Mermaid で補足する。
+  - Issue のゴール、plan の仕様、DESIGN/IMPLEMENT の参照関係を整理し、参照順に分岐や例外がある場合は Mermaid で補足する。
 - 事実と根拠:
   - `80-templates/implementation-plan.md` は 1〜7 の見出しと空欄の箇条書きのみで、要件やスコープの具体度を強制する欄がない。
   - `20-architecture.md` では Phase B が「確定 plan の範囲で実装」と記述される一方、Issue のゴール文を無視する明示ルールはない。
@@ -83,3 +83,4 @@
   - Review チェックリスト案（機能要件/スコープ/設計詳細の具体度）。
 - Issue 受入条件の引用:
   - .github/copilot/80-templates/implementation-plan.md に準拠した plan ドキュメントを .github/copilot/90-research/92-ssot-design-template-gap-analysis.md に作成する（この1行を必ず出力する）
+  - 本ドキュメント自体を plan として整備するという指定であり、別ファイルの作成は不要。
