@@ -49,7 +49,7 @@ jobs:
           OUT="$RUNNER_TEMP/example-build"
           rm -rf "$OUT"
           mkdir -p "$OUT"
-          # example/build は "Validate build output" ステップで検証済み
+          # example/build は上の "Validate build output" ステップで検証済み
           cp -R example/build/. "$OUT/"
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             git checkout -B gh-pages origin/gh-pages
