@@ -45,6 +45,10 @@ jobs:
       - name: Deploy to gh-pages
         run: |
           cd "$GITHUB_WORKSPACE"
+          OUT="$RUNNER_TEMP/example-build"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          cp -R example/build/. "$OUT/"
           git fetch origin gh-pages || true
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             git checkout -B gh-pages origin/gh-pages
@@ -54,7 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git rm -rf . || true
-          cp -R example/build/. .
+          cp -R "$OUT/". .
           touch .nojekyll
           git add -A
           if git diff --cached --quiet; then
