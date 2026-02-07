@@ -45,6 +45,7 @@ jobs:
       - name: Deploy to gh-pages
         run: |
           cd "$GITHUB_WORKSPACE"
+          git fetch origin gh-pages || true
           OUT="$RUNNER_TEMP/example-build"
           rm -rf "$OUT"
           mkdir -p "$OUT"
@@ -53,7 +54,6 @@ jobs:
             exit 1
           fi
           cp -R example/build/. "$OUT/"
-          git fetch origin gh-pages || true
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             git checkout -B gh-pages origin/gh-pages
           else
