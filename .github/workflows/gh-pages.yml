@@ -46,15 +46,22 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE"
           git fetch origin gh-pages || true
+          OUT="$RUNNER_TEMP/example-build"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          # example/build は上の "Validate build output" ステップで検証済み
+          cp -R example/build/. "$OUT/"
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             git checkout -B gh-pages origin/gh-pages
           else
             git checkout --orphan gh-pages
           fi
+          # node_modules 等の無視ファイルも含めて掃除し、成果物混入を防ぐ
+          git clean -fdx
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git rm -rf . || true
-          cp -R example/build/. .
+          cp -R "$OUT/". .
           touch .nojekyll
           git add -A
           if git diff --cached --quiet; then
