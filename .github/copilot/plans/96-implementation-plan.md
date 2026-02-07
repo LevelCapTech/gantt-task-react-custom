@@ -8,7 +8,7 @@
 - 外部依存・Secrets の扱い: 追加なし。RUNNER_TEMP のみ利用。
 
 # 3. 設計方針
-- 責務分離 / データフロー: Deploy ステップ内で checkout 前に成果物を RUNNER_TEMP に退避し、checkout 後に復元する。
+- 責務分離 / データフロー: Deploy ステップ内で checkout 前に成果物を RUNNER_TEMP に退避し、checkout 後に未追跡ファイルを掃除してから復元する。
 - エッジケース / 例外系 / リトライ方針: `example/build` が存在しない場合は Deploy 前の "Validate build output" ステップで失敗させる。退避先は都度削除して再作成する。
 - ログと観測性（漏洩防止を含む）: 退避先パスのみを使用し、Secrets を出力しない。
 
