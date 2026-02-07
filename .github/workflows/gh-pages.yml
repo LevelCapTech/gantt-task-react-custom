@@ -48,6 +48,10 @@ jobs:
           OUT="$RUNNER_TEMP/example-build"
           rm -rf "$OUT"
           mkdir -p "$OUT"
+          if [ ! -d example/build ] || [ -z "$(ls -A example/build)" ]; then
+            echo "example/build is missing or empty." >&2
+            exit 1
+          fi
           cp -R example/build/. "$OUT/"
           git fetch origin gh-pages || true
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
