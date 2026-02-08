@@ -18,6 +18,10 @@ https://github.com/MaTeMaTuK/gantt-task-react
 npm install @levelcaptech/gantt-task-react-custom
 ```
 
+## 関連リンク
+
+- npm: https://www.npmjs.com/package/@levelcaptech/gantt-task-react-custom
+
 ## Requirements
 
 - React: 18.x（必須）
