@@ -7,6 +7,7 @@
   - 工数計算・進捗率・日付ヘッダー・背景描画・ツールチップが統一的なカレンダー設定を参照する。
   - `GanttConfig`（公開設定）にカレンダー設定を追加し、未指定時は日本標準設定にフォールバックする。
   - 無効な日付文字列は例外にせず無視する。
+  - 祝日データはライブラリ内の静的データとして同梱し、年度更新はリリースで反映する（不足分は `extraHolidays` / `extraWorkingDays` で補完）。
 - 非機能要件:
   - 祝日データは静的同梱で、外部 API には依存しない。
   - 既存の公開 API との互換性を維持し、設定未指定でも従来の操作感を壊さない。
@@ -16,6 +17,7 @@
 # 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）: `.github/copilot/plans/102-implementation-plan.md`（新規、設計のみ）。
 - 影響範囲・互換性リスク: 設計文書のみ。実装時はカレンダー表示・工数計算・進捗率・背景描画へ影響。
+- 実装時に想定される変更対象: `src/types/public-types.ts`（設定型の拡張）、`src/components/gantt/gantt.tsx`（props 受け渡し）、`src/components/calendar/calendar.tsx` / `top-part-of-calendar.tsx`（ヘッダー表示）、`src/helpers/date-helper.ts` / `src/types/date-setup.ts`（日付計算）、`src/components/grid`（非稼働日背景）、`src/test/date-helper.test.tsx`（稼働日判定テスト）。
 - 外部依存・Secrets の扱い: 追加なし（既存の `date-fns` を利用する前提で、Secrets は不要）。
 
 # 3. 設計方針
@@ -35,6 +37,9 @@
   - `calendar` 未指定の場合は日本標準設定を自動適用する。
   - `calendar.locale` を優先し、未指定時は既存の `DisplayOption.locale` をフォールバックとして扱う。どちらも未指定の場合は `"ja"` を適用する。
   - i18n 非対応のため、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定された場合は無効扱いとし、`"ja"` にフォールバックする（開発向けに警告ログを出す想定）。この制約は公開 API ドキュメントで明示する。
+- 祝日データ運用:
+  - ライブラリ内に静的な祝日データ（TS/JSON）を同梱し、年度更新はパッケージリリースで反映する。
+  - 利用者が独自の祝日データを外部 JSON で管理する場合は、読み込んだ日付を `extraHolidays` / `extraWorkingDays` に渡して補完する（ライブラリ側でのファイル I/O は行わない）。
 - 稼働日判定ルール:
   - 基本非稼働日 = 日曜 + `workOnSaturday` が `false` の場合の土曜 + `enableJPHoliday` が `true` の日本祝日。
   - `extraHolidays` は通常稼働日となる日を非稼働に上書きする。
