@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は要求通り `MM/DD(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（date-fns 記法では `MM/dd(EEE)` と同義）。
+  - UI 表示は要求通り `MM/DD(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（date-fns 記法は `MM/dd(EEE)` で、`ja` ロケール適用時に日本語曜日になる）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -24,7 +24,7 @@
   - 稼働日判定を単一ユーティリティに集約し、計算系と UI が同じ結果を参照する。
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト）。
-  - `dateFormat`: `"MM/dd(EEE)"`（1 章の `MM/DD(曜日)` を date-fns 記法で表したもの）。
+  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで 1 章の `MM/DD(曜日)` を表現する date-fns 記法）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
@@ -41,7 +41,7 @@
   - `extraWorkingDays` は最優先で稼働日に上書きする（週末・祝日・`extraHolidays` より優先）。
   - ISO 日付文字列は日付単位で正規化し、重複や無効値は除外する。
 - UI 描画ルール:
-  - 日付ヘッダーは `MM/DD(曜日)` 表記で固定し、曜日は日本語略称（date-fns 記法: `MM/dd(EEE)`）。
+  - 日付ヘッダーは `MM/DD(曜日)` 表記で固定し、曜日は日本語略称（date-fns の `MM/dd(EEE)` を `ja` ロケールで表示）。
   - `highlightNonWorkingDays` が `true` の場合、非稼働日背景をグレー表示。
   - `extraWorkingDays` に該当する日付は通常背景を維持。
   - ツールチップには稼働日/非稼働日の区別を併記し、表示内容は日本語固定。
