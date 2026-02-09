@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は要求通り `MM/DD(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（表記の `DD` は日付表示の意味であり、date-fns のトークンではない。内部実装では date-fns の `MM/dd(EEE)` を使用し `dd` は日付を表す）。
+  - UI 表示は要求通り `MM/DD(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（内部実装のフォーマットは date-fns の `MM/dd(EEE)`）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -24,7 +24,7 @@
   - 稼働日判定を単一ユーティリティに集約し、計算系と UI が同じ結果を参照する。
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト）。
-  - `dateFormat`: `"MM/dd(EEE)"`（UI 表示は要件上 `MM/DD(曜日)` と表記するが、date-fns の日付トークンは小文字 `dd` を使用）。
+  - `dateFormat`: `"MM/dd(EEE)"`（UI 表示は上記の `MM/DD(曜日)` に準拠）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
@@ -34,10 +34,10 @@
   - 公開 API の設定型（`GanttConfig` または `GanttProps`）に `calendar?: CalendarConfig` を追加し、上記キーを包含する。
   - `calendar` 未指定の場合は日本標準設定を自動適用する。
   - `calendar.locale` を優先し、未指定時は既存の `DisplayOption.locale` をフォールバックとして扱う。どちらも未指定の場合は `"ja"` を適用する。
-  - i18n 非対応のため、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定された場合は `"ja"` にフォールバックする。
+  - i18n 非対応のため、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定された場合は無効扱いとし、`"ja"` にフォールバックする（開発向けに警告ログを出す想定）。
 - 稼働日判定ルール:
   - 基本非稼働日 = 日曜 + `workOnSaturday` が `false` の場合の土曜 + `enableJPHoliday` が `true` の日本祝日。
-  - `extraHolidays` は基準日を非稼働に上書きする。
+  - `extraHolidays` は通常稼働日となる日を非稼働に上書きする。
   - `extraWorkingDays` は最優先で稼働日に上書きする（週末・祝日・`extraHolidays` より優先）。
   - ISO 日付文字列は日付単位で正規化し、重複や無効値は除外する。
 - UI 描画ルール:
