@@ -24,7 +24,7 @@
   - 稼働日判定を単一ユーティリティに集約し、計算系と UI が同じ結果を参照する。
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト）。
-  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで 1 章の `MM/dd(曜日)` を表現する date-fns 記法）。
+  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する date-fns 記法）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
@@ -34,7 +34,7 @@
   - 公開 API の設定型（`GanttConfig` または `GanttProps`）に `calendar?: CalendarConfig` を追加し、上記キーを包含する。
   - `calendar` 未指定の場合は日本標準設定を自動適用する。
   - `calendar.locale` を優先し、未指定時は既存の `DisplayOption.locale` をフォールバックとして扱う。どちらも未指定の場合は `"ja"` を適用する。
-  - i18n 非対応のため、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定された場合は無効扱いとし、`"ja"` にフォールバックする（開発向けに警告ログを出す想定）。
+  - i18n 非対応のため、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定された場合は無効扱いとし、`"ja"` にフォールバックする（開発向けに警告ログを出す想定）。この制約は公開 API ドキュメントで明示する。
 - 稼働日判定ルール:
   - 基本非稼働日 = 日曜 + `workOnSaturday` が `false` の場合の土曜 + `enableJPHoliday` が `true` の日本祝日。
   - `extraHolidays` は通常稼働日となる日を非稼働に上書きする。
@@ -46,7 +46,7 @@
   - `extraWorkingDays` に該当する日付は通常背景を維持。
   - ツールチップには稼働日/非稼働日の区別を併記し、表示内容は日本語固定。
 - エッジケース / 例外系 / リトライ方針:
-  - 無効な日付文字列は無視し、例外を投げない。
+  - 無効な日付文字列は無視し、例外を投げない（開発向けに警告ログを出す）。
   - 同一日付が `extraHolidays` と `extraWorkingDays` の両方に含まれる場合は稼働日を優先する。
   - 年跨ぎの祝日リストは年単位で拡張できる構造とする。
 - ログと観測性（漏洩防止を含む）:
