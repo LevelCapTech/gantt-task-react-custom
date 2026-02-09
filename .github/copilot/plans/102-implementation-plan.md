@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - 日付表記を `MM/DD(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（実装フォーマットは `MM/dd(EEE)`）。
+  - 日付表記を `MM/DD(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（トークン表現は `MM/dd(EEE)`）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きできる。
@@ -16,7 +16,7 @@
 # 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）: `.github/copilot/plans/102-implementation-plan.md`（新規、設計のみ）。
 - 影響範囲・互換性リスク: 設計文書のみ。実装時はカレンダー表示・工数計算・進捗率・背景描画へ影響。
-- 外部依存・Secrets の扱い: 追加なし（既存の `date-fns` 利用を想定する場合でも Secrets は不要）。
+- 外部依存・Secrets の扱い: 追加なし（既存の `date-fns` を利用する前提で、Secrets は不要）。
 
 # 3. 設計方針
 - 責務分離 / データフロー:
@@ -24,7 +24,7 @@
   - 稼働日判定を単一ユーティリティに集約し、計算系と UI が同じ結果を参照する。
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト）。
-  - `dateFormat`: `"MM/dd(EEE)"`（UI 表示は `MM/DD(曜日)`）。
+  - `dateFormat`: `"MM/dd(EEE)"`（UI 表示は `MM/DD(曜日)` だが、日付トークンは小文字 `dd` を使用）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
