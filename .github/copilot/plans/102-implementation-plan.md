@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。JavaScript 標準の `Intl.DateTimeFormat` を用いて `ja` ロケール適用時に日本語曜日になる）。
+  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。`Intl.DateTimeFormat` に `{ month: "2-digit", day: "2-digit", weekday: "short" }` を指定し、`ja` ロケール適用時に日本語曜日になる）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -46,7 +46,7 @@
     ```
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト。`DisplayOption.locale` が指定されている場合はそれを優先する）。
-  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。実装は `Intl.DateTimeFormat` の `{ month: "2-digit", day: "2-digit", weekday: "short" }` を用いる）。
+  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。現時点ではこの値のみをサポートし、実装は `Intl.DateTimeFormat` の `{ month: "2-digit", day: "2-digit", weekday: "short" }` を用いる）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
