@@ -66,7 +66,7 @@
   - 基本非稼働日 = 日曜 + `workOnSaturday` が `false` の場合の土曜 + `enableJPHoliday` が `true` の日本祝日。
   - `extraHolidays` は通常稼働日となる日を非稼働に上書きする。
   - `extraWorkingDays` は最優先で稼働日に上書きする（週末・祝日・`extraHolidays` より優先）。
-  - ISO 日付文字列は日付単位で正規化し、`YYYY-MM-DD` を split して `new Date(y, m-1, d)` で検証/生成する（タイムゾーンのズレを回避する）。無効日（例: 2/30）は除外する。
+  - ISO 日付文字列は日付単位で正規化し、`YYYY-MM-DD` を split して `new Date(y, m-1, d)` で検証/生成する（タイムゾーンのズレを回避する）。生成した `Date` の `getFullYear()` / `getMonth()` / `getDate()` が入力値と一致することを確認し、無効日（例: 2/30）は除外する。
 - UI 描画ルール:
   - 日付ヘッダーは `MM/dd(曜日)` 表記で固定し、曜日は日本語略称（`Intl.DateTimeFormat("ja", { month: "2-digit", day: "2-digit", weekday: "short" })` + `formatToParts` で `month`/`day`/`weekday` の part を抽出して組み立てる）。
   - `highlightNonWorkingDays` が `true` の場合、非稼働日背景をグレー表示。
