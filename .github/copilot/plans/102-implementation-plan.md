@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。例: `Intl.DateTimeFormat(locale ?? "ja", { month: "2-digit", day: "2-digit", weekday: "short" })` と `formatToParts` を用いて `month`/`day`/`weekday` の part を抽出し、`MM/dd(曜日)` の並びに組み立てる）。
+  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。例: `calendar.locale` > `DisplayOption.locale` > `"ja"` で解決した locale を `Intl.DateTimeFormat` に渡し、`Intl.DateTimeFormat(resolvedLocale, { month: "2-digit", day: "2-digit", weekday: "short" })` と `formatToParts` を用いて `month`/`day`/`weekday` の part を抽出し、`MM/dd(曜日)` の並びに組み立てる）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -46,7 +46,7 @@
     ```
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト。`DisplayOption.locale` が指定されている場合はそれを優先する）。
-  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。Issue の既定値に合わせた legacy 識別子として扱い、互換性維持のためこの文字列を保持する（将来 `JP_STANDARD` などへの変更を検討）。この値は date-fns の書式文字列として解釈せず、`Intl.DateTimeFormat` + `formatToParts` の出力組み立てに紐づく識別子として扱う）。
+  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。Issue の既定値に合わせた legacy 識別子として扱い、互換性維持のためこの文字列を保持する（将来 `JP_STANDARD` などへの変更を検討）。この文字列は純粋な識別子であり、date-fns の書式文字列として解釈しない）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
@@ -74,7 +74,7 @@
   - ツールチップには稼働日/非稼働日の区別を併記し、表示内容は日本語固定。
 - エッジケース / 例外系 / リトライ方針:
   - 無効な日付文字列は無視し、例外を投げない（開発向けに警告ログを出す）。
-  - `dateFormat` は `"MM/dd(EEE)"` のみ許可する Union 型で公開し、実行時に他の値が渡された場合は警告を出して既定パターンへフォールバックする（カスタムパターンは将来拡張の検討対象）。
+  - `dateFormat` は `"MM/dd(EEE)"` のみ許可する文字列リテラル型で公開し、実行時に他の値が渡された場合は警告を出して既定パターンへフォールバックする（カスタムパターンは将来拡張の検討対象）。
   - 同一日付が `extraHolidays` と `extraWorkingDays` の両方に含まれる場合は稼働日を優先する。
   - 年跨ぎの祝日リストは年単位で拡張できる構造とする。
 - ログと観測性（漏洩防止を含む）:
