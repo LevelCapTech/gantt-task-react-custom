@@ -15,7 +15,14 @@
   - i18n 対応は行わず日本語固定とする。
 
 # 2. スコープと変更対象
-- 変更ファイル（設計成果物）: `.github/copilot/plans/102-implementation-plan.md`（新規、設計のみ）。実装時に想定される変更対象: `src/types/public-types.ts`（設定型の拡張）、`src/components/gantt/gantt.tsx`（props 受け渡し）、`src/components/calendar/calendar.tsx` / `top-part-of-calendar.tsx`（ヘッダー表示）、`src/helpers/date-helper.ts` / `src/types/date-setup.ts`（日付計算）、`src/components/grid`（非稼働日背景）、`src/test/date-helper.test.tsx`（稼働日判定テスト）。
+- 変更ファイル（設計成果物）: `.github/copilot/plans/102-implementation-plan.md`（新規、設計のみ）。実装時の想定変更対象は次項に列挙する。
+- 実装時に想定される変更対象:
+  - `src/types/public-types.ts`（設定型の拡張）
+  - `src/components/gantt/gantt.tsx`（props 受け渡し）
+  - `src/components/calendar/calendar.tsx` / `top-part-of-calendar.tsx`（ヘッダー表示）
+  - `src/helpers/date-helper.ts` / `src/types/date-setup.ts`（日付計算）
+  - `src/components/grid`（非稼働日背景）
+  - `src/test/date-helper.test.tsx`（稼働日判定テスト）
 - 影響範囲・互換性リスク: 設計文書のみ。実装時はカレンダー表示・工数計算・進捗率・背景描画へ影響。
 - 外部依存・Secrets の扱い: 追加なし（既存の `date-fns` を利用する前提で、Secrets は不要）。
 
