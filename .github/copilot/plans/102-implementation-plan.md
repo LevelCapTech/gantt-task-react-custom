@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。既存の `Intl.DateTimeFormat` を用いて `ja` ロケール適用時に日本語曜日になる）。
+  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。JavaScript 標準の `Intl.DateTimeFormat` を用いて `ja` ロケール適用時に日本語曜日になる）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -46,7 +46,7 @@
     ```
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト。`DisplayOption.locale` が指定されている場合はそれを優先する）。
-  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン。実装は `Intl.DateTimeFormat` による既定表示）。
+  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。実装は `Intl.DateTimeFormat` の `{ month: "2-digit", day: "2-digit", weekday: "short" }` を用いる）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
@@ -66,13 +66,13 @@
   - `extraWorkingDays` は最優先で稼働日に上書きする（週末・祝日・`extraHolidays` より優先）。
   - ISO 日付文字列は日付単位で正規化し、重複や無効値は除外する。
 - UI 描画ルール:
-  - 日付ヘッダーは `MM/dd(曜日)` 表記で固定し、曜日は日本語略称（`Intl.DateTimeFormat` を `ja` ロケールで表示）。
+  - 日付ヘッダーは `MM/dd(曜日)` 表記で固定し、曜日は日本語略称（`Intl.DateTimeFormat` の `{ month: "2-digit", day: "2-digit", weekday: "short" }` を `ja` ロケールで表示）。
   - `highlightNonWorkingDays` が `true` の場合、非稼働日背景をグレー表示。
   - `extraWorkingDays` に該当する日付は通常背景を維持。
   - ツールチップには稼働日/非稼働日の区別を併記し、表示内容は日本語固定。
 - エッジケース / 例外系 / リトライ方針:
   - 無効な日付文字列は無視し、例外を投げない（開発向けに警告ログを出す）。
-  - `dateFormat` が既定の `MM/dd(EEE)` 以外の場合はサポート外として警告し、既定パターンへフォールバックする。
+  - `dateFormat` が既定の `MM/dd(EEE)` 以外の場合はサポート外として警告し、既定パターンへフォールバックする（カスタムパターンは将来拡張の検討対象）。
   - 同一日付が `extraHolidays` と `extraWorkingDays` の両方に含まれる場合は稼働日を優先する。
   - 年跨ぎの祝日リストは年単位で拡張できる構造とする。
 - ログと観測性（漏洩防止を含む）:
