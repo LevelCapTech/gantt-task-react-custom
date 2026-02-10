@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義）。
+  - UI 表示は `MM/dd(曜日)` に統一し、曜日は常に日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -57,7 +57,7 @@
   - `calendar` 未指定の場合は日本標準設定を自動適用する（デフォルト変更を行う場合はメジャーバージョンアップと移行策を明記する）。
   - ロケールの優先順位は `calendar.locale` > 既存の `DisplayOption.locale` > ライブラリ既定値（従来どおり）とする。
   - i18n 非対応とは「祝日定義や固定文言が日本語である」ことを意味する。
-  - `calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定されても無効化せず、日付表示にのみ利用する（祝日や文言は日本語のまま）。
+  - `calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定されても無効化せず、日付表示にのみ利用する（祝日や文言は日本語のまま。日付ヘッダーの曜日は常に日本語固定）。
   - 非 `ja` 指定時は注意喚起の警告ログを出し、公開 API ドキュメントで混在ロケールの制約を明記する。
 - 祝日データ運用:
   - ライブラリ内に静的な祝日データ（TS/JSON）を同梱し、年度更新はパッケージリリースで反映する。
@@ -66,9 +66,9 @@
   - 基本非稼働日 = 日曜 + `workOnSaturday` が `false` の場合の土曜 + `enableJPHoliday` が `true` の日本祝日。
   - `extraHolidays` は通常稼働日となる日を非稼働に上書きする。
   - `extraWorkingDays` は最優先で稼働日に上書きする（週末・祝日・`extraHolidays` より優先）。
-  - ISO 日付文字列は日付単位で正規化し、重複や無効値は除外する。
+  - ISO 日付文字列は日付単位で正規化し、`YYYY-MM-DD` を split して `new Date(y, m-1, d)` で検証/生成する（タイムゾーンのズレを回避する）。無効日（例: 2/30）は除外する。
 - UI 描画ルール:
-  - 日付ヘッダーは `MM/dd(曜日)` 表記で固定し、曜日は日本語略称（`calendar.locale` > `DisplayOption.locale` > `"ja"` で解決した locale を `Intl.DateTimeFormat` に渡し、`Intl.DateTimeFormat(resolvedLocale, { month: "2-digit", day: "2-digit", weekday: "short" })` + `formatToParts` で `month`/`day`/`weekday` の part を抽出して組み立てる）。
+  - 日付ヘッダーは `MM/dd(曜日)` 表記で固定し、曜日は日本語略称（`Intl.DateTimeFormat("ja", { month: "2-digit", day: "2-digit", weekday: "short" })` + `formatToParts` で `month`/`day`/`weekday` の part を抽出して組み立てる）。
   - `highlightNonWorkingDays` が `true` の場合、非稼働日背景をグレー表示。
   - `extraWorkingDays` に該当する日付は通常背景を維持。
   - ツールチップには稼働日/非稼働日の区別を併記し、表示内容は日本語固定。
