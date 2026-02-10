@@ -15,15 +15,28 @@
   - i18n 対応は行わず日本語固定とする。
 
 # 2. スコープと変更対象
-- 変更ファイル（新規/修正/削除）: `.github/copilot/plans/102-implementation-plan.md`（新規、設計のみ）。
+- 変更ファイル（設計成果物）: `.github/copilot/plans/102-implementation-plan.md`（新規、設計のみ）。実装時に想定される変更対象: `src/types/public-types.ts`（設定型の拡張）、`src/components/gantt/gantt.tsx`（props 受け渡し）、`src/components/calendar/calendar.tsx` / `top-part-of-calendar.tsx`（ヘッダー表示）、`src/helpers/date-helper.ts` / `src/types/date-setup.ts`（日付計算）、`src/components/grid`（非稼働日背景）、`src/test/date-helper.test.tsx`（稼働日判定テスト）。
 - 影響範囲・互換性リスク: 設計文書のみ。実装時はカレンダー表示・工数計算・進捗率・背景描画へ影響。
-- 実装時に想定される変更対象: `src/types/public-types.ts`（設定型の拡張）、`src/components/gantt/gantt.tsx`（props 受け渡し）、`src/components/calendar/calendar.tsx` / `top-part-of-calendar.tsx`（ヘッダー表示）、`src/helpers/date-helper.ts` / `src/types/date-setup.ts`（日付計算）、`src/components/grid`（非稼働日背景）、`src/test/date-helper.test.tsx`（稼働日判定テスト）。
 - 外部依存・Secrets の扱い: 追加なし（既存の `date-fns` を利用する前提で、Secrets は不要）。
 
 # 3. 設計方針
 - 責務分離 / データフロー:
   - `GanttConfig` → `CalendarConfig` 正規化 → `CalendarState`（祝日・例外日・稼働日判定） → 工数計算 / 進捗 / 描画 / ツールチップへ共有。
   - 稼働日判定を単一ユーティリティに集約し、計算系と UI が同じ結果を参照する。
+  - シーケンス図:
+    ```mermaid
+    sequenceDiagram
+      participant User as 利用者
+      participant GanttConfig as GanttConfig
+      participant CalendarConfig as CalendarConfig
+      participant CalendarState as CalendarState
+      participant Renderer as 描画/計算
+      User->>GanttConfig: 設定入力
+      GanttConfig->>CalendarConfig: 正規化
+      CalendarConfig->>CalendarState: 稼働日判定
+      CalendarState->>Renderer: 表示・計算へ反映
+      Renderer-->>User: 画面描画
+    ```
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト）。
   - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する date-fns 記法）。
