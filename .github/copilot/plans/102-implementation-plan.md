@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。`Intl.DateTimeFormat` と `formatToParts` を用いて `month/day/weekday` を抽出し、`MM/dd(曜日)` の並びに組み立てる）。
+  - UI 表示は `MM/dd(曜日)` に統一し、日本語略称 `(日)(月)(火)(水)(木)(金)(土)` を使用する（Issue 記載の `MM/DD(曜日)` と同義。`Intl.DateTimeFormat` と `formatToParts` を用いて `month/day/weekday` を抽出し、月日を 2 桁ゼロ埋めで `MM/dd(曜日)` の並びに組み立てる）。
   - 日本の祝日定義をライブラリ内に同梱し、`enableJPHoliday` で有効化できる（デフォルト `true`）。
   - 土日祝を非稼働日として扱い、`workOnSaturday` で土曜稼働を切り替える（デフォルト `false`）。
   - `extraHolidays` / `extraWorkingDays` の ISO 日付文字列（`YYYY-MM-DD`）で独自休業日・特別稼働日を上書きでき、同日指定時は `extraWorkingDays` を優先する。
@@ -46,7 +46,7 @@
     ```
 - カレンダー設定仕様（仕様書）:
   - `locale`: `"ja"`（デフォルト。`DisplayOption.locale` が指定されている場合はそれを優先する）。
-  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。現時点ではこの値のみをサポートし、`Intl.DateTimeFormat` + `formatToParts` で `month/day/weekday` を組み立てる）。
+  - `dateFormat`: `"MM/dd(EEE)"`（`ja` ロケールで「1. 機能要件 / 非機能要件」の `MM/dd(曜日)` を表現する固定パターン名。これは date-fns 記法ではなく semantic な識別子として扱い、現時点ではこの値のみを有効とする。`Intl.DateTimeFormat` + `formatToParts` で `month/day/weekday` を組み立てる）。
   - `enableJPHoliday`: `true`。
   - `highlightNonWorkingDays`: `true`。
   - `workOnSaturday`: `false`。
@@ -56,7 +56,7 @@
   - 公開 API の設定型（`GanttConfig` または `GanttProps`）に `calendar?: CalendarConfig` を追加し、上記キーを包含する。
   - `calendar` 未指定の場合は日本標準設定を自動適用する（デフォルト変更を行う場合はメジャーバージョンアップと移行策を明記する）。
   - ロケールの優先順位は `calendar.locale` > 既存の `DisplayOption.locale` > ライブラリ既定値（従来どおり）とする。
-  - i18n 非対応とは「祝日定義や固定文言が日本語である」ことを意味し、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定されても無効化せず、そのまま日付表示に利用する（ロケールは日付表示のみ影響し、祝日や文言は日本語のまま）。
+  - i18n 非対応とは「祝日定義や固定文言が日本語である」ことを意味し、`calendar.locale` / `DisplayOption.locale` に `"ja"` 以外が指定されても無効化せず、そのまま日付表示に利用する（ロケールは日付表示のみ影響し、祝日や文言は日本語のまま。非 `ja` 指定時は注意喚起の警告ログを出す想定）。
 - 祝日データ運用:
   - ライブラリ内に静的な祝日データ（TS/JSON）を同梱し、年度更新はパッケージリリースで反映する。
   - 利用者が独自の祝日データを外部 JSON で管理する場合は、読み込んだ日付を `extraHolidays` / `extraWorkingDays` に渡して補完する（ライブラリ側でのファイル I/O は行わない）。
