@@ -19,7 +19,7 @@
 - 実装時に想定される変更対象:
   - `src/types/public-types.ts`（設定型の拡張）
   - `src/components/gantt/gantt.tsx`（props 受け渡し）
-  - `src/components/calendar/calendar.tsx` / `top-part-of-calendar.tsx`（ヘッダー表示）
+  - `src/components/calendar/calendar.tsx` / `src/components/calendar/top-part-of-calendar.tsx`（ヘッダー表示）
   - `src/helpers/date-helper.ts` / `src/types/date-setup.ts`（日付計算）
   - `src/components/grid`（非稼働日背景）
   - `src/test/date-helper.test.tsx`（稼働日判定テスト）
