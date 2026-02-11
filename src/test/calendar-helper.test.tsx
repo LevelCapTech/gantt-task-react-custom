@@ -29,12 +29,23 @@ describe("toISODateString", () => {
 });
 
 describe("normalizeCalendarConfig", () => {
-  test("default configuration", () => {
+  test("default configuration without calendar config (backward compatibility)", () => {
     const config = normalizeCalendarConfig();
     expect(config.locale).toBe("ja");
     expect(config.dateFormat).toBe("MM/dd(EEE)");
-    expect(config.enableJPHoliday).toBe(true);
-    expect(config.highlightNonWorkingDays).toBe(true);
+    expect(config.enableJPHoliday).toBe(false); // Disabled when no config provided
+    expect(config.highlightNonWorkingDays).toBe(false); // Disabled when no config provided
+    expect(config.workOnSaturday).toBe(false);
+    expect(config.extraHolidays.size).toBe(0);
+    expect(config.extraWorkingDays.size).toBe(0);
+  });
+
+  test("default configuration with explicit calendar config", () => {
+    const config = normalizeCalendarConfig({});
+    expect(config.locale).toBe("ja");
+    expect(config.dateFormat).toBe("MM/dd(EEE)");
+    expect(config.enableJPHoliday).toBe(true); // Enabled when config provided
+    expect(config.highlightNonWorkingDays).toBe(true); // Enabled when config provided
     expect(config.workOnSaturday).toBe(false);
     expect(config.extraHolidays.size).toBe(0);
     expect(config.extraWorkingDays.size).toBe(0);
@@ -64,19 +75,19 @@ describe("normalizeCalendarConfig", () => {
 
 describe("isWorkingDay", () => {
   test("weekday is working day", () => {
-    const config = normalizeCalendarConfig();
+    const config = normalizeCalendarConfig({});
     // Monday 2024-01-15
     expect(isWorkingDay(new Date(2024, 0, 15), config)).toBe(true);
   });
 
   test("Sunday is non-working day", () => {
-    const config = normalizeCalendarConfig();
+    const config = normalizeCalendarConfig({});
     // Sunday 2024-01-14
     expect(isWorkingDay(new Date(2024, 0, 14), config)).toBe(false);
   });
 
   test("Saturday is non-working by default", () => {
-    const config = normalizeCalendarConfig();
+    const config = normalizeCalendarConfig({});
     // Saturday 2024-01-13
     expect(isWorkingDay(new Date(2024, 0, 13), config)).toBe(false);
   });
@@ -128,7 +139,7 @@ describe("isWorkingDay", () => {
 
 describe("countWorkingDays", () => {
   test("count working days in a week", () => {
-    const config = normalizeCalendarConfig();
+    const config = normalizeCalendarConfig({});
     // Monday to Sunday (2024-01-15 to 2024-01-21)
     const count = countWorkingDays(
       new Date(2024, 0, 15),

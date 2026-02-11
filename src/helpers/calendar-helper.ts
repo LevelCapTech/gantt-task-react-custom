@@ -21,10 +21,14 @@ export const normalizeCalendarConfig = (
   config?: CalendarConfig,
   displayLocale?: string
 ): NormalizedCalendarConfig => {
+  // Only apply Japanese defaults if calendar config is explicitly provided
+  // For backward compatibility, if config is undefined, disable Japanese calendar features
+  const isCalendarConfigured = config !== undefined;
+  
   const locale = config?.locale || displayLocale || "ja";
   const dateFormat = config?.dateFormat || "MM/dd(EEE)";
-  const enableJPHoliday = config?.enableJPHoliday !== false;
-  const highlightNonWorkingDays = config?.highlightNonWorkingDays !== false;
+  const enableJPHoliday = isCalendarConfigured && config?.enableJPHoliday !== false;
+  const highlightNonWorkingDays = isCalendarConfigured && config?.highlightNonWorkingDays !== false;
   const workOnSaturday = config?.workOnSaturday === true;
 
   // Validate and normalize ISO date strings
@@ -48,8 +52,8 @@ export const normalizeCalendarConfig = (
     });
   }
 
-  // Warn if non-ja locale is specified
-  if (locale !== "ja" && typeof console !== "undefined") {
+  // Warn if non-ja locale is specified when calendar is configured
+  if (isCalendarConfigured && locale !== "ja" && typeof console !== "undefined") {
     console.warn(
       `[Gantt Calendar] Non-Japanese locale "${locale}" specified. ` +
         `Holiday definitions and weekday labels will remain in Japanese.`
