@@ -228,7 +228,8 @@ export const Calendar: React.FC<CalendarProps> = ({
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
       // Use Japanese format if calendarConfig is provided and locale is "ja"
-      const bottomValue = calendarConfig && calendarConfig.locale === "ja"
+      const useJapaneseFormat = calendarConfig && calendarConfig.locale === "ja";
+      const bottomValue = useJapaneseFormat
         ? formatJapaneseDate(date)
         : `${getLocalDayOfWeek(date, locale, "short")}, ${date.getDate().toString()}`;
 

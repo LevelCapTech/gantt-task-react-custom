@@ -195,7 +195,7 @@ describe("formatJapaneseDate", () => {
     // Monday 2024-01-15
     const formatted = formatJapaneseDate(new Date(2024, 0, 15));
     // Should be in format MM/dd(曜)
-    expect(formatted).toMatch(/01\/15\([月月]\)/);
+    expect(formatted).toMatch(/01\/15\([月火水木金土日]\)/);
   });
 
   test("format different dates", () => {

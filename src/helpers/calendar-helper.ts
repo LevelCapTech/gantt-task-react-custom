@@ -27,8 +27,8 @@ export const normalizeCalendarConfig = (
   
   const locale = config?.locale || displayLocale || "ja";
   const dateFormat = config?.dateFormat || "MM/dd(EEE)";
-  const enableJPHoliday = isCalendarConfigured && config?.enableJPHoliday !== false;
-  const highlightNonWorkingDays = isCalendarConfigured && config?.highlightNonWorkingDays !== false;
+  const enableJPHoliday = isCalendarConfigured && (config!.enableJPHoliday ?? true);
+  const highlightNonWorkingDays = isCalendarConfigured && (config!.highlightNonWorkingDays ?? true);
   const workOnSaturday = config?.workOnSaturday === true;
 
   // Validate and normalize ISO date strings
@@ -52,20 +52,39 @@ export const normalizeCalendarConfig = (
     });
   }
 
-  // Warn if non-ja locale is specified when calendar is configured
+  // Warn if non-ja locale is specified when calendar is configured (only once per session)
   if (isCalendarConfigured && locale !== "ja" && typeof console !== "undefined") {
-    console.warn(
-      `[Gantt Calendar] Non-Japanese locale "${locale}" specified. ` +
-        `Holiday definitions and weekday labels will remain in Japanese.`
-    );
+    const warningKey = `gantt-calendar-locale-${locale}`;
+    if (typeof window !== "undefined" && !(window as any)[warningKey]) {
+      console.warn(
+        `[Gantt Calendar] Non-Japanese locale "${locale}" specified. ` +
+          `Holiday definitions and weekday labels will remain in Japanese.`
+      );
+      (window as any)[warningKey] = true;
+    } else if (typeof window === "undefined") {
+      // Server-side: just warn once (can't track across renders)
+      console.warn(
+        `[Gantt Calendar] Non-Japanese locale "${locale}" specified. ` +
+          `Holiday definitions and weekday labels will remain in Japanese.`
+      );
+    }
   }
 
-  // Warn if unsupported dateFormat is specified
+  // Warn if unsupported dateFormat is specified (only once per session)
   if (dateFormat !== "MM/dd(EEE)" && typeof console !== "undefined") {
-    console.warn(
-      `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
-        `Falling back to default "MM/dd(EEE)" format.`
-    );
+    const warningKey = `gantt-calendar-dateFormat-${dateFormat}`;
+    if (typeof window !== "undefined" && !(window as any)[warningKey]) {
+      console.warn(
+        `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
+          `Falling back to default "MM/dd(EEE)" format.`
+      );
+      (window as any)[warningKey] = true;
+    } else if (typeof window === "undefined") {
+      console.warn(
+        `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
+          `Falling back to default "MM/dd(EEE)" format.`
+      );
+    }
   }
 
   return {
