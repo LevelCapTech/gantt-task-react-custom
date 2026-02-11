@@ -23,6 +23,7 @@ import { DateSetup } from "../../types/date-setup";
 import { HorizontalScroll } from "../other/horizontal-scroll";
 import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
 import { DEFAULT_VISIBLE_FIELDS } from "../../helpers/task-helper";
+import { normalizeCalendarConfig } from "../../helpers/calendar-helper";
 import styles from "./gantt.module.css";
 
 const DEFAULT_TASK_LIST_WIDTH = 450;
@@ -47,6 +48,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   viewMode = ViewMode.Day,
   preStepsCount = 1,
   locale = "en-GB",
+  calendar,
   barFill = 60,
   barCornerRadius = 3,
   barProgressColor = "#a3a3ff",
@@ -84,6 +86,12 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   onTaskUpdate,
   onCellCommit,
 }) => {
+  // Normalize calendar configuration
+  const calendarConfig = useMemo(
+    () => normalizeCalendarConfig(calendar, locale),
+    [calendar, locale]
+  );
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
   const taskListHeaderRef = useRef<HTMLDivElement>(null);
@@ -580,6 +588,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     dates: dateSetup.dates,
     todayColor,
     rtl,
+    calendarConfig,
   };
   const calendarProps: CalendarProps = {
     dateSetup,
@@ -590,6 +599,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     fontFamily,
     fontSize,
     rtl,
+    calendarConfig,
   };
   const barProps: TaskGanttContentProps = {
     tasks: barTasks,

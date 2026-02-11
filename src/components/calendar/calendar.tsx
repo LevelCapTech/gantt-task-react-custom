@@ -8,6 +8,10 @@ import {
   getLocaleMonth,
   getWeekNumberISO8601,
 } from "../../helpers/date-helper";
+import {
+  formatJapaneseDate,
+  NormalizedCalendarConfig,
+} from "../../helpers/calendar-helper";
 import { DateSetup } from "../../types/date-setup";
 import styles from "./calendar.module.css";
 
@@ -20,6 +24,7 @@ export type CalendarProps = {
   columnWidth: number;
   fontFamily: string;
   fontSize: string;
+  calendarConfig?: NormalizedCalendarConfig;
 };
 
 export const Calendar: React.FC<CalendarProps> = ({
@@ -31,6 +36,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   columnWidth,
   fontFamily,
   fontSize,
+  calendarConfig,
 }) => {
   const getCalendarValuesForYear = () => {
     const topValues: ReactChild[] = [];
@@ -221,9 +227,10 @@ export const Calendar: React.FC<CalendarProps> = ({
     const dates = dateSetup.dates;
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
-      const bottomValue = `${getLocalDayOfWeek(date, locale, "short")}, ${date
-        .getDate()
-        .toString()}`;
+      // Use Japanese format if calendarConfig is provided and locale is "ja"
+      const bottomValue = calendarConfig && calendarConfig.locale === "ja"
+        ? formatJapaneseDate(date)
+        : `${getLocalDayOfWeek(date, locale, "short")}, ${date.getDate().toString()}`;
 
       bottomValues.push(
         <text

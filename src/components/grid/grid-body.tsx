@@ -1,6 +1,10 @@
 import React, { ReactChild } from "react";
 import { Task } from "../../types/public-types";
 import { addToDate } from "../../helpers/date-helper";
+import {
+  isWorkingDay,
+  NormalizedCalendarConfig,
+} from "../../helpers/calendar-helper";
 import styles from "./grid.module.css";
 
 export type GridBodyProps = {
@@ -11,6 +15,7 @@ export type GridBodyProps = {
   columnWidth: number;
   todayColor: string;
   rtl: boolean;
+  calendarConfig?: NormalizedCalendarConfig;
 };
 export const GridBody: React.FC<GridBodyProps> = ({
   tasks,
@@ -20,6 +25,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
   columnWidth,
   todayColor,
   rtl,
+  calendarConfig,
 }) => {
   let y = 0;
   const gridRows: ReactChild[] = [];
@@ -60,6 +66,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
   const now = new Date();
   let tickX = 0;
   const ticks: ReactChild[] = [];
+  const nonWorkingDays: ReactChild[] = [];
   let today: ReactChild = <rect />;
   for (let i = 0; i < dates.length; i++) {
     const date = dates[i];
@@ -73,6 +80,25 @@ export const GridBody: React.FC<GridBodyProps> = ({
         className={styles.gridTick}
       />
     );
+
+    // Highlight non-working days
+    if (
+      calendarConfig &&
+      calendarConfig.highlightNonWorkingDays &&
+      !isWorkingDay(date, calendarConfig)
+    ) {
+      nonWorkingDays.push(
+        <rect
+          key={`non-working-${date.getTime()}`}
+          x={tickX}
+          y={0}
+          width={columnWidth}
+          height={y}
+          fill="rgba(0, 0, 0, 0.05)"
+        />
+      );
+    }
+
     if (
       (i + 1 !== dates.length &&
         date.getTime() < now.getTime() &&
@@ -120,6 +146,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
     <g className="gridBody">
       <g className="rows">{gridRows}</g>
       <g className="rowLines">{rowLines}</g>
+      <g className="nonWorkingDays">{nonWorkingDays}</g>
       <g className="ticks">{ticks}</g>
       <g className="today">{today}</g>
     </g>
