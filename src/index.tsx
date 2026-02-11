@@ -10,6 +10,7 @@ export type {
   VisibleField,
   TaskProcess,
   TaskStatus,
+  CalendarConfig,
 } from "./types/public-types";
 export {
   TASK_PROCESS_OPTIONS,
