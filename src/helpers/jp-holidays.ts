@@ -79,3 +79,8 @@ export const getJPHolidaySet = (): Set<string> => {
   });
   return holidays;
 };
+
+/**
+ * Cached Japanese holidays set for performance
+ */
+export const JP_HOLIDAYS_SET = getJPHolidaySet();

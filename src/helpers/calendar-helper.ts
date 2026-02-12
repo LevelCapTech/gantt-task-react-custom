@@ -1,5 +1,5 @@
 import { CalendarConfig } from "../types/public-types";
-import { getJPHolidaySet } from "./jp-holidays";
+import { JP_HOLIDAYS_SET } from "./jp-holidays";
 
 /**
  * Normalized calendar configuration with default values
@@ -18,22 +18,18 @@ export interface NormalizedCalendarConfig {
  * Normalize and validate calendar configuration
  */
 export const normalizeCalendarConfig = (
-  config?: CalendarConfig,
-  displayLocale?: string
+  config: CalendarConfig
 ): NormalizedCalendarConfig => {
-  // Only apply Japanese defaults if calendar config is explicitly provided
-  // For backward compatibility, if config is undefined, disable Japanese calendar features
-  const isCalendarConfigured = config !== undefined;
-  
-  const locale = config?.locale || displayLocale || "ja";
-  const dateFormat = config?.dateFormat || "MM/dd(EEE)";
-  const enableJPHoliday = isCalendarConfigured && (config!.enableJPHoliday ?? true);
-  const highlightNonWorkingDays = isCalendarConfigured && (config!.highlightNonWorkingDays ?? true);
-  const workOnSaturday = config?.workOnSaturday === true;
+  // When calendar config is provided, default to Japanese locale unless overridden
+  const locale = config.locale || "ja";
+  const dateFormat = config.dateFormat || "MM/dd(EEE)";
+  const enableJPHoliday = config.enableJPHoliday ?? true;
+  const highlightNonWorkingDays = config.highlightNonWorkingDays ?? true;
+  const workOnSaturday = config.workOnSaturday === true;
 
   // Validate and normalize ISO date strings
   const extraHolidays = new Set<string>();
-  if (config?.extraHolidays) {
+  if (config.extraHolidays) {
     config.extraHolidays.forEach((dateStr) => {
       const normalized = normalizeISODate(dateStr);
       if (normalized) {
@@ -43,7 +39,7 @@ export const normalizeCalendarConfig = (
   }
 
   const extraWorkingDays = new Set<string>();
-  if (config?.extraWorkingDays) {
+  if (config.extraWorkingDays) {
     config.extraWorkingDays.forEach((dateStr) => {
       const normalized = normalizeISODate(dateStr);
       if (normalized) {
@@ -53,7 +49,7 @@ export const normalizeCalendarConfig = (
   }
 
   // Warn if non-ja locale is specified when calendar is configured (only once per session)
-  if (isCalendarConfigured && locale !== "ja" && typeof console !== "undefined") {
+  if (!locale.toLowerCase().startsWith("ja") && typeof console !== "undefined") {
     const warningKey = `gantt-calendar-locale-${locale}`;
     if (typeof window !== "undefined" && !(window as any)[warningKey]) {
       console.warn(
@@ -76,13 +72,13 @@ export const normalizeCalendarConfig = (
     if (typeof window !== "undefined" && !(window as any)[warningKey]) {
       console.warn(
         `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
-          `Falling back to default "MM/dd(EEE)" format.`
+          `Only "MM/dd(EEE)" is officially supported; using other formats may lead to inconsistent display.`
       );
       (window as any)[warningKey] = true;
     } else if (typeof window === "undefined") {
       console.warn(
         `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
-          `Falling back to default "MM/dd(EEE)" format.`
+          `Only "MM/dd(EEE)" is officially supported; using other formats may lead to inconsistent display.`
       );
     }
   }
@@ -100,11 +96,12 @@ export const normalizeCalendarConfig = (
 
 /**
  * Normalize ISO date string (YYYY-MM-DD) to valid date
- * Returns null if invalid
+ * Returns canonical YYYY-MM-DD format or null if invalid
  */
 export const normalizeISODate = (dateStr: string): string | null => {
   try {
-    const parts = dateStr.split("-");
+    const trimmed = dateStr.trim();
+    const parts = trimmed.split("-");
     if (parts.length !== 3) return null;
 
     const year = parseInt(parts[0], 10);
@@ -134,7 +131,10 @@ export const normalizeISODate = (dateStr: string): string | null => {
       return null;
     }
 
-    return dateStr;
+    // Return canonical zero-padded format
+    const paddedMonth = String(month).padStart(2, "0");
+    const paddedDay = String(day).padStart(2, "0");
+    return `${year}-${paddedMonth}-${paddedDay}`;
   } catch (e) {
     if (typeof console !== "undefined") {
       console.warn(`[Gantt Calendar] Invalid date string: ${dateStr}`);
@@ -187,8 +187,7 @@ export const isWorkingDay = (
 
   // Priority 4: Check Japanese holidays
   if (config.enableJPHoliday) {
-    const jpHolidays = getJPHolidaySet();
-    if (jpHolidays.has(dateStr)) {
+    if (JP_HOLIDAYS_SET.has(dateStr)) {
       return false;
     }
   }

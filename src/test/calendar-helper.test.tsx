@@ -29,18 +29,7 @@ describe("toISODateString", () => {
 });
 
 describe("normalizeCalendarConfig", () => {
-  test("default configuration without calendar config (backward compatibility)", () => {
-    const config = normalizeCalendarConfig();
-    expect(config.locale).toBe("ja");
-    expect(config.dateFormat).toBe("MM/dd(EEE)");
-    expect(config.enableJPHoliday).toBe(false); // Disabled when no config provided
-    expect(config.highlightNonWorkingDays).toBe(false); // Disabled when no config provided
-    expect(config.workOnSaturday).toBe(false);
-    expect(config.extraHolidays.size).toBe(0);
-    expect(config.extraWorkingDays.size).toBe(0);
-  });
-
-  test("default configuration with explicit calendar config", () => {
+  test("default configuration with explicit empty calendar config", () => {
     const config = normalizeCalendarConfig({});
     expect(config.locale).toBe("ja");
     expect(config.dateFormat).toBe("MM/dd(EEE)");
@@ -69,6 +58,15 @@ describe("normalizeCalendarConfig", () => {
       extraHolidays: ["2024-01-15", "invalid", "2024-02-30"],
     });
     expect(config.extraHolidays.size).toBe(1);
+    expect(config.extraHolidays.has("2024-01-15")).toBe(true);
+  });
+
+  test("normalizes non-zero-padded dates", () => {
+    const config = normalizeCalendarConfig({
+      extraHolidays: ["2024-1-5", "2024-01-15"],
+    });
+    expect(config.extraHolidays.size).toBe(2);
+    expect(config.extraHolidays.has("2024-01-05")).toBe(true);
     expect(config.extraHolidays.has("2024-01-15")).toBe(true);
   });
 });

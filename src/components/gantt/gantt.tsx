@@ -86,10 +86,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   onTaskUpdate,
   onCellCommit,
 }) => {
-  // Normalize calendar configuration
+  // Normalize calendar configuration (only when calendar prop is provided)
   const calendarConfig = useMemo(
-    () => normalizeCalendarConfig(calendar, locale),
-    [calendar, locale]
+    () => (calendar ? normalizeCalendarConfig(calendar) : undefined),
+    [calendar]
   );
 
   const wrapperRef = useRef<HTMLDivElement>(null);

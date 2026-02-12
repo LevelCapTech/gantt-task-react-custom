@@ -172,7 +172,8 @@ export interface DisplayOption {
   rtl?: boolean;
   /**
    * Calendar configuration for working day calculation and date display.
-   * If not specified, Japanese standard settings will be used.
+   * If not specified, no calendar customization is applied and
+   * Japanese holiday/highlight features remain disabled (opt-in behavior).
    */
   calendar?: CalendarConfig;
 }
