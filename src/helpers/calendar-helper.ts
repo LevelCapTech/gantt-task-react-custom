@@ -71,7 +71,7 @@ export const normalizeCalendarConfig = (
     warnOnce(
       `gantt-calendar-locale-${localeKey}`,
       `[Gantt Calendar] Non-Japanese locale "${locale}" specified. ` +
-        `Holiday definitions and weekday labels will remain in Japanese.`
+        `Holiday definitions (including Japanese public holidays) are still based on the Japanese calendar.`
     );
   }
 
