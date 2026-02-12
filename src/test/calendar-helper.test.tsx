@@ -41,16 +41,21 @@ describe("normalizeCalendarConfig", () => {
   });
 
   test("custom configuration", () => {
-    const config = normalizeCalendarConfig({
-      locale: "en",
-      workOnSaturday: true,
-      extraHolidays: ["2024-01-15"],
-      extraWorkingDays: ["2024-01-01"],
-    });
-    expect(config.locale).toBe("en");
-    expect(config.workOnSaturday).toBe(true);
-    expect(config.extraHolidays.has("2024-01-15")).toBe(true);
-    expect(config.extraWorkingDays.has("2024-01-01")).toBe(true);
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const config = normalizeCalendarConfig({
+        locale: "en",
+        workOnSaturday: true,
+        extraHolidays: ["2024-01-15"],
+        extraWorkingDays: ["2024-01-01"],
+      });
+      expect(config.locale).toBe("en");
+      expect(config.workOnSaturday).toBe(true);
+      expect(config.extraHolidays.has("2024-01-15")).toBe(true);
+      expect(config.extraWorkingDays.has("2024-01-01")).toBe(true);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   test("invalid dates are filtered", () => {
