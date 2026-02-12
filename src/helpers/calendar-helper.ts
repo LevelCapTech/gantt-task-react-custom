@@ -99,12 +99,19 @@ export const normalizeCalendarConfig = (
 export const normalizeISODate = (dateStr: string): string | null => {
   try {
     const trimmed = dateStr.trim();
+
+    // Strictly validate format: YYYY-M-D where year is 4 digits and month/day are 1–2 digits
+    // This prevents inputs with trailing characters (e.g. "2024-01-15abc") from being accepted.
+    if (!/^\d{4}-\d{1,2}-\d{1,2}$/.test(trimmed)) {
+      return null;
+    }
+
     const parts = trimmed.split("-");
     if (parts.length !== 3) return null;
 
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    const day = parseInt(parts[2], 10);
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
 
     // Validate ranges
     if (
