@@ -74,6 +74,24 @@ describe("normalizeCalendarConfig", () => {
     expect(config.extraHolidays.has("2024-01-05")).toBe(true);
     expect(config.extraHolidays.has("2024-01-15")).toBe(true);
   });
+
+  test("trims whitespace from locale", () => {
+    // Test that locale with leading/trailing whitespace is trimmed
+    const config1 = normalizeCalendarConfig({ locale: " ja-JP " });
+    expect(config1.locale).toBe("ja-JP");
+
+    const config2 = normalizeCalendarConfig({ locale: "  ja  " });
+    expect(config2.locale).toBe("ja");
+  });
+
+  test("falls back to 'ja' when locale is empty after trimming", () => {
+    // Test that empty or whitespace-only locale falls back to "ja"
+    const config1 = normalizeCalendarConfig({ locale: "   " });
+    expect(config1.locale).toBe("ja");
+
+    const config2 = normalizeCalendarConfig({ locale: "" });
+    expect(config2.locale).toBe("ja");
+  });
 });
 
 describe("isWorkingDay", () => {

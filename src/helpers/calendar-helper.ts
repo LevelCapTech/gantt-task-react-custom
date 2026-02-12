@@ -36,7 +36,9 @@ export const normalizeCalendarConfig = (
   config: CalendarConfig
 ): NormalizedCalendarConfig => {
   // When calendar config is provided, default to Japanese locale unless overridden
-  const locale = config.locale || "ja";
+  // Normalize locale by trimming whitespace and falling back to "ja" if empty
+  const rawLocale = config.locale?.trim() || "";
+  const locale = rawLocale || "ja";
   const dateFormat = config.dateFormat || "MM/dd(EEE)";
   const enableJPHoliday = config.enableJPHoliday ?? true;
   const highlightNonWorkingDays = config.highlightNonWorkingDays ?? true;
