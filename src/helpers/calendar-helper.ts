@@ -63,19 +63,21 @@ export const normalizeCalendarConfig = (
     });
   }
 
-  // Warn if non-ja locale is specified when calendar is configured (only once per unique locale)
+  // Warn if non-ja locale is specified when calendar is configured (only once per normalized locale)
   if (!locale.toLowerCase().startsWith("ja")) {
+    const localeKey = locale.trim().toLowerCase();
     warnOnce(
-      `gantt-calendar-locale-${locale}`,
+      `gantt-calendar-locale-${localeKey}`,
       `[Gantt Calendar] Non-Japanese locale "${locale}" specified. ` +
         `Holiday definitions and weekday labels will remain in Japanese.`
     );
   }
 
-  // Warn if unsupported dateFormat is specified (only once per unique format)
+  // Warn if unsupported dateFormat is specified (only once per normalized format)
   if (dateFormat !== "MM/dd(EEE)") {
+    const dateFormatKey = dateFormat.trim().toLowerCase();
     warnOnce(
-      `gantt-calendar-dateFormat-${dateFormat}`,
+      `gantt-calendar-dateFormat-${dateFormatKey}`,
       `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
         `Only "MM/dd(EEE)" is officially supported; using other formats may lead to inconsistent display.`
     );
