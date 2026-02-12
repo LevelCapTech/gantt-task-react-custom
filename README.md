@@ -145,7 +145,7 @@ const calendarConfig: CalendarConfig = {
   highlightNonWorkingDays: true,
   workOnSaturday: false,
   extraHolidays: ["2024-12-30", "2024-12-31"], // 年末特別休業
-  extraWorkingDays: ["2024-01-06"], // 祝日だが特別稼働日
+  extraWorkingDays: ["2024-01-08"], // 祝日（成人の日）だが特別稼働日
 };
 
 <Gantt
