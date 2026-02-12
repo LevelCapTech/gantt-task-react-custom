@@ -15,8 +15,8 @@ import {
   DEFAULT_VISIBLE_FIELDS,
   TaskProcess,
   TaskStatus,
-  CalendarConfig,
 } from "@levelcaptech/gantt-task-react-custom";
+import type { CalendarConfig } from "@levelcaptech/gantt-task-react-custom";
 import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";

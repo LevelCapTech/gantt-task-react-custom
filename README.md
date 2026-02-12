@@ -35,8 +35,8 @@ VS Code Dev Containers で npmjs.com への publish を行う環境を用意し�
 
 ## 使い方
 
-```javascript
-import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption, CalendarConfig } from '@levelcaptech/gantt-task-react-custom';
+```typescript
+import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from '@levelcaptech/gantt-task-react-custom';
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 
 let tasks: Task[] = [
@@ -57,7 +57,7 @@ let tasks: Task[] = [
 
 次のアクションを処理できます
 
-```javascript
+```typescript
 <Gantt
   tasks={tasks}
   viewMode={view}
@@ -137,7 +137,8 @@ npm start
 #### 使用例
 
 ```typescript
-import { Gantt, CalendarConfig } from '@levelcaptech/gantt-task-react-custom';
+import { Gantt } from '@levelcaptech/gantt-task-react-custom';
+import type { CalendarConfig } from '@levelcaptech/gantt-task-react-custom';
 
 const calendarConfig: CalendarConfig = {
   locale: "ja",
