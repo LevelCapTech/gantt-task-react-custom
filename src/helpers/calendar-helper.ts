@@ -73,13 +73,15 @@ export const normalizeCalendarConfig = (
     );
   }
 
-  // Warn if unsupported dateFormat is specified (only once per normalized format)
+  // Warn if non-default dateFormat is specified (only once per normalized format)
+  // Note: dateFormat is currently a legacy field and does not affect rendering
   if (dateFormat !== "MM/dd(EEE)") {
     const dateFormatKey = dateFormat.trim().toLowerCase();
     warnOnce(
       `gantt-calendar-dateFormat-${dateFormatKey}`,
-      `[Gantt Calendar] Unsupported dateFormat "${dateFormat}" specified. ` +
-        `Only "MM/dd(EEE)" is officially supported; using other formats may lead to inconsistent display.`
+      `[Gantt Calendar] Custom dateFormat "${dateFormat}" specified. ` +
+        `Note: dateFormat is currently a legacy field and does not affect date rendering. ` +
+        `The format "MM/dd(EEE)" is used internally regardless of this setting.`
     );
   }
 
