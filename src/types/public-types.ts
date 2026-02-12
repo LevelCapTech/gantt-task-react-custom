@@ -150,12 +150,16 @@ export interface CalendarConfig {
    */
   workOnSaturday?: boolean;
   /**
-   * Additional holidays in ISO date format (YYYY-MM-DD).
+   * Additional holidays in ISO-like date string format.
+   * Year must be 4 digits; month and day may be 1–2 digits and are zero-padded internally
+   * (e.g. "2024-1-5" is normalized to "2024-01-05").
    * These dates will be treated as non-working days.
    */
   extraHolidays?: string[];
   /**
-   * Special working days in ISO date format (YYYY-MM-DD).
+   * Special working days in ISO-like date string format.
+   * Year must be 4 digits; month and day may be 1–2 digits and are zero-padded internally
+   * (e.g. "2024-1-5" is normalized to "2024-01-05").
    * These dates override weekends, holidays, and extraHolidays.
    */
   extraWorkingDays?: string[];
