@@ -118,7 +118,7 @@ npm start
 | preStepsCount  | number                          | 最初のタスクの前の空白を指定します。                                                                         |
 | locale         | string                          | 月名の言語を指定します。利用可能な形式: ISO 639-2, Java Locale。                                              |
 | rtl            | boolean                         | rtl モードを設定します。                                                                                    |
-| calendar       | [CalendarConfig](#CalendarConfig) | 稼働日計算と日付表示のカレンダー設定を指定します。未指定の場合は従来の動作を維持します（オプトイン式）。        |
+| calendar       | [CalendarConfig](#calendarconfig) | 稼働日計算と日付表示のカレンダー設定を指定します。未指定の場合は従来の動作を維持します（オプトイン式）。        |
 
 ### CalendarConfig
 
