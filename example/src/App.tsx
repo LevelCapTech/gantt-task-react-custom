@@ -16,6 +16,7 @@ import {
   TaskProcess,
   TaskStatus,
 } from "@levelcaptech/gantt-task-react-custom";
+import type { CalendarConfig } from "@levelcaptech/gantt-task-react-custom";
 import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";
@@ -128,6 +129,19 @@ const App = () => {
   const [tasks, setTasks] = React.useState<Task[]>(initTasks());
   const [isChecked, setIsChecked] = React.useState(true);
   const [effortUnit, setEffortUnit] = React.useState<EffortUnit>("MH");
+
+  // 日本カレンダー設定
+  const calendarConfig: CalendarConfig = {
+    locale: "ja",
+    enableJPHoliday: true,
+    highlightNonWorkingDays: true,
+    workOnSaturday: false,
+    // 例: 会社独自の休業日を追加
+    extraHolidays: ["2024-12-30", "2024-12-31"],
+    // 例: 特別稼働日を追加
+    extraWorkingDays: [],
+  };
+
   let columnWidth = 65;
   if (view === ViewMode.Year) {
     columnWidth = 350;
@@ -249,6 +263,7 @@ const App = () => {
         listCellWidth={isChecked ? "130px" : ""}
         columnWidth={columnWidth}
         locale="ja-JP"
+        calendar={calendarConfig}
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}
@@ -270,6 +285,7 @@ const App = () => {
         ganttHeight={300}
         columnWidth={columnWidth}
         locale="ja-JP"
+        calendar={calendarConfig}
         TooltipContent={JapaneseTooltip}
         visibleFields={DEFAULT_VISIBLE_FIELDS}
         onTaskUpdate={handleTaskUpdate}

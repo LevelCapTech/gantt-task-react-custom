@@ -127,6 +127,44 @@ export interface EventOption {
   onCellCommit?: (payload: CellCommitPayload) => Promise<void>;
 }
 
+export interface CalendarConfig {
+  /**
+   * Locale for date formatting. Defaults to "ja" for Japanese.
+   */
+  locale?: string;
+  /**
+   * Date format identifier. Currently supports "MM/dd(EEE)" for Japanese calendar display.
+   * This is a legacy identifier and not interpreted as a date-fns format string.
+   */
+  dateFormat?: string;
+  /**
+   * Enable Japanese holidays as non-working days. Defaults to true.
+   */
+  enableJPHoliday?: boolean;
+  /**
+   * Highlight non-working days with gray background. Defaults to true.
+   */
+  highlightNonWorkingDays?: boolean;
+  /**
+   * Treat Saturday as a working day. Defaults to false.
+   */
+  workOnSaturday?: boolean;
+  /**
+   * Additional holidays in ISO-like date string format.
+   * Year must be 4 digits; month and day may be 1–2 digits and are zero-padded internally
+   * (e.g. "2024-1-5" is normalized to "2024-01-05").
+   * These dates will be treated as non-working days.
+   */
+  extraHolidays?: string[];
+  /**
+   * Special working days in ISO-like date string format.
+   * Year must be 4 digits; month and day may be 1–2 digits and are zero-padded internally
+   * (e.g. "2024-1-5" is normalized to "2024-01-05").
+   * These dates override weekends, holidays, and extraHolidays.
+   */
+  extraWorkingDays?: string[];
+}
+
 export interface DisplayOption {
   viewMode?: ViewMode;
   viewDate?: Date;
@@ -136,6 +174,12 @@ export interface DisplayOption {
    */
   locale?: string;
   rtl?: boolean;
+  /**
+   * Calendar configuration for working day calculation and date display.
+   * If not specified, no calendar customization is applied and
+   * Japanese holiday/highlight features remain disabled (opt-in behavior).
+   */
+  calendar?: CalendarConfig;
 }
 
 export interface StylingOption {

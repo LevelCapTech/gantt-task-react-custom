@@ -8,6 +8,10 @@ import {
   getLocaleMonth,
   getWeekNumberISO8601,
 } from "../../helpers/date-helper";
+import {
+  formatJapaneseDate,
+  NormalizedCalendarConfig,
+} from "../../helpers/calendar-helper";
 import { DateSetup } from "../../types/date-setup";
 import styles from "./calendar.module.css";
 
@@ -20,6 +24,7 @@ export type CalendarProps = {
   columnWidth: number;
   fontFamily: string;
   fontSize: string;
+  calendarConfig?: NormalizedCalendarConfig;
 };
 
 export const Calendar: React.FC<CalendarProps> = ({
@@ -31,7 +36,11 @@ export const Calendar: React.FC<CalendarProps> = ({
   columnWidth,
   fontFamily,
   fontSize,
+  calendarConfig,
 }) => {
+  // Use calendarConfig.locale if calendar is configured, otherwise fall back to locale prop
+  const effectiveLocale = calendarConfig?.locale || locale;
+  
   const getCalendarValuesForYear = () => {
     const topValues: ReactChild[] = [];
     const bottomValues: ReactChild[] = [];
@@ -127,7 +136,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     const topDefaultHeight = headerHeight * 0.5;
     for (let i = 0; i < dateSetup.dates.length; i++) {
       const date = dateSetup.dates[i];
-      const bottomValue = getLocaleMonth(date, locale);
+      const bottomValue = getLocaleMonth(date, effectiveLocale);
       bottomValues.push(
         <text
           key={bottomValue + date.getFullYear()}
@@ -176,7 +185,7 @@ export const Calendar: React.FC<CalendarProps> = ({
       let topValue = "";
       if (i === 0 || date.getMonth() !== dates[i - 1].getMonth()) {
         // top
-        topValue = `${getLocaleMonth(date, locale)}, ${date.getFullYear()}`;
+        topValue = `${getLocaleMonth(date, effectiveLocale)}, ${date.getFullYear()}`;
       }
       // bottom
       const bottomValue = `W${getWeekNumberISO8601(date)}`;
@@ -221,9 +230,14 @@ export const Calendar: React.FC<CalendarProps> = ({
     const dates = dateSetup.dates;
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
-      const bottomValue = `${getLocalDayOfWeek(date, locale, "short")}, ${date
-        .getDate()
-        .toString()}`;
+      // Use Japanese format if calendarConfig is provided and locale is Japanese (e.g. "ja", "ja-JP")
+      const useJapaneseFormat =
+        !!calendarConfig &&
+        typeof calendarConfig.locale === "string" &&
+        calendarConfig.locale.toLowerCase().startsWith("ja");
+      const bottomValue = useJapaneseFormat
+        ? formatJapaneseDate(date)
+        : `${getLocalDayOfWeek(date, effectiveLocale, "short")}, ${date.getDate().toString()}`;
 
       bottomValues.push(
         <text
@@ -239,7 +253,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         i + 1 !== dates.length &&
         date.getMonth() !== dates[i + 1].getMonth()
       ) {
-        const topValue = getLocaleMonth(date, locale);
+        const topValue = getLocaleMonth(date, effectiveLocale);
 
         topValues.push(
           <TopPartOfCalendar
@@ -270,7 +284,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     const dates = dateSetup.dates;
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
-      const bottomValue = getCachedDateTimeFormat(locale, {
+      const bottomValue = getCachedDateTimeFormat(effectiveLocale, {
         hour: "numeric",
       }).format(date);
 
@@ -288,9 +302,9 @@ export const Calendar: React.FC<CalendarProps> = ({
       if (i === 0 || date.getDate() !== dates[i - 1].getDate()) {
         const topValue = `${getLocalDayOfWeek(
           date,
-          locale,
+          effectiveLocale,
           "short"
-        )}, ${date.getDate()} ${getLocaleMonth(date, locale)}`;
+        )}, ${date.getDate()} ${getLocaleMonth(date, effectiveLocale)}`;
         topValues.push(
           <TopPartOfCalendar
             key={topValue + date.getFullYear()}
@@ -315,7 +329,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     const dates = dateSetup.dates;
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
-      const bottomValue = getCachedDateTimeFormat(locale, {
+      const bottomValue = getCachedDateTimeFormat(effectiveLocale, {
         hour: "numeric",
       }).format(date);
 
@@ -334,9 +348,9 @@ export const Calendar: React.FC<CalendarProps> = ({
         const displayDate = dates[i - 1];
         const topValue = `${getLocalDayOfWeek(
           displayDate,
-          locale,
+          effectiveLocale,
           "long"
-        )}, ${displayDate.getDate()} ${getLocaleMonth(displayDate, locale)}`;
+        )}, ${displayDate.getDate()} ${getLocaleMonth(displayDate, effectiveLocale)}`;
         const topPosition = (date.getHours() - 24) / 2;
         topValues.push(
           <TopPartOfCalendar

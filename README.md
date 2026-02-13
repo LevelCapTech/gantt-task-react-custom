@@ -35,7 +35,7 @@ VS Code Dev Containers で npmjs.com への publish を行う環境を用意し�
 
 ## 使い方
 
-```javascript
+```typescript
 import { Gantt, Task, EventOption, StylingOption, ViewMode, DisplayOption } from '@levelcaptech/gantt-task-react-custom';
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 
@@ -57,7 +57,7 @@ let tasks: Task[] = [
 
 次のアクションを処理できます
 
-```javascript
+```typescript
 <Gantt
   tasks={tasks}
   viewMode={view}
@@ -111,13 +111,64 @@ npm start
 
 ### DisplayOption
 
-| パラメーター名 | 型      | 説明                                                                                                         |
-| :------------- | :------ | :---------------------------------------------------------------------------------------------------------- |
-| viewMode       | enum    | 時間スケールを指定します。Hour, Quarter Day, Half Day, Day, Week(ISO-8601 で 1 日目は月曜), Month, QuarterYear, Year。 |
-| viewDate       | date    | 表示に使用する日時を指定します。                                                                            |
-| preStepsCount  | number  | 最初のタスクの前の空白を指定します。                                                                         |
-| locale         | string  | 月名の言語を指定します。利用可能な形式: ISO 639-2, Java Locale。                                              |
-| rtl            | boolean | rtl モードを設定します。                                                                                    |
+| パラメーター名 | 型                              | 説明                                                                                                         |
+| :------------- | :------------------------------ | :---------------------------------------------------------------------------------------------------------- |
+| viewMode       | enum                            | 時間スケールを指定します。Hour, Quarter Day, Half Day, Day, Week(ISO-8601 で 1 日目は月曜), Month, QuarterYear, Year。 |
+| viewDate       | date                            | 表示に使用する日時を指定します。                                                                            |
+| preStepsCount  | number                          | 最初のタスクの前の空白を指定します。                                                                         |
+| locale         | string                          | 月名の言語を指定します。利用可能な形式: ISO 639-2, Java Locale。                                              |
+| rtl            | boolean                         | rtl モードを設定します。                                                                                    |
+| calendar       | [CalendarConfig](#calendarconfig) | 稼働日計算と日付表示のカレンダー設定を指定します。未指定の場合は従来の動作を維持します（オプトイン式）。        |
+
+### CalendarConfig
+
+日本カレンダー標準対応およびカスタム稼働日設定を提供します。`calendar` プロパティに設定を渡すことで有効化されます（オプトイン式）。
+
+| パラメーター名            | 型       | デフォルト値            | 説明                                                                                           |
+| :----------------------- | :------- | :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| locale                   | string   | `"ja"`                 | 日付フォーマットのロケール。日本語の場合は `"ja"` を指定します。                                                                       |
+| dateFormat               | string   | `"MM/dd(EEE)"`         | 日付フォーマット識別子（レガシーフィールド）。現在はレンダリング上は `"MM/dd(EEE)"` 固定で、この値を変更しても表示は変わりません。将来拡張用です。 |
+| enableJPHoliday          | boolean  | `true`                 | 日本の祝日を非稼働日として扱うかどうか。`true` で有効化されます。                                                                      |
+| highlightNonWorkingDays  | boolean  | `true`                 | 非稼働日をグレー背景でハイライト表示するかどうか。                                                                                    |
+| workOnSaturday           | boolean  | `false`                | 土曜日を稼働日として扱うかどうか。`true` にすると土曜日も稼働日になります。                                                            |
+| extraHolidays            | string[] | `[]`                   | 独自の休業日を日付文字列の配列で指定します。`YYYY-MM-DD` 形式に加えて `YYYY-M-D` のようなゼロパディング無しも受け入れ、内部で正規化されます。    |
+| extraWorkingDays         | string[] | `[]`                   | 特別稼働日を日付文字列の配列で指定します。`YYYY-MM-DD` 形式に加えて `YYYY-M-D` のようなゼロパディング無しも受け入れ、内部で正規化されます。週末・祝日・`extraHolidays` より優先されます。 |
+
+#### 使用例
+
+```typescript
+import { Gantt } from '@levelcaptech/gantt-task-react-custom';
+import type { CalendarConfig } from '@levelcaptech/gantt-task-react-custom';
+
+const calendarConfig: CalendarConfig = {
+  locale: "ja",
+  enableJPHoliday: true,
+  highlightNonWorkingDays: true,
+  workOnSaturday: false,
+  extraHolidays: ["2024-12-30", "2024-12-31"], // 年末特別休業
+  extraWorkingDays: ["2024-01-08"], // 祝日（成人の日）だが特別稼働日
+};
+
+<Gantt
+  tasks={tasks}
+  calendar={calendarConfig}
+  locale="ja-JP"
+/>
+```
+
+#### 稼働日判定の優先順位
+
+1. **最優先**: `extraWorkingDays` - 指定された日付は必ず稼働日になります
+2. **次**: `extraHolidays` - 指定された日付は非稼働日になります
+3. **標準**: 週末（日曜日、`workOnSaturday` が `false` の場合は土曜日も）と日本の祝日（`enableJPHoliday` が `true` の場合）
+
+#### 注意事項
+
+- `calendar` プロパティを指定しない場合、カレンダー機能は無効化され、従来の動作を維持します（後方互換性）。
+- 日本の祝日データは 2024-2026 年分がライブラリに静的に含まれています。
+- 無効な ISO 日付文字列は無視され、例外は投げられません。
+- 日付表示は `Intl.DateTimeFormat` を使用して `MM/dd(曜)` 形式で表示されます（日本語ロケール時）。
+
 
 ### StylingOption
 
