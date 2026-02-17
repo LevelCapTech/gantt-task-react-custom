@@ -16,7 +16,7 @@
 - 実装時に想定される変更対象:
   - `src/components/task-list/task-list-table.tsx`（選択行/選択セルの class 付与）
   - `src/components/task-list/task-list-table.module.css`（hover/selected/row ハイライトのスタイル追加）
-  - `src/test/task-list-table-highlight.test.tsx`（実装ファイル `task-list-table.tsx` と同じベース名 + 既存 `task-list-table-editing.test.tsx` と同じハイフン区切り命名で、選択・行ハイライト専用の回帰テストを新規追加）
+  - `src/test/task-list-table-highlight.test.tsx`（実装ファイル `task-list-table.tsx` のベース名 `task-list-table` に `-highlight` を付与し、`task-list-table-editing.test.tsx` と同じハイフン区切り命名で回帰テストを新規追加）
 - 影響範囲・互換性リスク:
   - Task Table の表示スタイルのみ。選択・編集のロジックは変更しない。
   - 既存の zebra 行背景（even 行）と競合するため、選択行の背景が上書きされるように CSS 優先度を調整する。
