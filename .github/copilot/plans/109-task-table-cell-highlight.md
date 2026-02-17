@@ -35,12 +35,12 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、Chrome/Firefox で 125%・150% ズーム時に枠線がズレる場合は `box-shadow: inset 0 0 0 2px` へ切り替える。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、Chrome/Firefox で 125% 以上のズーム時に枠線が隣接セルへはみ出す/1px 以上ずれる場合は `box-shadow: inset 0 0 0 2px` へ切り替える（100%/125%/150% で確認）。
   - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
-  - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、row 要素に `taskListTableRow` と `taskListTableRowSelected` の両方を付与した上で `.taskListTableRow.taskListTableRowSelected` で zebra 行より高い specificity を確保する。
+  - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、row 要素に `taskListTableRow` と `taskListTableRowSelected` の両方を付与した上で `.taskListTableRow.taskListTableRowSelected` を定義する（既存の `.taskListTableRow:nth-of-type(even)` を上書きできる specificity を確保）。
   - 優先順位の具体化（例）:
-    - 行淡色 → hover → selected の順で CSS 定義を並べ、後勝ちのカスケードで優先順位を担保する。
-    - `.taskListCell:hover` は `.taskListCellSelected` より前に定義し、選択セル上の hover でも SelectedCell が勝つようにする。
+    - hover は `.taskListCell:not(.taskListCellSelected):hover` で定義し、SelectedCell を明示的に除外する。
+    - SelectedCell は `.taskListCellSelected` で最優先の背景/outline を定義する。
   - カラーは既存 UI との調和を保つ中立色/淡いブルー系で決定し、可読性を確保する（詳細は「未確定事項」で決定）。
 - エッジケース / 例外系 / リトライ方針:
   - `editingState.mode === "viewing"` の場合は選択行/セルを付与しない。
