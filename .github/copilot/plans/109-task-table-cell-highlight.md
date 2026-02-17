@@ -16,7 +16,7 @@
 - 実装時に想定される変更対象:
   - `src/components/task-list/task-list-table.tsx`（選択行/選択セルの class 付与）
   - `src/components/task-list/task-list-table.module.css`（hover/selected/row ハイライトのスタイル追加）
-  - `src/test/task-list-table-highlight.test.tsx`（実装ファイル `task-list-table.tsx` のベース名 `task-list-table` に `-highlight` を付与し、`task-list-table-editing.test.tsx` と同じハイフン区切り命名で回帰テストを新規追加）
+  - `src/test/task-list-table-highlight.test.tsx`（実装ファイル `task-list-table.tsx` のベース名 `task-list-table` に `-highlight` を付与し、`task-list-table-editing.test.tsx` など既存テストと同じハイフン区切り命名で回帰テストを新規追加）
 - 影響範囲・互換性リスク:
   - Task Table の表示スタイルのみ。選択・編集のロジックは変更しない。
   - 既存の zebra 行背景（even 行）と競合するため、選択行の背景が上書きされるように CSS 優先度を調整する。
@@ -36,7 +36,7 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景（例: `#dbeafe`）+ `box-shadow: inset 0 0 0 2px #3b82f6` を使用し、レイアウトずれとズーム時の outline ずれを避ける。2px 幅は Focus Visible の視認性（WCAG 2.4.7）を満たすことを前提とする。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景（例: `#dbeafe`）+ `box-shadow: inset 0 0 0 2px #3b82f6` を使用し、レイアウトずれとズーム時の outline ずれを避ける。2px 幅は非テキストの視認性（WCAG 1.4.11）を満たすことを前提とし、矢印移動/Tab での選択状態にも適用される場合は Focus Visible（WCAG 2.4.7）にも配慮する。
   - `taskListCell` の `:hover`: 背景（例: `#eff6ff`）+ `box-shadow: inset 0 0 0 1px #93c5fd` を付与し、`taskListCellSelected` より弱い色を使用する。
   - `taskListTableRowSelected`: row 要素（`<div className={styles.taskListTableRow}>`）に `taskListTableRowSelected` を追加し、背景色（例: `#f8fafc`）を付与する。`.taskListTableRow.taskListTableRowSelected` を定義して既存の `.taskListTableRow:nth-of-type(even)` を上書きできる specificity を確保する。
   - 優先順位の具体化（例）:
@@ -57,7 +57,7 @@
   - 正常系: 選択行の他セルに `taskListTableRowSelected` 由来の背景が適用される。
   - 正常系: `hover` 時に `taskListCell` が hover スタイルになる（SelectedCell が優先）。
   - 回帰: SelectedCell > HoveredCell > SelectedRow の優先順位が維持される（選択セル上の hover でも SelectedCell が維持される）。
-  - アクセシビリティ: 背景色と文字色のコントラスト比を WCAG 2.1 の基準で確認する（可能なら axe/DevTools などの自動チェック、なければ手動確認）。
+  - アクセシビリティ: 背景色と文字色のコントラスト比を WCAG 2.1 の基準で確認する（既存で利用可能なら axe/DevTools などの自動チェック、なければ手動確認。新規依存追加は本スコープ外）。
   - 手動確認: 100%/125%/150% ズームで `box-shadow` が隣接セルへ侵入しないことを確認する。
   - 追加注記: 現状は visual regression の仕組みが無いため手動確認を前提とし、E2E/スクリーンショット基盤が導入され次第テスト追加を検討する。
   - 回帰: 既存の選択/編集挙動（Enter/ダブルクリック）のテストが通る。
