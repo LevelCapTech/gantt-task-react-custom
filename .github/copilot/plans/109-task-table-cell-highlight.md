@@ -9,13 +9,14 @@
   - outline などレイアウトがずれない描画方式を優先する。
   - 既存の DOM 構造/仮想化を変更せず、最小限の class 付与で完結させる。
   - 既存のセル内クリック可能要素の挙動を阻害しない。
+  - 背景色と文字色のコントラストは WCAG 2.1 の基準（通常文字 4.5:1、非テキスト 3:1）を満たすよう確認する。
 
 # 2. スコープと変更対象
 - 変更ファイル（設計成果物）: `.github/copilot/plans/109-task-table-cell-highlight.md`（新規、設計のみ）。実装時の想定変更対象は次項に列挙する。
 - 実装時に想定される変更対象:
   - `src/components/task-list/task-list-table.tsx`（選択行/選択セルの class 付与）
   - `src/components/task-list/task-list-table.module.css`（hover/selected/row ハイライトのスタイル追加）
-  - `src/test/task-list-table-highlight.test.tsx`（`task-list-table-editing.test.tsx` 等と同じハイフン区切り命名で、既存テスト命名規則に合わせて選択・行ハイライト専用の回帰テストを新規追加）
+  - `src/test/task-list-table-highlight.test.tsx`（実装ファイル `task-list-table.tsx` と同じベース名 + 既存 `task-list-table-editing.test.tsx` と同じハイフン区切り命名で、選択・行ハイライト専用の回帰テストを新規追加）
 - 影響範囲・互換性リスク:
   - Task Table の表示スタイルのみ。選択・編集のロジックは変更しない。
   - 既存の zebra 行背景（even 行）と競合するため、選択行の背景が上書きされるように CSS 優先度を調整する。
@@ -56,7 +57,9 @@
   - 正常系: 選択行の他セルに `taskListTableRowSelected` 由来の背景が適用される。
   - 正常系: `hover` 時に `taskListCell` が hover スタイルになる（SelectedCell が優先）。
   - 回帰: SelectedCell > HoveredCell > SelectedRow の優先順位が維持される（選択セル上の hover でも SelectedCell が維持される）。
+  - アクセシビリティ: 背景色と文字色のコントラスト比を WCAG 2.1 の基準で確認する。
   - 手動確認: 100%/125%/150% ズームで `box-shadow` が隣接セルへ侵入しないことを確認する。
+  - 追加注記: 現状は visual regression の仕組みが無いため手動確認を前提とし、E2E/スクリーンショット基盤が導入され次第テスト追加を検討する。
   - 回帰: 既存の選択/編集挙動（Enter/ダブルクリック）のテストが通る。
 - モック / フィクスチャ方針:
   - `TaskListTableDefault` の既存テストフィクスチャを再利用し、`data-row-id` / `data-column-id` を使って対象セルを取得する。
