@@ -9,7 +9,7 @@
   - outline などレイアウトがずれない描画方式を優先する。
   - 既存の DOM 構造/仮想化を変更せず、最小限の class 付与で完結させる。
   - 既存のセル内クリック可能要素の挙動を阻害しない。
-  - 背景色と文字色のコントラストは WCAG 2.1 の基準（通常文字 4.5:1、非テキスト 3:1）を満たすよう確認する。
+  - 背景色と文字色のコントラストは WCAG 2.1 の基準（通常文字 4.5:1、大きな文字 3:1、非テキスト 3:1）を満たすよう確認する。
 
 # 2. スコープと変更対象
 - 変更ファイル（設計成果物）: `.github/copilot/plans/109-task-table-cell-highlight.md`（新規、設計のみ）。実装時の想定変更対象は次項に列挙する。
@@ -36,7 +36,7 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景（例: `#dbeafe`）+ `box-shadow: inset 0 0 0 2px #3b82f6` を使用し、レイアウトずれとズーム時の outline ずれを避ける。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景（例: `#dbeafe`）+ `box-shadow: inset 0 0 0 2px #3b82f6` を使用し、レイアウトずれとズーム時の outline ずれを避ける。2px 幅は Focus Visible の視認性（WCAG 2.4.7）を満たすことを前提とする。
   - `taskListCell` の `:hover`: 背景（例: `#eff6ff`）+ `box-shadow: inset 0 0 0 1px #93c5fd` を付与し、`taskListCellSelected` より弱い色を使用する。
   - `taskListTableRowSelected`: row 要素（`<div className={styles.taskListTableRow}>`）に `taskListTableRowSelected` を追加し、背景色（例: `#f8fafc`）を付与する。`.taskListTableRow.taskListTableRowSelected` を定義して既存の `.taskListTableRow:nth-of-type(even)` を上書きできる specificity を確保する。
   - 優先順位の具体化（例）:
@@ -57,7 +57,7 @@
   - 正常系: 選択行の他セルに `taskListTableRowSelected` 由来の背景が適用される。
   - 正常系: `hover` 時に `taskListCell` が hover スタイルになる（SelectedCell が優先）。
   - 回帰: SelectedCell > HoveredCell > SelectedRow の優先順位が維持される（選択セル上の hover でも SelectedCell が維持される）。
-  - アクセシビリティ: 背景色と文字色のコントラスト比を WCAG 2.1 の基準で確認する。
+  - アクセシビリティ: 背景色と文字色のコントラスト比を WCAG 2.1 の基準で確認する（可能なら axe/DevTools などの自動チェック、なければ手動確認）。
   - 手動確認: 100%/125%/150% ズームで `box-shadow` が隣接セルへ侵入しないことを確認する。
   - 追加注記: 現状は visual regression の仕組みが無いため手動確認を前提とし、E2E/スクリーンショット基盤が導入され次第テスト追加を検討する。
   - 回帰: 既存の選択/編集挙動（Enter/ダブルクリック）のテストが通る。
