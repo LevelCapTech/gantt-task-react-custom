@@ -30,14 +30,14 @@
     ```mermaid
     flowchart LR
       EditingState -->|rowId/columnId| TaskListTableDefault
-      TaskListTableDefault -->|className| CellStyles
-      CellStyles -->|背景/枠線| TaskTableUI
+      TaskListTableDefault -->|className| taskListTableModule[task-list-table.module.css]
+      taskListTableModule -->|背景/枠線| TaskListTableDOM[TaskListTable DOM]
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、ズーム時に崩れる場合は `box-shadow: inset 0 0 0 2px` へ切り替える。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、Chrome/Firefox で 125%・150% ズーム時に枠線がズレる場合は `box-shadow: inset 0 0 0 2px` へ切り替える。
   - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
-  - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、`taskListTableRow.taskListTableRowSelected` のように zebra 行より高い specificity にする。
+  - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、row 要素に `taskListTableRow` と `taskListTableRowSelected` の両方を付与した上で `.taskListTableRow.taskListTableRowSelected` で zebra 行より高い specificity を確保する。
   - 優先順位の具体化（例）:
     - 行淡色 → hover → selected の順で CSS 定義を並べ、後勝ちのカスケードで優先順位を担保する。
     - `.taskListCell:hover` は `.taskListCellSelected` より前に定義し、選択セル上の hover でも SelectedCell が勝つようにする。
