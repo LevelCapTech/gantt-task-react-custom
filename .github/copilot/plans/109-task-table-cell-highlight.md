@@ -15,7 +15,7 @@
 - 実装時に想定される変更対象:
   - `src/components/task-list/task-list-table.tsx`（選択行/選択セルの class 付与）
   - `src/components/task-list/task-list-table.module.css`（hover/selected/row ハイライトのスタイル追加）
-  - `src/test/task-list-table-editing.test.tsx`（既存テストに選択・行ハイライトの回帰ケースを追加）
+  - `src/test/task-list-table-highlight.test.tsx`（選択・行ハイライト専用の回帰テストを新規追加）
 - 影響範囲・互換性リスク:
   - Task Table の表示スタイルのみ。選択・編集のロジックは変更しない。
   - 既存の zebra 行背景（even 行）と競合するため、選択行の背景が上書きされるように CSS 優先度を調整する。
@@ -34,6 +34,7 @@
       CellStyles -->|背景/枠線| TaskTableUI
     ```
 - UI スタイル設計（優先度の担保）:
+  - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
   - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset` を負値にして枠線のズレを防ぐ。
   - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
   - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、`taskListTableRow.taskListTableRowSelected` のように zebra 行より高い specificity にする。
@@ -57,6 +58,7 @@
   - 回帰: 既存の選択/編集挙動（Enter/ダブルクリック）のテストが通る。
 - モック / フィクスチャ方針:
   - `TaskListTableDefault` の既存テストフィクスチャを再利用し、`data-row-id` / `data-column-id` を使って対象セルを取得する。
+  - `src/test/task-list-table-highlight.test.tsx` を新設し、ハイライト専用のテストを集約する。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
   - `npm run test:unit`（対象テストのみ）
   - `npm test`（lint/build/unit を包含）
