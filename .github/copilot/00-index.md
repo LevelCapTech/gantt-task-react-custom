@@ -20,6 +20,12 @@
 13. [90-research/](90-research/) — RESEARCH フェーズの成果物。DESIGN、IMPLEMENT フェーズのインプット資料でもあります。
 
 ## 使い方
+- PR作成時は、`80-templates/pr-checklist.md`の品質ゲートを通過させること。
+- PR種別に応じて対応するテンプレートを必ず使用する：
+  - DESIGN PR → [.github/PULL_REQUEST_TEMPLATE/design.md](../PULL_REQUEST_TEMPLATE/design.md)
+  - IMPLEMENT PR → [.github/PULL_REQUEST_TEMPLATE/implement.md](../PULL_REQUEST_TEMPLATE/implement.md)
+  - RESEARCH PR → [.github/PULL_REQUEST_TEMPLATE/research.md](../PULL_REQUEST_TEMPLATE/research.md)
+  - BLIND PR → [.github/PULL_REQUEST_TEMPLATE/blind.md](../PULL_REQUEST_TEMPLATE/blind.md)
 - **設計フェーズ (Phase A)**: `80-templates/implementation-plan.md` に沿って plan を作成し、`10-60` の仕様を満たすこと。
 - **実装フェーズ (Phase B)**: 確定 plan の範囲内で実装し、`60-ci-quality-gates.md` の品質ゲートを通過させること。
 - 仕様変更・追記は本ディレクトリに集約し、重複や分散を避ける。
