@@ -35,8 +35,8 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、Chrome/Firefox で 125% 以上のズーム時に枠線が隣接セルへはみ出す、または 1px 以上ずれる場合はいずれかが確認された時点で `box-shadow: inset 0 0 0 2px` へ切り替える（100%/125%/150% で確認）。
-  - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景 + `box-shadow: inset 0 0 0 2px` を使用し、レイアウトずれとズーム時の outline ずれを避ける。
+  - `taskListCell` の `:hover`: 背景 + `box-shadow: inset 0 0 0 1px` を付与し、`taskListCellSelected` より弱い色を使用する。
   - `taskListTableRowSelected`: row 要素（`<div className={styles.taskListTableRow}>`）に `taskListTableRowSelected` を追加し、`.taskListTableRow.taskListTableRowSelected` を定義する（既存の `.taskListTableRow:nth-of-type(even)` を上書きできる specificity を確保）。
   - 優先順位の具体化（例）:
     - hover は `.taskListCell:not(.taskListCellSelected):hover` で定義し、SelectedCell を明示的に除外する。
@@ -46,7 +46,7 @@
   - `editingState.mode === "viewing"` の場合は選択行/セルを付与しない。
   - `editingState.rowId` / `columnId` が `tasks` / `columns` に存在しない場合はハイライトしない。
   - `editingState.mode === "editing"` の場合も選択セルは保持し、編集中のセルが引き続きハイライトされる。
-  - `outline-offset` の描画差異が出る場合は `box-shadow` へ切り替え、主要ブラウザで表示確認する。
+  - `box-shadow` でもセル境界が不明瞭な場合は色/コントラストを調整し、主要ブラウザで表示確認する。
 - ログと観測性（漏洩防止を含む）:
   - 追加ログは不要（UI 表現のみ）。
 
@@ -56,6 +56,7 @@
   - 正常系: 選択行の他セルに `taskListTableRowSelected` 由来の背景が適用される。
   - 正常系: `hover` 時に `taskListCell` が hover スタイルになる（SelectedCell が優先）。
   - 回帰: SelectedCell > HoveredCell > SelectedRow の優先順位が維持される（選択セル上の hover でも SelectedCell が維持される）。
+  - 手動確認: 100%/125%/150% ズームで `box-shadow` が隣接セルへ侵入しないことを確認する。
   - 回帰: 既存の選択/編集挙動（Enter/ダブルクリック）のテストが通る。
 - モック / フィクスチャ方針:
   - `TaskListTableDefault` の既存テストフィクスチャを再利用し、`data-row-id` / `data-column-id` を使って対象セルを取得する。
