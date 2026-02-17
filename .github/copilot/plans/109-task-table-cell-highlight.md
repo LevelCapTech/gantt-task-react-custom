@@ -1,6 +1,6 @@
 # 1. 機能要件 / 非機能要件
 - 機能要件:
-  - Task Table のセル hover 時に背景色 + 枠線のハイライトを表示する。
+  - Task Table のセル `hover` 時に背景色 + 枠線のハイライトを表示する。
   - セルクリックで選択されたセルを「濃い」背景色 + 枠線でハイライトする。
   - 選択セルと同一行の他セルを「淡い」背景色でハイライトする。
   - 優先順位は SelectedCell > HoveredCell > SelectedRow とし、同時成立時に視認性が損なわれない。
@@ -35,18 +35,18 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset` を負値にして枠線のズレを防ぐ。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、ズーム時に崩れる場合は `box-shadow: inset 0 0 0 2px` へ切り替える。
   - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
   - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、`taskListTableRow.taskListTableRowSelected` のように zebra 行より高い specificity にする。
   - 優先順位の具体化（例）:
-    - `.taskListCellSelected` は最優先で背景/outline を定義。
-    - `.taskListCell:hover:not(.taskListCellSelected)` で hover を適用。
-    - `.taskListTableRow.taskListTableRowSelected .taskListCell:not(.taskListCellSelected):not(:hover)` で行淡色を適用。
+    - 行淡色 → hover → selected の順で CSS 定義を並べ、後勝ちのカスケードで優先順位を担保する。
+    - `.taskListCell:hover` は `.taskListCellSelected` より前に定義し、選択セル上の hover でも SelectedCell が勝つようにする。
   - カラーは既存 UI との調和を保つ中立色/淡いブルー系で決定し、可読性を確保する（詳細は「未確定事項」で決定）。
 - エッジケース / 例外系 / リトライ方針:
   - `editingState.mode === "viewing"` の場合は選択行/セルを付与しない。
   - `editingState.rowId` / `columnId` が `tasks` / `columns` に存在しない場合はハイライトしない。
   - `editingState.mode === "editing"` の場合も選択セルは保持し、編集中のセルが引き続きハイライトされる。
+  - `outline-offset` の描画差異が出る場合は `box-shadow` へ切り替え、主要ブラウザで表示確認する。
 - ログと観測性（漏洩防止を含む）:
   - 追加ログは不要（UI 表現のみ）。
 
@@ -54,7 +54,8 @@
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
   - 正常系: セルクリックで選択セルに `taskListCellSelected` が付く。
   - 正常系: 選択行の他セルに `taskListRowSelected` 由来の背景が適用される。
-  - 正常系: hover 時に `taskListCell` が hover スタイルになる（SelectedCell が優先）。
+  - 正常系: `hover` 時に `taskListCell` が hover スタイルになる（SelectedCell が優先）。
+  - 回帰: SelectedCell > HoveredCell > SelectedRow の優先順位が維持される（選択セル上の hover でも SelectedCell が維持される）。
   - 回帰: 既存の選択/編集挙動（Enter/ダブルクリック）のテストが通る。
 - モック / フィクスチャ方針:
   - `TaskListTableDefault` の既存テストフィクスチャを再利用し、`data-row-id` / `data-column-id` を使って対象セルを取得する。
