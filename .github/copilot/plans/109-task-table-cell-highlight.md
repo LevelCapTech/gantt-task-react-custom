@@ -15,7 +15,7 @@
 - 実装時に想定される変更対象:
   - `src/components/task-list/task-list-table.tsx`（選択行/選択セルの class 付与）
   - `src/components/task-list/task-list-table.module.css`（hover/selected/row ハイライトのスタイル追加）
-  - `src/test/task-list-table-editing.test.tsx` もしくは新規テスト（選択・行ハイライトの回帰テスト）
+  - `src/test/task-list-table-editing.test.tsx`（既存テストに選択・行ハイライトの回帰ケースを追加）
 - 影響範囲・互換性リスク:
   - Task Table の表示スタイルのみ。選択・編集のロジックは変更しない。
   - 既存の zebra 行背景（even 行）と競合するため、選択行の背景が上書きされるように CSS 優先度を調整する。
@@ -35,7 +35,7 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset` を負値にして枠線のズレを防ぐ。
-  - `taskListCellHover`: `:hover` で背景 + outline を付与し、`taskListCellSelected` より弱い色を使用。
+  - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
   - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、`taskListTableRow.taskListTableRowSelected` のように zebra 行より高い specificity にする。
   - 優先順位の具体化（例）:
     - `.taskListCellSelected` は最優先で背景/outline を定義。
