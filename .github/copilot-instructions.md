@@ -1,5 +1,10 @@
 # Copilot 規範層（全タスク共通で短く強い指示）
 - 仕様の入口は `.github/copilot/00-index.md`。参照順に従い、設計→実装の2段階ループを厳守する。
+- PR種別に応じて以下テンプレートを必ず使用する：
+  - DESIGN PR → [.github/PULL_REQUEST_TEMPLATE/design.md](PULL_REQUEST_TEMPLATE/design.md)
+  - IMPLEMENT PR → [.github/PULL_REQUEST_TEMPLATE/implement.md](PULL_REQUEST_TEMPLATE/implement.md)
+  - RESEARCH PR → [.github/PULL_REQUEST_TEMPLATE/research.md](PULL_REQUEST_TEMPLATE/research.md)
+  - BLIND PR → [.github/PULL_REQUEST_TEMPLATE/blind.md](PULL_REQUEST_TEMPLATE/blind.md)
 - コード/ドキュメントは **完全実装**で提出し、擬似コード・未完成サンプルは禁止。出力は必要最小限の差分にとどめる。
 - **PRタイトルは必ず日本語で記述すること。**（例: `feat: 新しい認証処理の追加` のように、日本語で目的を明示する。）
 - コミットメッセージは `.github/instructions/commit-messages.instructions.md` に従い、日本語・`fix:`/`hotfix:`/`feat:` のプレフィックス付きで3行以上の構造を守ること（Copilot 生成分も含む）。
