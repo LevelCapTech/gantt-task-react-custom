@@ -15,7 +15,7 @@
 - 実装時に想定される変更対象:
   - `src/components/task-list/task-list-table.tsx`（選択行/選択セルの class 付与）
   - `src/components/task-list/task-list-table.module.css`（hover/selected/row ハイライトのスタイル追加）
-  - `src/test/task-list-table-highlight.test.tsx`（選択・行ハイライト専用の回帰テストを新規追加）
+  - `src/test/task-list-table-highlight.test.tsx`（`task-list-table-editing.test.tsx` と同じハイフン区切り命名で、選択・行ハイライト専用の回帰テストを新規追加）
 - 影響範囲・互換性リスク:
   - Task Table の表示スタイルのみ。選択・編集のロジックは変更しない。
   - 既存の zebra 行背景（even 行）と競合するため、選択行の背景が上書きされるように CSS 優先度を調整する。
@@ -35,9 +35,9 @@
     ```
 - UI スタイル設計（優先度の担保）:
   - CSS Modules の命名は既存の `taskListCell` / `taskListTableRow` に揃え、`taskListCellSelected` / `taskListTableRowSelected` の形式で統一する。
-  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、Chrome/Firefox で 125% 以上のズーム時に枠線が隣接セルへはみ出す/1px 以上ずれる場合は `box-shadow: inset 0 0 0 2px` へ切り替える（100%/125%/150% で確認）。
+  - `taskListCellSelected`: SelectedCell 用の濃色背景 + outline。`outline-offset: -2px` を基本とし、Chrome/Firefox で 125% 以上のズーム時に枠線が隣接セルへはみ出す、または 1px 以上ずれる場合はいずれかの条件で `box-shadow: inset 0 0 0 2px` へ切り替える（100%/125%/150% で確認）。
   - `taskListCell` の `:hover`: 背景 + outline を付与し、`taskListCellSelected` より弱い色を使用する。
-  - `taskListRowSelected`: 選択行の淡色背景を `taskListTableRow` に付与し、row 要素に `taskListTableRow` と `taskListTableRowSelected` の両方を付与した上で `.taskListTableRow.taskListTableRowSelected` を定義する（既存の `.taskListTableRow:nth-of-type(even)` を上書きできる specificity を確保）。
+  - `taskListRowSelected`: row 要素（`<div className={styles.taskListTableRow}>`）に `taskListTableRowSelected` を追加し、`.taskListTableRow.taskListTableRowSelected` を定義する（既存の `.taskListTableRow:nth-of-type(even)` を上書きできる specificity を確保）。
   - 優先順位の具体化（例）:
     - hover は `.taskListCell:not(.taskListCellSelected):hover` で定義し、SelectedCell を明示的に除外する。
     - SelectedCell は `.taskListCellSelected` で最優先の背景/outline を定義する。
