@@ -25,4 +25,20 @@ describe("initTasks", () => {
     expect(plannedStart.getMonth()).toBe(2);
     expect(plannedStart.getDate()).toBe(1);
   });
+
+  it("sets all sample tasks to March 2026 based on project start", () => {
+    const tasks = initTasks();
+
+    expect(tasks.length).toBeGreaterThan(1);
+
+    tasks.slice(1).forEach((task) => {
+      expect(task.start.getFullYear()).toBe(2026);
+      expect(task.start.getMonth()).toBe(2);
+
+      if (task.plannedStart) {
+        expect(task.plannedStart.getFullYear()).toBe(2026);
+        expect(task.plannedStart.getMonth()).toBe(2);
+      }
+    });
+  });
 });
