@@ -13,12 +13,15 @@ describe("initTasks", () => {
   });
 
   it("sets the sample project start date to March 1", () => {
-    const [projectTask] = initTasks();
-    const plannedStart = projectTask.plannedStart!;
+    const projectTask = initTasks().find(
+      (t) => t.type === "project" || t.id === "ProjectSample",
+    );
+    expect(projectTask).toBeDefined();
+    const plannedStart = projectTask!.plannedStart!;
 
-    expect(projectTask.start.getFullYear()).toBe(2026);
-    expect(projectTask.start.getMonth()).toBe(2);
-    expect(projectTask.start.getDate()).toBe(1);
+    expect(projectTask!.start.getFullYear()).toBe(2026);
+    expect(projectTask!.start.getMonth()).toBe(2);
+    expect(projectTask!.start.getDate()).toBe(1);
     expect(plannedStart.getMonth()).toBe(2);
     expect(plannedStart.getDate()).toBe(1);
   });
