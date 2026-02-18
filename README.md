@@ -24,6 +24,9 @@ npm install @levelcaptech/gantt-task-react-custom
 
 ## Requirements
 
+- Node.js: 20.x（推奨）
+  - CI 環境（GitHub Actions）は Node.js 20.x で統一されています。
+  - React 18 は Node.js 20 で問題なく動作します。
 - React: 18.x（必須）
   - 本プロジェクトは `react` / `react-dom` の peerDependencies として `^18.0.0` を指定しています。
   - **React 18 系のみを正式サポート**しています。
