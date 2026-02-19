@@ -68,6 +68,11 @@ export const TaskListTableDefault: React.FC<{
   const columnIds = columns.map(column =>
     typeof column === "string" ? column : column.id
   );
+  const selectedColumnId = editingState?.columnId ?? null;
+  const hasValidSelection =
+    editingState?.mode !== "viewing" &&
+    !!selectedColumnId &&
+    columnIds.includes(selectedColumnId as VisibleField);
 
   const resolveColumnId = (column: (typeof columns)[number]) =>
     (typeof column === "string" ? column : column.id) as VisibleField;
@@ -244,6 +249,7 @@ export const TaskListTableDefault: React.FC<{
         } else if (t.hideChildren === true) {
           expanderSymbol = "▶";
         }
+        const isSelectedRow = hasValidSelection && editingState?.rowId === t.id;
 
         const renderCell = (field: VisibleField) => {
           switch (field) {
@@ -304,16 +310,20 @@ export const TaskListTableDefault: React.FC<{
         };
         return (
           <div
-            className={styles.taskListTableRow}
+            className={
+              isSelectedRow
+                ? `${styles.taskListTableRow} ${styles.taskListTableRowSelected}`
+                : styles.taskListTableRow
+            }
             style={{ height: rowHeight }}
             key={`${t.id}row`}
           >
             {columns.map(column => {
               const columnId = resolveColumnId(column);
               const isSelected =
-                editingState?.mode !== "viewing" &&
+                hasValidSelection &&
                 editingState?.rowId === t.id &&
-                editingState?.columnId === columnId;
+                selectedColumnId === columnId;
               const handleCellClick = (
                 event: React.MouseEvent<HTMLDivElement>
               ) => {
@@ -398,7 +408,11 @@ export const TaskListTableDefault: React.FC<{
               return (
                 <div
                   key={`${t.id}-${columnId}`}
-                  className={styles.taskListCell}
+                  className={
+                    isSelected
+                      ? `${styles.taskListCell} ${styles.taskListCellSelected}`
+                      : styles.taskListCell
+                  }
                   data-row-id={t.id}
                   data-column-id={columnId}
                   aria-selected={isSelected || undefined}
