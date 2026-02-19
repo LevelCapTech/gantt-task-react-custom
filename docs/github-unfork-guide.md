@@ -7,11 +7,11 @@
 ## フォーク解除手順（ブラウザ操作）
 
 ### Step 1: リポジトリを開く
-- ブラウザで `https://github.com/dashboard` を開きます。
+- ブラウザで [GitHub ダッシュボード](https://github.com/dashboard) を開きます。
 - 対象リポジトリ「LevelCapTech/gantt-task-react-custom」をクリックして表示します。
 
 ### Step 2: Supportへ連絡
-- `https://support.github.com/contact` を開きます。
+- GitHub Support の [問い合わせフォーム](https://support.github.com/contact) を開きます。
 - 問い合わせカテゴリで "Repository Network" 関連の問い合わせを選択します。
 - フォーク解除の依頼を送信します。
 
