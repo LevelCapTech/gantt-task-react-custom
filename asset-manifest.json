@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/gantt-task-react-custom/static/css/main.9441954c.css",
-    "main.js": "/gantt-task-react-custom/static/js/main.c4cd2043.js",
+    "main.css": "/gantt-task-react-custom/static/css/main.47889ec4.css",
+    "main.js": "/gantt-task-react-custom/static/js/main.774386f3.js",
     "index.html": "/gantt-task-react-custom/index.html",
-    "main.9441954c.css.map": "/gantt-task-react-custom/static/css/main.9441954c.css.map",
-    "main.c4cd2043.js.map": "/gantt-task-react-custom/static/js/main.c4cd2043.js.map"
+    "main.47889ec4.css.map": "/gantt-task-react-custom/static/css/main.47889ec4.css.map",
+    "main.774386f3.js.map": "/gantt-task-react-custom/static/js/main.774386f3.js.map"
   },
   "entrypoints": [
-    "static/css/main.9441954c.css",
-    "static/js/main.c4cd2043.js"
+    "static/css/main.47889ec4.css",
+    "static/js/main.774386f3.js"
   ]
 }
