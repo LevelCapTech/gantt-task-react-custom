@@ -42,6 +42,8 @@
   - 既定の `npm version` を使う場合は重複タグ作成を避けるため、`git tag` 実行の要否を明確化する。
 - CI / GitHub Releases への影響:
   - `npm-publish` ワークフローの tag トリガを `v*.*.*` に更新し、旧タグでは発火しないよう明記する。
+  - `.github/workflows/npm-publish.yml` 内のタグ検証ロジック（例: `EXPECTED_VERSION="${GITHUB_REF#refs/tags/release_levelcaptech/v}"` によるタグ文字列の切り出しや、"Expected release_levelcaptech/vX.Y.Z" といったエラーメッセージ）は、新しいタグ命名規則に合わせて `refs/tags/vX.Y.Z`・"Expected vX.Y.Z" 前提の実装へ更新する。
+  - 上記のトリガ条件・タグ検証ロジック・エラーメッセージの変更内容を `docs/npm-publish.md` のリリース手順に反映し、運用手順と CI 実装に差分が出ないようにする。
   - GitHub Releases は新タグ `vX.Y.Z` を基準に作成する。旧タグは履歴として保持する。
 - 後方互換の扱い:
   - 既存の `release_levelcaptech/vX.Y.Z` タグは削除せず残す。
