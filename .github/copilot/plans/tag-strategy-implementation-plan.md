@@ -49,7 +49,7 @@
   - 既存の `release_levelcaptech/vX.Y.Z` タグは削除せず残す。
   - 新しい運用では旧タグを使わないが、過去リリースの参照性は維持する。
 - 実装イメージ（旧運用）:
-  - Issue 記載の手順を転記した例。`npm version` の引数は `1.2.3` のように `v` なしで指定し、手動 `git tag` を行う場合は `npm version --no-git-tag-version` を使う前提で読み替える（既定の `npm version` を使う運用では `git tag` 行を省略する）。
+  - Issue 記載の手順を転記した例（運用の前提は「7. オープンな課題」で確認する）。
   ```
   npm version 1.2.3
   git push
@@ -57,7 +57,7 @@
   git push origin release_levelcaptech/v1.2.3
   ```
 - 実装イメージ（新運用）:
-  - Issue 記載の手順を転記した例。`npm version` の引数は `1.2.3` のように `v` なしで指定し、手動 `git tag` を行う場合は `npm version --no-git-tag-version` を使う前提で読み替える（既定の `npm version` を使う運用では `git tag` 行を省略する）。
+  - Issue 記載の手順を転記した例（運用の前提は「7. オープンな課題」で確認する）。
   ```
   npm version 1.2.3
   git push
@@ -97,7 +97,8 @@
 
 # 7. オープンな課題 / ADR 要否
 - 未確定事項:
-  - 既存運用で `npm version` を `--no-git-tag-version` 付きで実行しているかを確認する。
+  - 既存運用で `npm version` を `--no-git-tag-version` 付きで実行しているかを確認する（Issue の手順が手動 `git tag` 併用を前提としているため）。
+  - Issue に `121-semver-tagging-implementation-plan.md` の記載があるため、成果物ファイル名の最終確認が必要。
   - `npm-publish` 以外に tag で発火する CI が存在するかを洗い出す。
 - ADR に残すべき判断:
   - なし（運用方針の変更のみのため）。
