@@ -27,8 +27,9 @@
 ## タグ駆動リリース手順
 
 ### タグとバージョン番号の関係（必須定義）
-- npm リリース対象タグは `release_levelcaptech/vMAJOR.MINOR.PATCH` の形式のみです。
-- `release_levelcaptech/v1.2.3` の場合、`package.json` の version は `1.2.3` に設定しておきます。
+- npm リリース対象タグは `vMAJOR.MINOR.PATCH` の形式のみです。
+- `v1.2.3` の場合、`package.json` の version は `1.2.3` に設定しておきます。
+- 旧タグ `release_levelcaptech/vX.Y.Z` はフォーク時の衝突回避のために使っていましたが、今後は新規利用しません（既存タグは保持し、ワークフローのトリガー対象外です）。
 - `release/vX.Y.Z` は本リポジトリではリリーストリガーとして扱いません。
 - タグと `package.json` の version が一致しない場合は、ワークフロー内でエラーとして停止します。
 
@@ -36,9 +37,11 @@
 ```bash
 npm version 1.2.3
 git push
-git tag release_levelcaptech/v1.2.3
-git push origin release_levelcaptech/v1.2.3
+git tag v1.2.3
+git push origin v1.2.3
 ```
+
+※ `npm version` がタグを自動生成する設定の場合は、`git tag` 手順を省略するか `--no-git-tag-version` を利用してください。
 
 #### 緊急時の差し戻し操作
 
@@ -46,8 +49,8 @@ git push origin release_levelcaptech/v1.2.3
 2. 下記コマンドを実行する
 
 ```bash
-git tag -d release_levelcaptech/v1.2.3
-git push origin :refs/tags/release_levelcaptech/v1.2.3
+git tag -d v1.2.3
+git push origin :refs/tags/v1.2.3
 ```
 
 3. npm側の確認
@@ -65,5 +68,6 @@ npm view @levelcaptech/gantt-task-react-custom versions
 
 ### 禁止事項
 - `package.json` の version を手動編集する
-- `release_levelcaptech/` プレフィックス無しタグでの公開を期待する
+- `v` プレフィックス無しや SemVer 形式外のタグでの公開を期待する
+- `release_levelcaptech/` プレフィックス付きタグでの新規公開を行う
 - `release/vX.Y.Z` タグでの公開を期待する
