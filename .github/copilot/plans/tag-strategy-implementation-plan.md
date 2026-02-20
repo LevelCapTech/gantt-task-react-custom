@@ -38,8 +38,8 @@
   - `release_levelcaptech/` プレフィックスは新規タグでは使用しない。
 - npm version との整合性:
   - `npm version` は既定で `vX.Y.Z` タグを生成するため、新ルールと一致する。
-  - 現行フローで `--no-git-tag-version` を使っている場合は、手動で `vX.Y.Z` タグを作成する運用に統一する。
-  - 既定の `npm version` を使う場合は、重複タグ作成を避けるため手動 `git tag` の有無を運用で明確化する。
+  - 現行フローで `--no-git-tag-version` を使っているかを確認し、手動 `git tag` が必要かどうかを確定したうえで運用手順を統一する。
+  - 既定の `npm version` を使う場合は重複タグ作成を避けるため、`git tag` 実行の要否を明確化する。
 - CI / GitHub Releases への影響:
   - `npm-publish` ワークフローの tag トリガを `v*.*.*` に更新し、旧タグでは発火しないよう明記する。
   - GitHub Releases は新タグ `vX.Y.Z` を基準に作成する。旧タグは履歴として保持する。
@@ -47,6 +47,7 @@
   - 既存の `release_levelcaptech/vX.Y.Z` タグは削除せず残す。
   - 新しい運用では旧タグを使わないが、過去リリースの参照性は維持する。
 - 実装イメージ（旧運用）:
+  - 実運用で `npm version` のタグ生成有無に応じて `git tag` の要否を調整する前提のイメージ。
   ```
   npm version 1.2.3
   git push
@@ -54,6 +55,7 @@
   git push origin release_levelcaptech/v1.2.3
   ```
 - 実装イメージ（新運用）:
+  - 実運用で `npm version` のタグ生成有無に応じて `git tag` の要否を調整する前提のイメージ。
   ```
   npm version 1.2.3
   git push
