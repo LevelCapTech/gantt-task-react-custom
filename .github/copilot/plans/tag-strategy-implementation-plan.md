@@ -47,7 +47,7 @@
   - 既存の `release_levelcaptech/vX.Y.Z` タグは削除せず残す。
   - 新しい運用では旧タグを使わないが、過去リリースの参照性は維持する。
 - 実装イメージ（旧運用）:
-  - 実運用で `npm version` のタグ生成有無に応じて `git tag` の要否を調整する前提のイメージ。
+  - Issue 記載の手順を転記した例。手動 `git tag` を行う場合は `npm version --no-git-tag-version` を使う想定とし、既定の `npm version` を使う運用では `git tag` 行を省略する。
   ```
   npm version 1.2.3
   git push
@@ -55,7 +55,7 @@
   git push origin release_levelcaptech/v1.2.3
   ```
 - 実装イメージ（新運用）:
-  - 実運用で `npm version` のタグ生成有無に応じて `git tag` の要否を調整する前提のイメージ。
+  - Issue 記載の手順を転記した例。手動 `git tag` を行う場合は `npm version --no-git-tag-version` を使う想定とし、既定の `npm version` を使う運用では `git tag` 行を省略する。
   ```
   npm version 1.2.3
   git push
