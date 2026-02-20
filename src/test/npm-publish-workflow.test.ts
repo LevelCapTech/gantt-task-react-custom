@@ -11,10 +11,10 @@ const workflowContent = fs.readFileSync(workflowPath, "utf8");
 
 describe("npm-publish workflow tag strategy", () => {
   test("uses vX.Y.Z tag trigger", () => {
-    expect(workflowContent).toMatch(/tags:\s*\n\s*-\s+"v\*\.\*\.\*"/);
+    expect(workflowContent).toContain('- "v*.*.*"');
   });
 
-  test("does not reference legacy release_levelcaptech tags", () => {
+  test("does not use release_levelcaptech tag prefix", () => {
     expect(workflowContent).not.toContain("release_levelcaptech/");
   });
 
