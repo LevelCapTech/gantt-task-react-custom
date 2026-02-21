@@ -24,6 +24,7 @@ import {
   parseDateFromInput,
   sanitizeEffortInput,
 } from "../../helpers/task-helper";
+import { ParsedTime, parseTimeString } from "../../helpers/time-helper";
 import { OverlayEditor } from "./overlay-editor";
 
 export type EditingTrigger = "dblclick" | "enter" | "key";
@@ -103,32 +104,26 @@ export const DEFAULT_MIN_WIDTH = 32;
 export const getDefaultWidth = (field: VisibleField, rowWidth: string): number =>
   field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155;
 
-const parseTimeFromInput = (value?: string) => {
-  if (!value) return null;
-  const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-  return { hours, minutes };
+const isValidDate = (value?: Date) =>
+  value instanceof Date && !Number.isNaN(value.getTime());
+
+const isSameDate = (a?: Date, b?: Date): boolean => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const validA = isValidDate(a);
+  const validB = isValidDate(b);
+  if (!validA && !validB) return true;
+  if (!validA || !validB) return false;
+  return a.getTime() === b.getTime();
 };
 
 const applyTimeToDate = (
   date: Date,
   sourceDate: Date | undefined,
-  fallbackTime?: { hours: number; minutes: number } | null
+  fallbackTime?: ParsedTime | null
 ) => {
   const next = new Date(date);
-  if (sourceDate && !Number.isNaN(sourceDate.getTime())) {
+  if (sourceDate && isValidDate(sourceDate)) {
     next.setHours(
       sourceDate.getHours(),
       sourceDate.getMinutes(),
@@ -333,7 +328,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             return null;
           }
           const sourceDate = columnId === "start" ? task.start : task.end;
-          const fallbackTime = parseTimeFromInput(
+          const fallbackTime = parseTimeString(
             columnId === "start"
               ? actualsOptions?.workdayStartTime
               : actualsOptions?.workdayEndTime
@@ -353,10 +348,10 @@ export const TaskList: React.FC<TaskListProps> = ({
         } as Task;
         const normalized = normalizeActuals(draftTask, actualsOptions ?? {});
         const updatedFields: Partial<Task> = {};
-        if (normalized.start.getTime() !== task.start.getTime()) {
+        if (!isSameDate(normalized.start, task.start)) {
           updatedFields.start = normalized.start;
         }
-        if (normalized.end.getTime() !== task.end.getTime()) {
+        if (!isSameDate(normalized.end, task.end)) {
           updatedFields.end = normalized.end;
         }
         if (normalized.actualEffort !== task.actualEffort) {

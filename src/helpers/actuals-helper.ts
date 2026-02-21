@@ -1,5 +1,6 @@
 import { Task } from "../types/public-types";
 import { isWorkingDay, NormalizedCalendarConfig } from "./calendar-helper";
+import { parseTimeString } from "./time-helper";
 
 export type ActualsNormalizeOptions = {
   workHoursPerDay?: number;
@@ -34,30 +35,17 @@ const warnOnce = (key: string, message: string): void => {
   }
 };
 
-const parseTimeToMinutes = (value?: string): number | null => {
-  if (!value) return null;
-  const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-  return hours * MINUTES_PER_HOUR + minutes;
-};
-
 const resolveWorkdayWindow = (options: ActualsNormalizeOptions): WorkdayWindow => {
-  const parsedStart = parseTimeToMinutes(options.workdayStartTime);
-  const parsedEnd = parseTimeToMinutes(options.workdayEndTime);
-  let startMinutes = parsedStart ?? DEFAULT_WORKDAY_START_MINUTES;
-  let endMinutes = parsedEnd ?? DEFAULT_WORKDAY_END_MINUTES;
+  const parsedStart = parseTimeString(options.workdayStartTime);
+  const parsedEnd = parseTimeString(options.workdayEndTime);
+  let startMinutes =
+    parsedStart !== null
+      ? parsedStart.hours * MINUTES_PER_HOUR + parsedStart.minutes
+      : DEFAULT_WORKDAY_START_MINUTES;
+  let endMinutes =
+    parsedEnd !== null
+      ? parsedEnd.hours * MINUTES_PER_HOUR + parsedEnd.minutes
+      : DEFAULT_WORKDAY_END_MINUTES;
   if (endMinutes <= startMinutes) {
     startMinutes = DEFAULT_WORKDAY_START_MINUTES;
     endMinutes = DEFAULT_WORKDAY_END_MINUTES;
