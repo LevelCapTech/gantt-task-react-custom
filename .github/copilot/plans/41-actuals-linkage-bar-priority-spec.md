@@ -10,6 +10,7 @@
   - 稼働時間/日 (workHoursPerDay) は呼び出し元パラメータで指定可能とし、未指定時は既定の業務時間帯から算出する。
     - `windowHours = workdayEndTime - workdayStartTime` の duration。
     - `workHoursPerDay` 未指定時は `defaultBreakHours = 1h` として `workHoursPerDay = windowHours - defaultBreakHours`（既定値は 8h）。
+    - `windowHours <= defaultBreakHours` の場合は `workHoursPerDay = windowHours` とし、`breakHours = 0` とする（業務時間帯が短い場合は休憩を持たない）。
     - `effectiveWorkHoursPerDay = min(workHoursPerDay, windowHours)`。
     - `breakHours = windowHours - effectiveWorkHoursPerDay`（暗黙の休憩時間）。
   - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする（9h 窓に対して workHoursPerDay 既定 8h を想定し、休憩相当は workHoursPerDay の指定で調整し、breakHours は windowHours と effectiveWorkHoursPerDay の差分として暗黙に決まる）。
@@ -108,7 +109,7 @@ sequenceDiagram
   - 非稼働日跨ぎはカレンダー API に委譲し、加算/差分計算は稼働日のみを対象にする。
   - workHoursPerDay が未指定/0 以下/NaN の場合は、既定の算出ルール（`workHoursPerDay = windowHours - defaultBreakHours`、既定値 8h）にフォールバックする。
   - workHoursPerDay が業務時間帯の長さ（workdayStartTime/workdayEndTime を時間差に換算した値）を超える場合は、`effectiveWorkHoursPerDay = windowHours` を適用して計算し、設定不整合を警告ログで通知する。
-    - 正規化は高頻度呼び出しを前提とするため、既存の `src/helpers/calendar-helper.ts` の `warnOnce` と同様に同一内容の警告は 1 回だけ出力する、または呼び出し元で事前にパラメータ検証を行う方針とする。
+    - 正規化は高頻度呼び出しを前提とするため、既存の `src/helpers/calendar-helper.ts` の `warnOnce` と同様に同一内容の警告は 1 回だけ出力する（プロセス内の記憶で抑制し、永続化はしない）。
   - workdayStartTime/workdayEndTime が未指定/不正/逆転の場合は既定値 09:00〜18:00 にフォールバックする。
   - end 算出/丸めは業務時間帯内で完結させ、丸め後の end が workdayEndTime を超える場合は次稼働日の workdayStartTime に繰り越す。
     - 繰り越し手順:
@@ -126,6 +127,7 @@ sequenceDiagram
   - workHoursPerDay の変更: 6h/8h/10h で end 算出が変わることを確認。
   - workdayStartTime/workdayEndTime の変更: 08:00〜17:00/09:00〜18:00/10:00〜19:00 で丸め後の end が業務時間内に収束することを確認。
   - workHoursPerDay > windowHours のクランプ（`effectiveWorkHoursPerDay = windowHours`）と warnOnce 相当の警告が 1 回だけ出ることを確認（警告は「workHoursPerDay が業務時間帯を超過している」旨と採用値を含む）。
+  - windowHours <= defaultBreakHours の場合に `workHoursPerDay = windowHours` となり、休憩時間が 0 になることを確認。
   - workdayStartTime/workdayEndTime の不正値フォールバックと overflow 繰り越しが次稼働日に反映されることを確認。
   - 0.25h 丸めを確認:
     - 1.12→1.00、1.13→1.25。
