@@ -342,9 +342,14 @@ export const normalizeActuals = (
     end: nextEnd,
     actualEffort: nextEffort,
   };
+  const isSameDate = (a?: Date, b?: Date): boolean => {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    return Object.is(a.getTime(), b.getTime());
+  };
   const hasChange =
-    nextTask.start.getTime() !== task.start.getTime() ||
-    nextTask.end.getTime() !== task.end.getTime() ||
+    !isSameDate(nextTask.start as Date | undefined, task.start as Date | undefined) ||
+    !isSameDate(nextTask.end as Date | undefined, task.end as Date | undefined) ||
     nextTask.actualEffort !== task.actualEffort;
   return hasChange ? nextTask : task;
 };
