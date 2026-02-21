@@ -11,7 +11,7 @@
     - `workHoursPerDay` 未指定時は `defaultBreakHours = 1h` として `workHoursPerDay = windowHours - defaultBreakHours`（既定値は 8h）。
     - `effectiveWorkHoursPerDay = min(workHoursPerDay, windowHours)`。
     - `breakHours = windowHours - effectiveWorkHoursPerDay`（暗黙の休憩時間）。
-  - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする（9h 窓に対して workHoursPerDay 既定 8h を想定し、休憩は明示指定で調整する）。
+  - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする（9h 窓に対して workHoursPerDay 既定 8h を想定し、休憩相当は workHoursPerDay の指定で調整し、breakHours は windowHours と effectiveWorkHoursPerDay の差分として暗黙に決まる）。
   - workdayStartTime/workdayEndTime は `"HH:mm"` 形式の文字列で受け取り、タスクの日時と同じローカルタイムゾーンで解釈する（例: `"09:00"`）。
   - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は `q = effort / 0.25` に対して `normalized = Math.floor(q + 0.5) * 0.25` を適用する（round-half-up を明示し、0.5 は上方向）。例: 1.12→1.00、1.13→1.25。
 - 非機能要件:
