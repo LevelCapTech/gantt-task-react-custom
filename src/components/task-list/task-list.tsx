@@ -103,6 +103,46 @@ export const DEFAULT_MIN_WIDTH = 32;
 export const getDefaultWidth = (field: VisibleField, rowWidth: string): number =>
   field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155;
 
+const parseTimeFromInput = (value?: string) => {
+  if (!value) return null;
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+  return { hours, minutes };
+};
+
+const applyTimeToDate = (
+  date: Date,
+  sourceDate: Date | undefined,
+  fallbackTime?: { hours: number; minutes: number } | null
+) => {
+  const next = new Date(date);
+  if (sourceDate && !Number.isNaN(sourceDate.getTime())) {
+    next.setHours(
+      sourceDate.getHours(),
+      sourceDate.getMinutes(),
+      sourceDate.getSeconds(),
+      sourceDate.getMilliseconds()
+    );
+    return next;
+  }
+  if (fallbackTime) {
+    next.setHours(fallbackTime.hours, fallbackTime.minutes, 0, 0);
+  }
+  return next;
+};
+
 export const TaskList: React.FC<TaskListProps> = ({
   headerHeight,
   fontFamily,
@@ -284,14 +324,26 @@ export const TaskList: React.FC<TaskListProps> = ({
         if (columnId !== "start" && columnId !== "end" && columnId !== "actualEffort") {
           return null;
         }
-        const parsedValue =
-          columnId === "actualEffort"
-            ? sanitizeEffortInput(value)
-            : parseDateFromInput(value);
+        let parsedValue: number | Date | undefined;
+        if (columnId === "actualEffort") {
+          parsedValue = sanitizeEffortInput(value);
+        } else {
+          const parsedDate = parseDateFromInput(value);
+          if (!parsedDate) {
+            return null;
+          }
+          const sourceDate = columnId === "start" ? task.start : task.end;
+          const fallbackTime = parseTimeFromInput(
+            columnId === "start"
+              ? actualsOptions?.workdayStartTime
+              : actualsOptions?.workdayEndTime
+          );
+          parsedValue = applyTimeToDate(parsedDate, sourceDate, fallbackTime);
+        }
         if (parsedValue === undefined) {
           return null;
         }
-        const invalidEndForRecalc = new Date("invalid");
+        const invalidEndForRecalc = new Date("invalid"); // force derive end from effort
         const draftTask = {
           ...task,
           [columnId]: parsedValue,

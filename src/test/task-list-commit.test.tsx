@@ -17,6 +17,12 @@ const MockTaskListTable: React.FC = () => {
         Start
       </button>
       <button
+        data-testid="start-edit-start"
+        onClick={() => context?.startEditing("task-1", "start", "enter")}
+      >
+        Start Date
+      </button>
+      <button
         data-testid="start-edit-effort"
         onClick={() => context?.startEditing("task-1", "actualEffort", "enter")}
       >
@@ -24,6 +30,9 @@ const MockTaskListTable: React.FC = () => {
       </button>
       <div data-row-id="task-1" data-column-id="name">
         Task 1
+      </div>
+      <div data-row-id="task-1" data-column-id="start">
+        2026-01-01
       </div>
       <div data-row-id="task-1" data-column-id="actualEffort">
         1
@@ -160,5 +169,29 @@ describe("TaskList onCellCommit", () => {
     expect(update.end).toBeInstanceOf(Date);
     expect((update.end as Date).getHours()).toBe(14);
     expect((update.end as Date).getMinutes()).toBe(15);
+  });
+
+  it("keeps time portion when editing start date", async () => {
+    const onCellCommit = jest.fn().mockResolvedValue(undefined);
+    const onUpdateTask = jest.fn();
+    renderTaskList(onCellCommit, onUpdateTask, [
+      createTask({
+        start: new Date(2026, 0, 1, 13, 30),
+        end: new Date(2026, 0, 2, 18, 0),
+        actualEffort: 8,
+      }),
+    ]);
+
+    fireEvent.click(screen.getByTestId("start-edit-start"));
+    const input = await screen.findByTestId("overlay-editor-input");
+    fireEvent.change(input, { target: { value: "2026-01-02" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => expect(onCellCommit).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onUpdateTask).toHaveBeenCalledTimes(1));
+    const update = onUpdateTask.mock.calls[0][1] as Partial<Task>;
+    expect(update.start).toBeInstanceOf(Date);
+    expect((update.start as Date).getHours()).toBe(13);
+    expect((update.start as Date).getMinutes()).toBe(30);
   });
 });

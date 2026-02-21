@@ -345,7 +345,11 @@ export const normalizeActuals = (
   const isSameDate = (a?: Date, b?: Date): boolean => {
     if (a === b) return true;
     if (!a || !b) return false;
-    return Object.is(a.getTime(), b.getTime());
+    const validA = isValidDate(a);
+    const validB = isValidDate(b);
+    if (!validA && !validB) return true;
+    if (!validA || !validB) return false;
+    return a.getTime() === b.getTime();
   };
   const hasChange =
     !isSameDate(nextTask.start as Date | undefined, task.start as Date | undefined) ||
