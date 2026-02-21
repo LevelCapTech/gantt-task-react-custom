@@ -72,9 +72,9 @@ flowchart TD
   - workdayStartTime/workdayEndTime が未指定/不正/逆転の場合は既定値 09:00〜18:00 にフォールバックする。
   - end 算出/丸めは業務時間帯内で完結させ、丸め後の end が workdayEndTime を超える場合は次稼働日の workdayStartTime に繰り越す。
     - 繰り越し手順:
-      - `overflow = roundedEnd - workdayEndTime`（roundedEnd は datetime、workdayEndTime は同日の時刻に変換し、時間差を分/時の duration として扱う）。
+      - `overflow = roundedEnd - workdayEndTime`（roundedEnd は datetime、workdayEndTime は同日の時刻に変換し、時間差を分または時間の duration として扱う）。
       - 次稼働日の `workdayStartTime + overflow` を end とする。
-      - 例: effort を 0.5h=30分 に丸めた結果 17:45→18:15 になった場合、overflow は 0:15 なので翌稼働日の 09:15 にする。
+      - 例: start 17:45、effort 0.5h=30分 → roundedEnd 18:15、workdayEndTime 18:00 のため overflow 0:15、翌稼働日の 09:15 にする。
 - ログと観測性（漏洩防止を含む）:
   - 既存の console.debug / console.warn の構造化ログ方針に合わせる。
   - 無効値補完や矛盾補正時は rowId・フィールド名・原因のみをログに出し、値本文は必要最小限にする。
