@@ -343,7 +343,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         if (parsedValue === undefined) {
           return null;
         }
-        const invalidEndForRecalc = new Date("invalid"); // force derive end from effort
+        const invalidEndForRecalc = new Date("invalid");
         const draftTask = {
           ...task,
           [columnId]: parsedValue,

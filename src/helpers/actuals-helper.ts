@@ -347,7 +347,10 @@ export const normalizeActuals = (
     if (!a || !b) return false;
     const validA = isValidDate(a);
     const validB = isValidDate(b);
-    if (!validA && !validB) return true;
+    if (!validA && !validB) {
+      // Treat two invalid dates as equal to keep normalization idempotent.
+      return true;
+    }
     if (!validA || !validB) return false;
     return a.getTime() === b.getTime();
   };
