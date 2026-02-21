@@ -8,6 +8,7 @@
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
   - 稼働時間/日 (workHoursPerDay) は呼び出し元パラメータで指定可能とし、未指定時は 8h を既定値とする。
   - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする。
+  - workdayStartTime/workdayEndTime は `"HH:mm"` 形式の文字列で受け取る（例: `"09:00"`）。
   - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は `q = effort / 0.25` に対して `normalized = Math.floor(q + 0.5) * 0.25` を適用する（round-half-up を明示し、0.5 は上方向）。例: 1.12→1.00、1.13→1.25。
 - 非機能要件:
   - 正規化は冪等で、高頻度呼び出しに耐える軽量な計算であること。
@@ -44,7 +45,7 @@
   - 呼び出しタイミング:
     - 初期表示/再描画: `Gantt` の tasks 受信時に `normalizeActuals` を適用し、正規化後の tasks で `ganttDateRange` と `convertToBarTasks` を生成する。
     - 編集確定時: `TaskList` の `commitEditing` で該当タスクに `normalizeActuals` を適用し、正規化済みの差分を `onUpdateTask` / `onCellCommit` へ渡す。
-    - ガントバー操作: ガントのドラッグ/リサイズで `onDateChange` が発火し、ホストが更新した tasks を再投入する際に `normalizeActuals` を適用する（バー操作による日付変更も同じ正規化経路で収束させる）。
+    - ガントバー操作: ガントのドラッグ/リサイズで `onDateChange` が発火し、ホスト側で更新した tasks が再投入されたタイミングで `normalizeActuals` を適用する（`onDateChange` の通知は正規化前、再描画時に正規化後の値へ収束）。
     - 外部更新: API 再取得や親コンポーネントの更新でも tasks prop の更新で同じ正規化が走る（冪等前提）。
 
 ```mermaid
@@ -64,7 +65,7 @@ flowchart TD
   - ActualEffortHours=0 は start=end を許容し、半開区間のため effort は 0 として扱う。
   - 非稼働日跨ぎはカレンダー API に委譲し、加算/差分計算は稼働日のみを対象にする。
   - workHoursPerDay が未指定/0 以下/NaN の場合は既定値 8h にフォールバックする。
-  - workHoursPerDay が業務時間帯 (workdayEndTime - workdayStartTime) を超える場合は、業務時間帯の長さに切り詰める。
+  - workHoursPerDay が業務時間帯 (workdayEndTime - workdayStartTime) を超える場合は、業務時間帯の長さに切り詰め、console.warn で設定不整合を通知する。
   - workdayStartTime/workdayEndTime が未指定/不正/逆転の場合は既定値 09:00〜18:00 にフォールバックする。
   - end 算出/丸めは業務時間帯内で完結させ、丸め結果が workdayEndTime を超える場合は次稼働日の workdayStartTime に繰り越す。
 - ログと観測性（漏洩防止を含む）:
