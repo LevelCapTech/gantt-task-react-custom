@@ -56,12 +56,26 @@ const resolveWorkdayWindow = (options: ActualsNormalizeOptions): WorkdayWindow =
     workHoursPerDay !== undefined && Number.isFinite(workHoursPerDay) && workHoursPerDay > 0
       ? workHoursPerDay
       : undefined;
-  let workMinutesPerDay =
-    requestedWorkHours !== undefined
-      ? Math.round(requestedWorkHours * MINUTES_PER_HOUR)
-      : windowMinutes <= DEFAULT_BREAK_MINUTES
-        ? windowMinutes
-        : windowMinutes - DEFAULT_BREAK_MINUTES;
+  const defaultWorkMinutesPerDay =
+    windowMinutes <= DEFAULT_BREAK_MINUTES
+      ? windowMinutes
+      : windowMinutes - DEFAULT_BREAK_MINUTES;
+  let workMinutesPerDay: number;
+  if (requestedWorkHours !== undefined) {
+    const requestedMinutes = Math.round(requestedWorkHours * MINUTES_PER_HOUR);
+    if (requestedMinutes <= 0) {
+      warnOnce(
+        `gantt-actuals-workhours-too-small-${requestedWorkHours}`,
+        `[Gantt Actuals] workHoursPerDay (${requestedWorkHours}h) is too small and rounds to 0 minutes. ` +
+          `Falling back to the default work minutes per day derived from the workday window.`
+      );
+      workMinutesPerDay = defaultWorkMinutesPerDay;
+    } else {
+      workMinutesPerDay = requestedMinutes;
+    }
+  } else {
+    workMinutesPerDay = defaultWorkMinutesPerDay;
+  }
   if (workMinutesPerDay > windowMinutes) {
     const windowHours = windowMinutes / MINUTES_PER_HOUR;
     warnOnce(
