@@ -15,6 +15,15 @@ import {
   Task,
   VisibleField,
 } from "../../types/public-types";
+import {
+  ActualsNormalizeOptions,
+  normalizeActuals,
+} from "../../helpers/actuals-helper";
+import {
+  formatDate,
+  parseDateFromInput,
+  sanitizeEffortInput,
+} from "../../helpers/task-helper";
 import { OverlayEditor } from "./overlay-editor";
 
 export type EditingTrigger = "dblclick" | "enter" | "key";
@@ -50,6 +59,7 @@ export type TaskListProps = {
   visibleFields: VisibleField[];
   effortDisplayUnit: EffortUnit;
   tasks: Task[];
+  actualsOptions?: ActualsNormalizeOptions;
   taskListRef: React.RefObject<HTMLDivElement>;
   headerContainerRef?: React.RefObject<HTMLDivElement>;
   bodyContainerRef?: React.RefObject<HTMLDivElement>;
@@ -116,6 +126,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   onUpdateTask,
   onCellCommit,
   effortDisplayUnit,
+  actualsOptions,
   enableColumnDrag = true,
   onHorizontalScroll,
 }) => {
@@ -265,6 +276,53 @@ export const TaskList: React.FC<TaskListProps> = ({
       }
       const rowId = editingState.rowId;
       const columnId = editingState.columnId;
+      const task = tasks.find(row => row.id === rowId);
+      const resolveActualsCommit = () => {
+        if (!task) {
+          return null;
+        }
+        if (columnId !== "start" && columnId !== "end" && columnId !== "actualEffort") {
+          return null;
+        }
+        const parsedValue =
+          columnId === "actualEffort"
+            ? sanitizeEffortInput(value)
+            : parseDateFromInput(value);
+        if (parsedValue === undefined) {
+          return null;
+        }
+        const draftTask = {
+          ...task,
+          [columnId]: parsedValue,
+          ...(columnId === "actualEffort"
+            ? { end: new Date("invalid") }
+            : {}),
+        } as Task;
+        const normalized = normalizeActuals(draftTask, actualsOptions ?? {});
+        const updatedFields: Partial<Task> = {};
+        if (normalized.start.getTime() !== task.start.getTime()) {
+          updatedFields.start = normalized.start;
+        }
+        if (normalized.end.getTime() !== task.end.getTime()) {
+          updatedFields.end = normalized.end;
+        }
+        if (normalized.actualEffort !== task.actualEffort) {
+          updatedFields.actualEffort = normalized.actualEffort;
+        }
+        const normalizedValue =
+          columnId === "actualEffort"
+            ? normalized.actualEffort !== undefined
+              ? `${normalized.actualEffort}`
+              : value
+            : columnId === "start"
+              ? formatDate(normalized.start)
+              : formatDate(normalized.end);
+        return {
+          normalizedValue,
+          updatedFields: Object.keys(updatedFields).length > 0 ? updatedFields : null,
+        };
+      };
+      const actualsCommit = resolveActualsCommit();
       setEditingState(prev => {
         if (
           prev.mode !== "editing" ||
@@ -277,7 +335,11 @@ export const TaskList: React.FC<TaskListProps> = ({
         return { ...prev, pending: true, errorMessage: null };
       });
       try {
-        await onCellCommit({ rowId, columnId, value, trigger });
+        const commitValue = actualsCommit?.normalizedValue ?? value;
+        await onCellCommit({ rowId, columnId, value: commitValue, trigger });
+        if (actualsCommit?.updatedFields && onUpdateTask) {
+          onUpdateTask(rowId, actualsCommit.updatedFields);
+        }
         if (!mountedRef.current) {
           return;
         }
@@ -324,7 +386,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         });
       }
     },
-    [editingState, onCellCommit]
+    [actualsOptions, editingState, onCellCommit, onUpdateTask, tasks]
   );
 
   const selectCell = useCallback((rowId: string, columnId: VisibleField) => {

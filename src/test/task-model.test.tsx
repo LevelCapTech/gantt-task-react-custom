@@ -40,7 +40,7 @@ describe("Task data model extensions", () => {
     expect(screen.getAllByText("2026-01-01")).toHaveLength(2);
     expect(screen.getAllByText("2026-01-03")).toHaveLength(1);
     expect(screen.getAllByText("16MH")).not.toHaveLength(0);
-    expect(screen.getAllByText("8MH")).not.toHaveLength(0);
+    expect(screen.getAllByText("32MH")).not.toHaveLength(0);
     expect(screen.getByText("進行中")).toBeInTheDocument();
   });
 
@@ -72,5 +72,28 @@ describe("Task data model extensions", () => {
     expect(serialized.plannedStart).toBeDefined();
     expect(serialized.plannedEnd).toBeDefined();
     expect(TASK_STATUS_OPTIONS).toContain(serialized.status);
+  });
+
+  it("normalizes actual effort before initial render", () => {
+    const task: Task = {
+      id: "Task-2",
+      name: "Actuals Task",
+      start: new Date(2026, 0, 1, 9, 0),
+      end: new Date(2026, 0, 1, 11, 0),
+      progress: 0,
+      type: "task",
+      actualEffort: 1,
+    };
+    render(
+      <Gantt
+        tasks={[task]}
+        onTaskUpdate={jest.fn()}
+        onCellCommit={async () => {}}
+        listCellWidth="140px"
+        effortDisplayUnit="MH"
+      />
+    );
+
+    expect(screen.getByText("2MH")).toBeInTheDocument();
   });
 });

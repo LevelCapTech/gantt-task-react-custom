@@ -24,6 +24,7 @@ import { HorizontalScroll } from "../other/horizontal-scroll";
 import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
 import { DEFAULT_VISIBLE_FIELDS } from "../../helpers/task-helper";
 import { normalizeCalendarConfig } from "../../helpers/calendar-helper";
+import { normalizeActuals } from "../../helpers/actuals-helper";
 import styles from "./gantt.module.css";
 
 const DEFAULT_TASK_LIST_WIDTH = 450;
@@ -49,6 +50,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   preStepsCount = 1,
   locale = "en-GB",
   calendar,
+  workHoursPerDay,
+  workdayStartTime,
+  workdayEndTime,
   barFill = 60,
   barCornerRadius = 3,
   barProgressColor = "#a3a3ff",
@@ -91,6 +95,19 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     () => (calendar ? normalizeCalendarConfig(calendar) : undefined),
     [calendar]
   );
+  const actualsOptions = useMemo(
+    () => ({
+      calendarConfig,
+      workHoursPerDay,
+      workdayStartTime,
+      workdayEndTime,
+    }),
+    [calendarConfig, workHoursPerDay, workdayStartTime, workdayEndTime]
+  );
+  const normalizedTasks = useMemo(
+    () => tasks.map(task => normalizeActuals(task, actualsOptions)),
+    [tasks, actualsOptions]
+  );
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
@@ -104,7 +121,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const supportsPointerEvents =
     typeof window !== "undefined" && "PointerEvent" in window;
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
-    const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
+    const [startDate, endDate] = ganttDateRange(
+      normalizedTasks,
+      viewMode,
+      preStepsCount
+    );
     return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
   });
   const [currentViewDate, setCurrentViewDate] = useState<Date | undefined>(
@@ -142,9 +163,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   useEffect(() => {
     let filteredTasks: Task[];
     if (onExpanderClick) {
-      filteredTasks = removeHiddenTasks(tasks);
+      filteredTasks = removeHiddenTasks(normalizedTasks);
     } else {
-      filteredTasks = tasks;
+      filteredTasks = normalizedTasks;
     }
     filteredTasks = filteredTasks.sort(sortTasks);
     const [startDate, endDate] = ganttDateRange(
@@ -183,7 +204,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       )
     );
   }, [
-    tasks,
+    normalizedTasks,
     viewMode,
     preStepsCount,
     rowHeight,
@@ -306,9 +327,9 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (ganttHeight) {
       setSvgContainerHeight(ganttHeight + headerHeight);
     } else {
-      setSvgContainerHeight(tasks.length * rowHeight + headerHeight);
+      setSvgContainerHeight(normalizedTasks.length * rowHeight + headerHeight);
     }
-  }, [ganttHeight, tasks, headerHeight, rowHeight]);
+  }, [ganttHeight, normalizedTasks, headerHeight, rowHeight]);
 
   useEffect(() => {
     return () => {
@@ -389,7 +410,14 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       }
       window.removeEventListener("resize", updateLeftScroller);
     };
-  }, [tasks, fontFamily, fontSize, listCellWidth, taskListBodyRef, visibleFields]);
+  }, [
+    normalizedTasks,
+    fontFamily,
+    fontSize,
+    listCellWidth,
+    taskListBodyRef,
+    visibleFields,
+  ]);
 
   const handleScrollY = (event: SyntheticEvent<HTMLDivElement>) => {
     if (scrollY !== event.currentTarget.scrollTop && !ignoreScrollLeftRef.current) {
@@ -583,7 +611,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const gridProps: GridProps = {
     columnWidth,
     svgWidth,
-    tasks: tasks,
+    tasks: normalizedTasks,
     rowHeight,
     dates: dateSetup.dates,
     todayColor,
@@ -651,6 +679,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     onCellCommit,
     effortDisplayUnit,
     enableColumnDrag,
+    actualsOptions,
   };
   return (
     <div>

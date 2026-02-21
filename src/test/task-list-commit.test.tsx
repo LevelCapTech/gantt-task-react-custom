@@ -16,23 +16,37 @@ const MockTaskListTable: React.FC = () => {
       >
         Start
       </button>
+      <button
+        data-testid="start-edit-effort"
+        onClick={() => context?.startEditing("task-1", "actualEffort", "enter")}
+      >
+        Start Effort
+      </button>
       <div data-row-id="task-1" data-column-id="name">
         Task 1
+      </div>
+      <div data-row-id="task-1" data-column-id="actualEffort">
+        1
       </div>
     </div>
   );
 };
 
-const createTask = (): Task => ({
+const createTask = (overrides: Partial<Task> = {}): Task => ({
   id: "task-1",
   name: "Task 1",
-  start: new Date(2026, 0, 1),
-  end: new Date(2026, 0, 2),
+  start: new Date(2026, 0, 1, 9, 0),
+  end: new Date(2026, 0, 1, 10, 0),
   progress: 0,
   type: "task",
+  ...overrides,
 });
 
-const renderTaskList = (onCellCommit: jest.Mock) => {
+const renderTaskList = (
+  onCellCommit: jest.Mock,
+  onUpdateTask?: jest.Mock,
+  tasks: Task[] = [createTask()]
+) => {
   render(
     <TaskList
       headerHeight={40}
@@ -44,13 +58,14 @@ const renderTaskList = (onCellCommit: jest.Mock) => {
       scrollY={0}
       visibleFields={["name"] as VisibleField[]}
       effortDisplayUnit="MH"
-      tasks={[createTask()]}
+      tasks={tasks}
       taskListRef={React.createRef<HTMLDivElement>()}
       selectedTask={undefined}
       setSelectedTask={jest.fn()}
       onExpanderClick={jest.fn()}
       TaskListHeader={MockTaskListHeader}
       TaskListTable={MockTaskListTable}
+      onUpdateTask={onUpdateTask}
       onCellCommit={onCellCommit}
     />
   );
@@ -118,5 +133,30 @@ describe("TaskList onCellCommit", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("overlay-editor")).toBeNull()
     );
+  });
+
+  it("normalizes actual effort commits and updates derived end", async () => {
+    const onCellCommit = jest.fn().mockResolvedValue(undefined);
+    const onUpdateTask = jest.fn();
+    renderTaskList(onCellCommit, onUpdateTask, [
+      createTask({
+        start: new Date(2026, 0, 1, 9, 0),
+        end: new Date(2026, 0, 1, 10, 0),
+        actualEffort: 1,
+      }),
+    ]);
+    fireEvent.click(screen.getByTestId("start-edit-effort"));
+
+    const input = await screen.findByTestId("overlay-editor-input");
+    fireEvent.change(input, { target: { value: "4" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => expect(onCellCommit).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onUpdateTask).toHaveBeenCalledTimes(1));
+    const update = onUpdateTask.mock.calls[0][1] as Partial<Task>;
+    expect(update.actualEffort).toBe(4);
+    expect(update.end).toBeInstanceOf(Date);
+    expect((update.end as Date).getHours()).toBe(13);
+    expect((update.end as Date).getMinutes()).toBe(0);
   });
 });
