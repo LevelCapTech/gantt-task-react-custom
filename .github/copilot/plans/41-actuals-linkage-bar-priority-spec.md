@@ -6,8 +6,9 @@
   - 初期表示時に 4 パターンの補完/矛盾解決を実施し、常に矛盾ゼロの表示にする。
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
-  - 稼働時間/日 (workHoursPerDay) は呼び出し元パラメータで指定可能とし、未指定時は 8h を既定値とする。
+  - 稼働時間/日 (workHoursPerDay) は呼び出し元パラメータで指定可能とし、未指定時は既定の業務時間帯から算出する。
     - `windowHours = workdayEndTime - workdayStartTime` の duration。
+    - `workHoursPerDay` 未指定時は `defaultBreakHours = 1h` として `workHoursPerDay = windowHours - defaultBreakHours`（既定値は 8h）。
     - `effectiveWorkHoursPerDay = min(workHoursPerDay, windowHours)`。
     - `breakHours = windowHours - effectiveWorkHoursPerDay`（暗黙の休憩時間）。
   - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする（9h 窓に対して workHoursPerDay 既定 8h を想定し、休憩は明示指定で調整する）。
@@ -60,6 +61,41 @@ flowchart TD
   D -->|No| F{End+Effort}
   F -->|Yes| G[deriveStart -> normalize]
   F -->|No| H[Undetermined]
+```
+
+- シーケンス図:
+
+```mermaid
+sequenceDiagram
+  participant Host
+  participant Gantt
+  participant TaskList
+  participant Normalize as normalizeActuals
+  participant Calendar
+
+  rect rgb(240, 248, 255)
+    Host->>Gantt: tasks 初期投入
+    Gantt->>Normalize: 正規化(workHoursPerDay/workdayStartTime等)
+    Normalize->>Calendar: 稼働日計算
+    Normalize-->>Gantt: 正規化済み tasks
+    Gantt-->>Host: 表示更新
+  end
+
+  rect rgb(245, 245, 245)
+    Host->>TaskList: tasks 再描画
+    TaskList->>Normalize: 編集確定時の正規化
+    Normalize->>Calendar: 稼働日計算
+    Normalize-->>TaskList: 正規化差分
+    TaskList-->>Host: onUpdateTask/onCellCommit
+  end
+
+  rect rgb(255, 248, 240)
+    Host->>Gantt: ガントバー操作
+    Gantt-->>Host: onDateChange (正規化前)
+    Host->>Gantt: 更新済み tasks 再投入
+    Gantt->>Normalize: 正規化
+    Normalize-->>Gantt: 正規化済み tasks
+  end
 ```
 
 - エッジケース / 例外系 / リトライ方針:
