@@ -1,5 +1,5 @@
 /**
- * Parsed time value with validated hours (0-23) and minutes (0-59).
+ * Parsed time value returned from parseTimeString with validated hours/minutes.
  */
 export type ParsedTime = {
   hours: number;
