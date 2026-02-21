@@ -7,7 +7,7 @@
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
   - 稼働時間/日 (workHoursPerDay) は呼び出し元パラメータで指定可能とし、未指定時は 8h を既定値とする（既定の業務時間帯 09:00〜18:00 に対して 1h の休憩を想定）。
-  - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする。
+  - 業務開始/終了時刻 (workdayStartTime/workdayEndTime) を呼び出し元パラメータで指定可能とし、未指定時は 09:00〜18:00 を既定値とする（9h 窓に対して workHoursPerDay 既定 8h を想定し、休憩は明示指定で調整する）。
   - workdayStartTime/workdayEndTime は `"HH:mm"` 形式の文字列で受け取り、タスクの日時と同じローカルタイムゾーンで解釈する（例: `"09:00"`）。
   - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は `q = effort / 0.25` に対して `normalized = Math.floor(q + 0.5) * 0.25` を適用する（round-half-up を明示し、0.5 は上方向）。例: 1.12→1.00、1.13→1.25。
 - 非機能要件:
@@ -65,10 +65,10 @@ flowchart TD
   - ActualEffortHours=0 は start=end を許容し、半開区間のため effort は 0 として扱う。
   - 非稼働日跨ぎはカレンダー API に委譲し、加算/差分計算は稼働日のみを対象にする。
   - workHoursPerDay が未指定/0 以下/NaN の場合は既定値 8h にフォールバックする。
-  - workHoursPerDay が業務時間帯 (workdayEndTime - workdayStartTime) を超える場合は、`effectiveWorkHoursPerDay = workdayEndTime - workdayStartTime` を適用して計算し、console.warn で設定不整合を通知する（有効な 1 日の稼働時間は常に業務時間帯の長さ以内とする）。
+  - workHoursPerDay が業務時間帯の長さ（workdayStartTime/workdayEndTime を時間差に換算した値）を超える場合は、`effectiveWorkHoursPerDay = businessWindowHours` を適用して計算し、console.warn で設定不整合を通知する（有効な 1 日の稼働時間は常に業務時間帯の長さ以内とする）。
   - workdayStartTime/workdayEndTime が未指定/不正/逆転の場合は既定値 09:00〜18:00 にフォールバックする。
   - end 算出/丸めは業務時間帯内で完結させ、丸め後の end が workdayEndTime を超える場合は次稼働日の workdayStartTime に繰り越す。
-    - 繰り越しは `overflow = roundedEnd - workdayEndTime` とし、次稼働日の `workdayStartTime + overflow` を end とする（例: 17:45 に 0.5h 丸めで 18:15 になった場合、翌稼働日の 09:15 にする）。
+    - 繰り越しは `overflow = roundedEnd - workdayEndTime`（時間差を分/時の duration として扱う）とし、次稼働日の `workdayStartTime + overflow` を end とする（例: 17:45 に 0.5h 丸めで 18:15 になった場合、翌稼働日の 09:15 にする）。
 - ログと観測性（漏洩防止を含む）:
   - 既存の console.debug / console.warn の構造化ログ方針に合わせる。
   - 無効値補完や矛盾補正時は rowId・フィールド名・原因のみをログに出し、値本文は必要最小限にする。
