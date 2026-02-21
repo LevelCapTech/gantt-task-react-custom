@@ -67,6 +67,7 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
+  participant User
   participant Host
   participant Gantt
   participant TaskList
@@ -90,7 +91,7 @@ sequenceDiagram
   end
 
   rect rgb(255, 248, 240)
-    Host->>Gantt: ガントバー操作
+    User->>Gantt: ガントバー操作
     Gantt-->>Host: onDateChange (正規化前)
     Host->>Gantt: 更新済み tasks 再投入
     Gantt->>Normalize: 正規化
