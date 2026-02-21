@@ -6,6 +6,7 @@
   - 初期表示時に 4 パターンの補完/矛盾解決を実施し、常に矛盾ゼロの表示にする。
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
+  - 稼働時間/日 (workHoursPerDay) は呼び出し元パラメータで指定可能とし、未指定時は 8h を既定値とする。
   - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は `q = effort / 0.25` に対して `normalized = Math.floor(q + 0.5) * 0.25` を適用する（round-half-up を明示し、0.5 は上方向）。例: 1.12→1.00、1.13→1.25。
 - 非機能要件:
   - 正規化は冪等で、高頻度呼び出しに耐える軽量な計算であること。
@@ -14,12 +15,22 @@
 
 ## 2. スコープと変更対象
 - 変更ファイル（新規/修正/削除）:
-  - 新規: `.github/copilot/plans/41-actuals-linkage-bar-priority-spec.md`
+  - 新規:
+    - `src/helpers/actuals-helper.ts`（正規化/補完/丸めの専用ユーティリティ）
+  - 修正:
+    - `src/types/public-types.ts`（Task に actualStart/actualEnd を追加、正規化オプション workHoursPerDay を追加）
+    - `src/helpers/task-helper.ts`（actualStart/actualEnd の入出力サポート）
+    - `src/components/gantt/gantt.tsx`（tasks 受信時の正規化適用）
+    - `src/components/task-list/task-list.tsx`（編集確定時に正規化を適用）
+    - `src/components/task-list/task-list-table.tsx`（実績開始/終了の表示列追加）
+    - `src/components/task-list/overlay-editor.tsx`（実績開始/終了/工数の編集対応）
+    - `src/test/task-list-table-editing.test.tsx`（編集時正規化の回帰テスト）
+    - `src/test/task-model.test.tsx`（actualStart/actualEnd シリアライズ/表示の回帰テスト）
 - 影響範囲・互換性リスク:
   - Task Table の実績表示、Gantt 実績バー、ロード時の既存データ表示が影響範囲。
   - 既存データの ActualEffortHours がバーと矛盾する場合、ロード時に補正される。
 - 外部依存・Secrets の扱い:
-  - 稼働日カレンダー、1日8時間、1人固定の前提に依存。
+  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定（未指定時は 8h）。
   - Secrets/PII は扱わない。
 
 ## 3. 設計方針
@@ -27,6 +38,11 @@
   - 正規化ロジックは純粋関数として実装し、UI からは `normalizeActuals` を呼び出す。
   - 正規化は `recalcEffort`, `deriveEnd`, `deriveStart`, `roundEffortToQuarterHour` に責務分割する。
   - 半開区間を前提に稼働日カレンダー計算 API を利用する。
+  - `normalizeActuals` の引数で `workHoursPerDay` と `calendarConfig` を受け取り、Gantt の props からデフォルト 8h を注入する。
+  - 呼び出しタイミング:
+    - 初期表示/再描画: `Gantt` の tasks 受信時に `normalizeActuals` を適用し、正規化後の tasks で `ganttDateRange` と `convertToBarTasks` を生成する。
+    - 編集確定: `TaskList` の編集確定 (`commitEditing`) で該当タスクに `normalizeActuals` を適用し、正規化済みの差分を `onUpdateTask` / `onCellCommit` へ渡す。
+    - 外部更新: API 再取得や親コンポーネントの更新でも tasks prop の更新で同じ正規化が走る（冪等前提）。
 
 ```mermaid
 flowchart TD
@@ -44,6 +60,7 @@ flowchart TD
   - ActualEffortHours が負数/NaN は欠落扱いとし補完を試みる。
   - ActualEffortHours=0 は start=end を許容し、半開区間のため effort は 0 として扱う。
   - 非稼働日跨ぎはカレンダー API に委譲し、加算/差分計算は稼働日のみを対象にする。
+  - workHoursPerDay が未指定/0 以下/NaN の場合は既定値 8h にフォールバックする。
 - ログと観測性（漏洩防止を含む）:
   - 既存の console.debug / console.warn の構造化ログ方針に合わせる。
   - 無効値補完や矛盾補正時は rowId・フィールド名・原因のみをログに出し、値本文は必要最小限にする。
@@ -52,6 +69,7 @@ flowchart TD
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
   - 初期表示 4 パターン: Start+End, Start+Effort, End+Effort, どれも無い。
   - 編集時 3 パターン: Start 編集, End 編集, Effort 編集。
+  - workHoursPerDay の変更: 6h/8h/10h で end 算出が変わることを確認。
   - 0.25h 丸めを確認:
     - 1.12→1.00、1.13→1.25。
     - 1.37→1.25、1.38→1.50。
