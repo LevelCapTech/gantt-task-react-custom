@@ -3,6 +3,7 @@
 ## 1. 機能要件 / 非機能要件
 - 機能要件:
   - SSOT を (ActualStart, ActualEnd) とし、ActualEffortHours は派生値として正規化する。
+  - ActualEffortHours は既存の `Task.actualEffort`（hours）を指す表現とし、新しい公開APIの追加は行わない。
   - 初期表示時に 4 パターンの補完/矛盾解決を実施し、常に矛盾ゼロの表示にする。
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
@@ -35,8 +36,9 @@
 - 影響範囲・互換性リスク:
   - Task Table の実績表示、Gantt 実績バー、ロード時の既存データ表示が影響範囲。
   - 既存データの ActualEffortHours がバーと矛盾する場合、ロード時に補正される。
+  - 既存の `actualEffort` フィールドを hours として扱い、`actualEffortHours` は表示上の呼称に留める。
 - 外部依存・Secrets の扱い:
-  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定 (未指定時は 8h を既定値とする)。
+  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定 (未指定時は windowHours と defaultBreakHours から算出する)。
   - 業務時間帯は workdayStartTime/workdayEndTime で指定 (未指定時は 09:00〜18:00 を既定値とする)。
   - Secrets/PII は扱わない。
 
@@ -123,6 +125,8 @@ sequenceDiagram
   - 編集時 3 パターン: Start 編集, End 編集, Effort 編集。
   - workHoursPerDay の変更: 6h/8h/10h で end 算出が変わることを確認。
   - workdayStartTime/workdayEndTime の変更: 08:00〜17:00/09:00〜18:00/10:00〜19:00 で丸め後の end が業務時間内に収束することを確認。
+  - workHoursPerDay > windowHours のクランプと warnOnce 相当の警告が 1 回だけ出ることを確認。
+  - workdayStartTime/workdayEndTime の不正値フォールバックと overflow 繰り越しが次稼働日に反映されることを確認。
   - 0.25h 丸めを確認:
     - 1.12→1.00、1.13→1.25。
     - 1.37→1.25、1.38→1.50。
