@@ -103,7 +103,7 @@ sequenceDiagram
   - ActualEffortHours が負数/NaN は欠落扱いとし補完を試みる。
   - ActualEffortHours=0 は start=end を許容し、半開区間のため effort は 0 として扱う。
   - 非稼働日跨ぎはカレンダー API に委譲し、加算/差分計算は稼働日のみを対象にする。
-  - workHoursPerDay が未指定/0 以下/NaN の場合は既定値 8h にフォールバックする。
+  - workHoursPerDay が未指定/0 以下/NaN の場合は、既定の算出ルール（`workHoursPerDay = windowHours - defaultBreakHours`、既定値 8h）にフォールバックする。
   - workHoursPerDay が業務時間帯の長さ（workdayStartTime/workdayEndTime を時間差に換算した値）を超える場合は、`effectiveWorkHoursPerDay = windowHours` を適用して計算し、console.warn で設定不整合を通知する。
   - workdayStartTime/workdayEndTime が未指定/不正/逆転の場合は既定値 09:00〜18:00 にフォールバックする。
   - end 算出/丸めは業務時間帯内で完結させ、丸め後の end が workdayEndTime を超える場合は次稼働日の workdayStartTime に繰り越す。
