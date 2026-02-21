@@ -107,13 +107,8 @@ export const getDefaultWidth = (field: VisibleField, rowWidth: string): number =
 const isValidDate = (value?: Date) =>
   value instanceof Date && !Number.isNaN(value.getTime());
 
-const isSameDate = (a?: Date, b?: Date): boolean => {
-  if (!a || !b) return false;
-  const validA = isValidDate(a);
-  const validB = isValidDate(b);
-  if (!validA || !validB) return false;
-  return a.getTime() === b.getTime();
-};
+const isSameDate = (a?: Date, b?: Date): boolean =>
+  !!a && !!b && isValidDate(a) && isValidDate(b) && a.getTime() === b.getTime();
 
 const applyTimeToDate = (
   date: Date,

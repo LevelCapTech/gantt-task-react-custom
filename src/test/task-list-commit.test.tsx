@@ -150,7 +150,7 @@ describe("TaskList onCellCommit", () => {
     renderTaskList(onCellCommit, onUpdateTask, [
       createTask({
         start: new Date(2026, 0, 1, 9, 0),
-        end: new Date(2026, 0, 1, 10, 0),
+        end: new Date("invalid"),
         actualEffort: 1,
       }),
     ]);
