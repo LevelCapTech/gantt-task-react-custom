@@ -38,7 +38,7 @@
   - 既存データの ActualEffortHours がバーと矛盾する場合、ロード時に補正される。
   - 既存の `actualEffort` フィールドを hours として扱い、`actualEffortHours` は表示上の呼称に留める。
 - 外部依存・Secrets の扱い:
-  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定 (未指定時は windowHours と defaultBreakHours から算出する)。
+  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定 (未指定時は `workHoursPerDay = windowHours - defaultBreakHours` で算出する)。
   - 業務時間帯は workdayStartTime/workdayEndTime で指定 (未指定時は 09:00〜18:00 を既定値とする)。
   - Secrets/PII は扱わない。
 
@@ -125,7 +125,7 @@ sequenceDiagram
   - 編集時 3 パターン: Start 編集, End 編集, Effort 編集。
   - workHoursPerDay の変更: 6h/8h/10h で end 算出が変わることを確認。
   - workdayStartTime/workdayEndTime の変更: 08:00〜17:00/09:00〜18:00/10:00〜19:00 で丸め後の end が業務時間内に収束することを確認。
-  - workHoursPerDay > windowHours のクランプと warnOnce 相当の警告が 1 回だけ出ることを確認。
+  - workHoursPerDay > windowHours のクランプ（`effectiveWorkHoursPerDay = windowHours`）と warnOnce 相当の警告が 1 回だけ出ることを確認。
   - workdayStartTime/workdayEndTime の不正値フォールバックと overflow 繰り越しが次稼働日に反映されることを確認。
   - 0.25h 丸めを確認:
     - 1.12→1.00、1.13→1.25。
