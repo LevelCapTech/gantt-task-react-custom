@@ -6,7 +6,7 @@
   - 初期表示時に 4 パターンの補完/矛盾解決を実施し、常に矛盾ゼロの表示にする。
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
-  - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は 0.25h 単位で四捨五入（ties 上方向）する。
+  - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は 0.25h 単位で四捨五入（0.125h の端数は切り上げ）する。
 - 非機能要件:
   - 正規化は冪等で、高頻度呼び出しに耐える軽量な計算であること。
   - ログ/表示に Secrets/PII を含めない。
@@ -40,7 +40,7 @@ flowchart TD
 ```
 
 - エッジケース / 例外系 / リトライ方針:
-  - ActualStart/ActualEnd のパース不能・範囲外・start >= end は「欠落」と同等に扱い、初期表示の補完順序に従う。
+  - ActualStart/ActualEnd のパース不能・範囲外・start > end は「欠落」と同等に扱い、初期表示の補完順序に従う。
   - ActualEffortHours が負数/NaN は欠落扱いとし補完を試みる。
   - ActualEffortHours=0 は start=end を許容し、半開区間のため effort は 0 として扱う。
   - 非稼働日跨ぎはカレンダー API に委譲し、加算/差分計算は稼働日のみを対象にする。
@@ -52,9 +52,9 @@ flowchart TD
 - テスト観点（正常 / 例外 / 境界 / 回帰）:
   - 初期表示 4 パターン: Start+End, Start+Effort, End+Effort, どれも無い。
   - 編集時 3 パターン: Start 編集, End 編集, Effort 編集。
-  - 0.25h 丸め（1.12/1.13/1.37/1.38 等）と ties 上方向を確認。
+  - 0.25h 丸め（1.12/1.13/1.37/1.38、境界値 1.125/1.375/1.625/1.875 は切り上げ）を確認。
   - 祝日/非稼働日を含む期間での effort 再計算/ end 算出。
-  - 無効値（NaN/負数/start>=end）入力時の欠落扱い。
+  - 無効値（NaN/負数/start>end）入力時の欠落扱い。
 - モック / フィクスチャ方針:
   - 稼働日カレンダーは既存ユーティリティをモックし、固定カレンダーで期待値を確定させる。
 - テスト追加の実行コマンド（例: `python -m pytest`）:
