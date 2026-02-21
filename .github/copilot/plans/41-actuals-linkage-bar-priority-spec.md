@@ -6,7 +6,7 @@
   - 初期表示時に 4 パターンの補完/矛盾解決を実施し、常に矛盾ゼロの表示にする。
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
-  - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は最も近い 0.25h に丸め、境界の 0.125h は切り上げ（round half up）する。
+  - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は 0.25h 刻みで差分が 0.125h 未満なら下方向、0.125h 以上なら上方向へ丸める（例: 1.125→1.25）。
 - 非機能要件:
   - 正規化は冪等で、高頻度呼び出しに耐える軽量な計算であること。
   - ログ/表示に Secrets/PII を含めない。
