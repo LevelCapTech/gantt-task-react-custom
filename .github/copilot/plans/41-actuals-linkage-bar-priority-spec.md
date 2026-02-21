@@ -30,7 +30,7 @@
   - Task Table の実績表示、Gantt 実績バー、ロード時の既存データ表示が影響範囲。
   - 既存データの ActualEffortHours がバーと矛盾する場合、ロード時に補正される。
 - 外部依存・Secrets の扱い:
-  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定（未指定時は 8h）。
+  - 稼働日カレンダー、1人固定の前提に依存し、1日あたりの稼働時間は workHoursPerDay で指定 (未指定時は 8h を既定値とする)。
   - Secrets/PII は扱わない。
 
 ## 3. 設計方針
@@ -38,10 +38,10 @@
   - 正規化ロジックは純粋関数として実装し、UI からは `normalizeActuals` を呼び出す。
   - 正規化は `recalcEffort`, `deriveEnd`, `deriveStart`, `roundEffortToQuarterHour` に責務分割する。
   - 半開区間を前提に稼働日カレンダー計算 API を利用する。
-  - `normalizeActuals` の引数で `workHoursPerDay` と `calendarConfig` を受け取り、Gantt の props からデフォルト 8h を注入する。
+  - `normalizeActuals` の引数で `workHoursPerDay` と `calendarConfig`（既存の `CalendarConfig` と同義の稼働日/休日設定）を受け取り、Gantt の props から既定値 8h を注入する。
   - 呼び出しタイミング:
     - 初期表示/再描画: `Gantt` の tasks 受信時に `normalizeActuals` を適用し、正規化後の tasks で `ganttDateRange` と `convertToBarTasks` を生成する。
-    - 編集確定: `TaskList` の編集確定 (`commitEditing`) で該当タスクに `normalizeActuals` を適用し、正規化済みの差分を `onUpdateTask` / `onCellCommit` へ渡す。
+    - 編集確定時: `TaskList` の `commitEditing` で該当タスクに `normalizeActuals` を適用し、正規化済みの差分を `onUpdateTask` / `onCellCommit` へ渡す。
     - 外部更新: API 再取得や親コンポーネントの更新でも tasks prop の更新で同じ正規化が走る（冪等前提）。
 
 ```mermaid
