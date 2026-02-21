@@ -153,6 +153,7 @@ export const roundEffortToQuarterHour = (
   }
   const minutes = (effort as number) * MINUTES_PER_HOUR;
   const scaled = minutes / 15;
+  // Guard against floating point precision around half steps.
   const roundedMinutes = Math.floor(scaled + 0.5 + Number.EPSILON) * 15;
   return roundedMinutes / MINUTES_PER_HOUR;
 };

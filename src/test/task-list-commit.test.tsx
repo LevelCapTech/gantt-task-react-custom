@@ -148,15 +148,17 @@ describe("TaskList onCellCommit", () => {
     fireEvent.click(screen.getByTestId("start-edit-effort"));
 
     const input = await screen.findByTestId("overlay-editor-input");
-    fireEvent.change(input, { target: { value: "4" } });
+    fireEvent.change(input, { target: { value: "4.13" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => expect(onCellCommit).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onUpdateTask).toHaveBeenCalledTimes(1));
+    const commitPayload = onCellCommit.mock.calls[0][0];
+    expect(commitPayload.value).toBe("4.25");
     const update = onUpdateTask.mock.calls[0][1] as Partial<Task>;
-    expect(update.actualEffort).toBe(4);
+    expect(update.actualEffort).toBe(4.25);
     expect(update.end).toBeInstanceOf(Date);
-    expect((update.end as Date).getHours()).toBe(13);
-    expect((update.end as Date).getMinutes()).toBe(0);
+    expect((update.end as Date).getHours()).toBe(14);
+    expect((update.end as Date).getMinutes()).toBe(15);
   });
 });

@@ -291,11 +291,12 @@ export const TaskList: React.FC<TaskListProps> = ({
         if (parsedValue === undefined) {
           return null;
         }
+        const invalidEndForRecalc = new Date("invalid");
         const draftTask = {
           ...task,
           [columnId]: parsedValue,
           ...(columnId === "actualEffort"
-            ? { end: new Date("invalid") }
+            ? { end: invalidEndForRecalc }
             : {}),
         } as Task;
         const normalized = normalizeActuals(draftTask, actualsOptions ?? {});
