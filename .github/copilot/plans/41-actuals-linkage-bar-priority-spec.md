@@ -6,7 +6,7 @@
   - 初期表示時に 4 パターンの補完/矛盾解決を実施し、常に矛盾ゼロの表示にする。
   - 編集時は 2 項目確定で残り 1 項目を自動更新し、バー優先（start/end）を保持する。
   - ActualEffortHours 編集時は ActualStart を固定し、稼働日計算で ActualEnd を算出する。
-  - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は `normalized = Math.round(effort / 0.25) * 0.25` で正規化する（effort/0.25 の小数部を Math.round で丸め、0.5 は上方向）。例: 1.12→1.00、1.13→1.25。
+  - 期間は [ActualStart, ActualEnd) の半開区間とし、ActualEffortHours は `q = effort / 0.25` に対して `normalized = Math.floor(q + 0.5) * 0.25` を適用する（round-half-up を明示し、0.5 は上方向）。例: 1.12→1.00、1.13→1.25。
 - 非機能要件:
   - 正規化は冪等で、高頻度呼び出しに耐える軽量な計算であること。
   - ログ/表示に Secrets/PII を含めない。
