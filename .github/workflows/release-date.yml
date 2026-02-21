@@ -1,0 +1,95 @@
+name: release-date
+
+on:
+  workflow_dispatch:
+    inputs:
+      enforce_lint:
+        description: "lint エラーで fail させるか（false = スキップ）"
+        type: boolean
+        default: false
+      enforce_commitlint:
+        description: "commitlint 違反で fail させるか（false = スキップ）"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-date-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint（強制モード）
+        if: ${{ github.event.inputs.enforce_lint == 'true' }}
+        run: npm run test:lint
+
+      - name: Lint（warn-only モード）
+        if: ${{ github.event.inputs.enforce_lint != 'true' }}
+        run: npm run test:lint
+        continue-on-error: true
+
+      - name: commitlint（強制モード）
+        if: ${{ github.event.inputs.enforce_commitlint == 'true' }}
+        run: |
+          npx --no -- commitlint \
+            --from "$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)" \
+            --to HEAD \
+            --verbose
+
+      - name: commitlint（warn-only モード）
+        if: ${{ github.event.inputs.enforce_commitlint != 'true' }}
+        run: |
+          npx --no -- commitlint \
+            --from "$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)" \
+            --to HEAD \
+            --verbose
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build
+
+      - name: Determine release version (date-based)
+        id: version
+        run: |
+          DATE_TAG="$(date -u +'%Y.%m.%d')"
+          # 同一日付タグが存在する場合はサフィックスを付ける
+          COUNTER=0
+          TAG="v${DATE_TAG}"
+          while git ls-remote --exit-code --tags origin "refs/tags/${TAG}" > /dev/null 2>&1; do
+            COUNTER=$((COUNTER + 1))
+            TAG="v${DATE_TAG}.${COUNTER}"
+          done
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Release tag: ${TAG}"
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.0.6
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
