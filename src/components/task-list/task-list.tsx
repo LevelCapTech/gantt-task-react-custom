@@ -15,6 +15,16 @@ import {
   Task,
   VisibleField,
 } from "../../types/public-types";
+import {
+  ActualsNormalizeOptions,
+  normalizeActuals,
+} from "../../helpers/actuals-helper";
+import {
+  formatDate,
+  parseDateFromInput,
+  sanitizeEffortInput,
+} from "../../helpers/task-helper";
+import { ParsedTime, parseTimeString } from "../../helpers/time-helper";
 import { OverlayEditor } from "./overlay-editor";
 
 export type EditingTrigger = "dblclick" | "enter" | "key";
@@ -50,6 +60,7 @@ export type TaskListProps = {
   visibleFields: VisibleField[];
   effortDisplayUnit: EffortUnit;
   tasks: Task[];
+  actualsOptions?: ActualsNormalizeOptions;
   taskListRef: React.RefObject<HTMLDivElement>;
   headerContainerRef?: React.RefObject<HTMLDivElement>;
   bodyContainerRef?: React.RefObject<HTMLDivElement>;
@@ -93,6 +104,34 @@ export const DEFAULT_MIN_WIDTH = 32;
 export const getDefaultWidth = (field: VisibleField, rowWidth: string): number =>
   field === "name" ? 140 : Number.parseInt(rowWidth, 10) || 155;
 
+const isValidDate = (value?: Date) =>
+  value instanceof Date && !Number.isNaN(value.getTime());
+
+// invalid dates are treated as different to ensure normalization updates propagate
+const isSameDate = (a?: Date, b?: Date): boolean =>
+  !!a && !!b && isValidDate(a) && isValidDate(b) && a.getTime() === b.getTime();
+
+const applyTimeToDate = (
+  date: Date,
+  sourceDate: Date | undefined,
+  fallbackTime?: ParsedTime | null
+) => {
+  const next = new Date(date);
+  if (sourceDate && isValidDate(sourceDate)) {
+    next.setHours(
+      sourceDate.getHours(),
+      sourceDate.getMinutes(),
+      sourceDate.getSeconds(),
+      sourceDate.getMilliseconds()
+    );
+    return next;
+  }
+  if (fallbackTime) {
+    next.setHours(fallbackTime.hours, fallbackTime.minutes, 0, 0);
+  }
+  return next;
+};
+
 export const TaskList: React.FC<TaskListProps> = ({
   headerHeight,
   fontFamily,
@@ -116,6 +155,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   onUpdateTask,
   onCellCommit,
   effortDisplayUnit,
+  actualsOptions,
   enableColumnDrag = true,
   onHorizontalScroll,
 }) => {
@@ -265,6 +305,66 @@ export const TaskList: React.FC<TaskListProps> = ({
       }
       const rowId = editingState.rowId;
       const columnId = editingState.columnId;
+      const task = tasks.find(row => row.id === rowId);
+      const resolveActualsCommit = () => {
+        if (!task) {
+          return null;
+        }
+        if (columnId !== "start" && columnId !== "end" && columnId !== "actualEffort") {
+          return null;
+        }
+        let parsedValue: number | Date | undefined;
+        if (columnId === "actualEffort") {
+          parsedValue = sanitizeEffortInput(value);
+        } else {
+          const parsedDate = parseDateFromInput(value);
+          if (!parsedDate) {
+            return null;
+          }
+          const sourceDate = columnId === "start" ? task.start : task.end;
+          const fallbackTime = parseTimeString(
+            columnId === "start"
+              ? actualsOptions?.workdayStartTime
+              : actualsOptions?.workdayEndTime
+          );
+          parsedValue = applyTimeToDate(parsedDate, sourceDate, fallbackTime);
+        }
+        if (parsedValue === undefined) {
+          return null;
+        }
+        const invalidEndForRecalc = new Date("invalid");
+        const draftTask = {
+          ...task,
+          [columnId]: parsedValue,
+          ...(columnId === "actualEffort"
+            ? { end: invalidEndForRecalc }
+            : {}),
+        } as Task;
+        const normalized = normalizeActuals(draftTask, actualsOptions ?? {});
+        const updatedFields: Partial<Task> = {};
+        if (!isSameDate(normalized.start, task.start)) {
+          updatedFields.start = normalized.start;
+        }
+        if (!isSameDate(normalized.end, task.end)) {
+          updatedFields.end = normalized.end;
+        }
+        if (normalized.actualEffort !== task.actualEffort) {
+          updatedFields.actualEffort = normalized.actualEffort;
+        }
+        const normalizedValue =
+          columnId === "actualEffort"
+            ? normalized.actualEffort !== undefined
+              ? `${normalized.actualEffort}`
+              : value
+            : columnId === "start"
+              ? formatDate(normalized.start)
+              : formatDate(normalized.end);
+        return {
+          normalizedValue,
+          updatedFields: Object.keys(updatedFields).length > 0 ? updatedFields : null,
+        };
+      };
+      const actualsCommit = resolveActualsCommit();
       setEditingState(prev => {
         if (
           prev.mode !== "editing" ||
@@ -277,7 +377,11 @@ export const TaskList: React.FC<TaskListProps> = ({
         return { ...prev, pending: true, errorMessage: null };
       });
       try {
-        await onCellCommit({ rowId, columnId, value, trigger });
+        const commitValue = actualsCommit?.normalizedValue ?? value;
+        await onCellCommit({ rowId, columnId, value: commitValue, trigger });
+        if (actualsCommit?.updatedFields && onUpdateTask) {
+          onUpdateTask(rowId, actualsCommit.updatedFields);
+        }
         if (!mountedRef.current) {
           return;
         }
@@ -324,7 +428,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         });
       }
     },
-    [editingState, onCellCommit]
+    [actualsOptions, editingState, onCellCommit, onUpdateTask, tasks]
   );
 
   const selectCell = useCallback((rowId: string, columnId: VisibleField) => {

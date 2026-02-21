@@ -121,6 +121,9 @@ npm start
 | preStepsCount  | number                          | 最初のタスクの前の空白を指定します。                                                                         |
 | locale         | string                          | 月名の言語を指定します。利用可能な形式: ISO 639-2, Java Locale。                                              |
 | rtl            | boolean                         | rtl モードを設定します。                                                                                    |
+| workHoursPerDay | number                         | 実績正規化で使用する 1 日あたりの稼働時間（時間単位）。未指定時は業務時間帯から算出されます。                               |
+| workdayStartTime | string                        | 実績正規化で使用する業務開始時刻（"HH:mm"）。未指定・不正時は "09:00" を使用します。                               |
+| workdayEndTime | string                          | 実績正規化で使用する業務終了時刻（"HH:mm"）。未指定・不正時は "18:00" を使用します。                               |
 | calendar       | [CalendarConfig](#calendarconfig) | 稼働日計算と日付表示のカレンダー設定を指定します。未指定の場合は従来の動作を維持します（オプトイン式）。        |
 
 ### CalendarConfig

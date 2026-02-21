@@ -175,6 +175,18 @@ export interface DisplayOption {
   locale?: string;
   rtl?: boolean;
   /**
+   * Working hours per day used for actuals normalization.
+   */
+  workHoursPerDay?: number;
+  /**
+   * Workday start time in "HH:mm" format for actuals normalization.
+   */
+  workdayStartTime?: string;
+  /**
+   * Workday end time in "HH:mm" format for actuals normalization.
+   */
+  workdayEndTime?: string;
+  /**
    * Calendar configuration for working day calculation and date display.
    * If not specified, no calendar customization is applied and
    * Japanese holiday/highlight features remain disabled (opt-in behavior).
