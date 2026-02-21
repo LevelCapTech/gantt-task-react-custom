@@ -112,7 +112,6 @@ const isSameDate = (a?: Date, b?: Date): boolean => {
   const validA = isValidDate(a);
   const validB = isValidDate(b);
   if (!validA || !validB) return false;
-  if (a === b) return true;
   return a.getTime() === b.getTime();
 };
 
