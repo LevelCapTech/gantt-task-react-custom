@@ -45,10 +45,10 @@
   - 正規化ロジックは純粋関数として実装し、UI からは `normalizeActuals` を呼び出す。
   - 正規化は `recalcEffort`, `deriveEnd`, `deriveStart`, `roundEffortToQuarterHour` に責務分割する。
   - 半開区間を前提に稼働日カレンダー計算 API を利用する。
-  - `normalizeActuals` の引数で `workHoursPerDay` と `calendarConfig`（既存の `CalendarConfig` と同義の稼働日/休日設定）、`workdayStartTime`/`workdayEndTime` を受け取り、Gantt の props から既定値 (8h, 09:00〜18:00) を注入する。
+  - `normalizeActuals` の引数で `workHoursPerDay` と `calendar`（DisplayOption; 内部的には既存の `CalendarConfig` と同義の稼働日/休日設定）、`workdayStartTime`/`workdayEndTime` を受け取り、Gantt の props から既定値 (8h, 09:00〜18:00) を注入する。
   - 呼び出しタイミング:
     - 初期表示/再描画: `Gantt` の tasks 受信時に `normalizeActuals` を適用し、正規化後の tasks で `ganttDateRange` と `convertToBarTasks` を生成する。
-    - 編集確定時: `TaskList` の `commitEditing` で該当タスクに `normalizeActuals` を適用し、正規化済みの差分を `onUpdateTask` / `onCellCommit` へ渡す。
+    - 編集確定時: `TaskList` の `commitEditing` で該当タスクに `normalizeActuals` を適用し、正規化済みの差分を `onTaskUpdate` / `onCellCommit` へ渡す（内部的には `TaskList` に `onUpdateTask` として渡される）。
     - ガントバー操作: ガントのドラッグ/リサイズで `onDateChange` が発火し、ホスト側で更新した tasks が再投入されたタイミングで `normalizeActuals` を適用する（`onDateChange` の通知は正規化前。ホスト側で同じ正規化を適用してから tasks を更新してもよい）。
     - 外部更新: API 再取得や親コンポーネントの更新でも tasks prop の更新で同じ正規化が走る（冪等前提）。
 
