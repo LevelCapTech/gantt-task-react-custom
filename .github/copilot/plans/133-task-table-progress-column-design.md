@@ -51,8 +51,8 @@
   - 編集時は `type="number"` 入力を使用し、`min=0`, `max=100`, `step=5` を指定する（OverlayEditor の columnId 判定で付与）。
   - 表示値は `Task.progress` を `Number` 変換し、`Math.round(value / 5) * 5` で 5 刻みに丸めたうえで 0〜100 にクランプして表示する。`Task.progress` が `NaN` や `null` 等の場合は空表示にする。
   - 編集確定時は入力値を `Number` 変換し、`Math.round(value / 5) * 5` で 5 刻みに丸めた値を 0〜100 にクランプして `onCellCommit` に渡す。
-  - 小数入力は許容せず、5 刻みの整数値のみを扱う。
-  - 変換不能の場合は commit を実行せず、編集 UI に `0〜100 の数値を入力してください` を表示して入力を促す（既存の OverlayEditor の error 表示領域を使用）。
+  - 小数を含む任意の数値入力を許容し、表示・編集確定のいずれのタイミングでも 5 刻みの整数値へ丸めて扱う。
+  - 数値へ変換できない場合は commit を実行せず、編集 UI に `0〜100 の数値を入力してください` を表示して入力を促す（既存の OverlayEditor の error 表示領域を使用）。
   - 編集可能条件は既存の `isCellEditable` と同一（`onCellCommit` があること、`task.isDisabled !== true`）を基本とし、task type による制限は設けない。
   - デフォルトの列構成では progress 列を終了日の列の直後に配置し、列幅は終了日と同一とする（既存の `getDefaultWidth` と同値）。必要であればホスト側で `visibleFields` / `columnsState` を用いて順序や列幅を調整する。
 - 既存 API / props / callback / イベントとの整合方針:
