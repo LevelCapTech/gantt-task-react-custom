@@ -1,0 +1,97 @@
+name: mermaid-lint
+
+on:
+  pull_request:
+    paths:
+      - "docs/**/*.md"
+      - ".github/**/*.md"
+
+jobs:
+  mermaid:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install tools
+        run: |
+          npm install -g @mermaid-js/mermaid-cli
+          npm install -g reviewdog
+
+      - name: Extract Mermaid blocks
+        run: |
+          mkdir -p tmp
+          node <<'EOF'
+          const fs = require('fs')
+          const path = require('path')
+
+          let i = 0
+          const mapPath = path.join('tmp', 'map.txt')
+          fs.writeFileSync(mapPath, '')
+
+          function walk(dir) {
+            if (!fs.existsSync(dir)) return
+            fs.readdirSync(dir).forEach((file) => {
+              const full = path.join(dir, file)
+              if (fs.statSync(full).isDirectory()) walk(full)
+              else if (full.endsWith('.md')) processFile(full)
+            })
+          }
+
+          function processFile(file) {
+            const lines = fs.readFileSync(file, 'utf8').split('\n')
+            let inside = false
+            let buffer = []
+            let startLine = 0
+
+            lines.forEach((line, idx) => {
+              if (line.startsWith('```mermaid')) {
+                inside = true
+                buffer = []
+                startLine = idx + 1
+                return
+              }
+
+              if (inside && line.startsWith('```')) {
+                inside = false
+                const name = `tmp/diagram-${++i}.mmd`
+                fs.writeFileSync(name, buffer.join('\n'))
+                fs.appendFileSync(mapPath, `${name}:${file}:${startLine}\n`)
+                return
+              }
+
+              if (inside) buffer.push(line)
+            })
+          }
+
+          walk('docs')
+          walk('.github')
+          EOF
+
+      - name: Validate Mermaid diagrams
+        run: |
+          : > result.txt
+
+          if [ -s tmp/map.txt ]; then
+            while IFS=":" read -r mmd src line; do
+              if ! mmdc -i "$mmd" -o "$mmd.svg"; then
+                echo "$src:$line: Mermaid図の構文エラー" >> result.txt
+              fi
+            done < tmp/map.txt
+          fi
+
+      - name: Report via reviewdog
+        run: |
+          cat result.txt | reviewdog \
+            -efm="%f:%l: %m" \
+            -name="Mermaid図チェック" \
+            -reporter=github-pr-review \
+            -level=error

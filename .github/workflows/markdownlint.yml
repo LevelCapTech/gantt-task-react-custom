@@ -1,0 +1,40 @@
+name: markdownlint
+
+on:
+  pull_request:
+    paths:
+      - "docs/**/*.md"
+      - ".github/**/*.md"
+  push:
+    paths:
+      - "docs/**/*.md"
+      - ".github/**/*.md"
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install tools
+        run: |
+          npm install -g markdownlint-cli
+          npm install -g reviewdog
+
+      - name: Markdown lint
+        run: |
+          markdownlint "docs/**/*.md" ".github/**/*.md" \
+            | reviewdog \
+              -f=markdownlint \
+              -name="Markdownチェック" \
+              -reporter=github-pr-review \
+              -level=warning
