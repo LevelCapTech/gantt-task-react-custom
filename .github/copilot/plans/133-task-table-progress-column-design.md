@@ -54,7 +54,7 @@
   - 小数入力は許容せず、5 刻みの整数値のみを扱う。
   - 変換不能の場合は commit を実行せず、編集 UI に `0〜100 の数値を入力してください` を表示して入力を促す（既存の OverlayEditor の error 表示領域を使用）。
   - 編集可能条件は既存の `isCellEditable` と同一（`onCellCommit` があること、`task.isDisabled !== true`）を基本とし、task type による制限は設けない。
-  - progress 列は終了日の列の直後に挿入し、列幅は終了日と同一とする（既存の `getDefaultWidth` と同値）。必要であればホスト側で列幅を調整する。
+  - デフォルトの列構成では progress 列を終了日の列の直後に配置し、列幅は終了日と同一とする（既存の `getDefaultWidth` と同値）。必要であればホスト側で `visibleFields` / `columnsState` を用いて順序や列幅を調整する。
 - 既存 API / props / callback / イベントとの整合方針:
   - `VisibleField` に `progress` を追加し、`visibleFields` に progress を指定可能にする。
   - `DEFAULT_VISIBLE_FIELDS` は変更せず、progress 列は `visibleFields`/`columnsState` で明示的に追加する。
