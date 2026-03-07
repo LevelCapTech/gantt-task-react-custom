@@ -1,7 +1,8 @@
-name: markdownlint
+name: Markdownチェック（reviewdog）
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "docs/**/*.md"
       - ".github/**/*.md"
@@ -10,8 +11,16 @@ on:
       - "docs/**/*.md"
       - ".github/**/*.md"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: markdownlint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  markdownlint:
+  markdownlint-pr:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     permissions:
@@ -19,28 +28,127 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: "24"
 
       - name: Install tools
-        run: |
-          npm install -g markdownlint-cli@0.48.0
+        run: npm install -g markdownlint-cli@0.48.0
 
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: v0.21.0
+      - name: Log goコマンド確認開始
+        run: echo "goコマンドの存在を確認します" >&2
+
+      - name: Check Go availability
+        run: |
+          if ! command -v go >/dev/null 2>&1; then
+            echo "goコマンドが見つからないためジョブを失敗扱いにします" >&2
+            exit 1
+          fi
+
+      - name: Install reviewdog
+        run: |
+          go install github.com/reviewdog/reviewdog/cmd/reviewdog@v0.21.0
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+
+      - name: Log markdownlint開始
+        run: echo "markdownlintとreviewdogを実行します" >&2
 
       - name: Markdown lint
-        run: |
-          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || true
-          cat markdownlint.txt | reviewdog \
-            -f=markdownlint \
-            -name="Markdownチェック" \
-            -reporter=github-pr-review \
-            -level=warning
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          # 複数コマンドをパイプで繋いでいないため pipefail は省略
+          exit_code=0
+          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || exit_code=$?
+          reviewdog_exit=0
+          reviewdog < markdownlint.txt \
+            -f=markdownlint \
+            -name="Markdownチェック" \
+            -reporter="github-pr-review" \
+            -level=warning || reviewdog_exit=$?
+          # markdownlint: 1=lint違反, 2以上=実行エラー
+          # reviewdog: 0=成功（PRコメント/チェックの投稿が成功）
+          if [ "$reviewdog_exit" -ne 0 ]; then
+            echo "reviewdogが失敗しました: exit code ${reviewdog_exit}" >&2
+            exit "$reviewdog_exit"
+          fi
+          # exit_code=1 は reviewdog で通知済みのため成功扱い
+          if [ "$exit_code" -gt 1 ]; then
+            echo "markdownlintが失敗しました: exit code ${exit_code}" >&2
+            exit "$exit_code"
+          fi
+
+      - name: Log markdownlint完了
+        run: echo "markdownlintとreviewdogの処理が完了しました" >&2
+
+  markdownlint-push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      checks: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install tools
+        run: npm install -g markdownlint-cli@0.48.0
+
+      - name: Log goコマンド確認開始
+        run: echo "goコマンドの存在を確認します" >&2
+
+      - name: Check Go availability
+        run: |
+          if ! command -v go >/dev/null 2>&1; then
+            echo "goコマンドが見つからないためジョブを失敗扱いにします" >&2
+            exit 1
+          fi
+
+      - name: Install reviewdog
+        run: |
+          go install github.com/reviewdog/reviewdog/cmd/reviewdog@v0.21.0
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+
+      - name: Log markdownlint開始
+        run: echo "markdownlintとreviewdogを実行します" >&2
+
+      - name: Markdown lint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          # 複数コマンドをパイプで繋いでいないため pipefail は省略
+          exit_code=0
+          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || exit_code=$?
+          reviewdog_exit=0
+          reviewdog < markdownlint.txt \
+            -f=markdownlint \
+            -name="Markdownチェック" \
+            -reporter="github-check" \
+            -level=warning || reviewdog_exit=$?
+          # markdownlint: 1=lint違反, 2以上=実行エラー
+          # reviewdog: 0=成功（PRコメント/チェックの投稿が成功）
+          if [ "$reviewdog_exit" -ne 0 ]; then
+            echo "reviewdogが失敗しました: exit code ${reviewdog_exit}" >&2
+            exit "$reviewdog_exit"
+          fi
+          # exit_code=1 は reviewdog で通知済みのため成功扱い
+          if [ "$exit_code" -gt 1 ]; then
+            echo "markdownlintが失敗しました: exit code ${exit_code}" >&2
+            exit "$exit_code"
+          fi
+
+      - name: Log markdownlint完了
+        run: echo "markdownlintとreviewdogの処理が完了しました" >&2

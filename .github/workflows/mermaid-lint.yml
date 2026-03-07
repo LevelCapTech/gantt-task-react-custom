@@ -1,10 +1,18 @@
-name: mermaid-lint
+name: Mermaid図チェック（reviewdog）
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "docs/**/*.md"
       - ".github/**/*.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mermaid-lint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   mermaid:
@@ -15,20 +23,52 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: "24"
 
-      - name: Install tools
+      - name: Log Mermaid CLIインストール開始
+        run: echo "Mermaid CLIをインストールします" >&2
+
+      - name: Install Mermaid CLI
         run: |
+          set -e
           npm install -g @mermaid-js/mermaid-cli@11.12.0
 
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: v0.21.0
+      - name: Log Mermaid CLIインストール完了
+        run: echo "Mermaid CLIのインストールが完了しました" >&2
+
+      - name: Log mmdcコマンド確認開始
+        run: echo "mmdcコマンドの存在を確認します" >&2
+
+      - name: Check mmdc availability
+        run: |
+          if ! command -v mmdc >/dev/null 2>&1; then
+            echo "mmdcコマンドが見つからないためジョブを失敗扱いにします" >&2
+            exit 1
+          fi
+
+      - name: Log goコマンド確認開始
+        run: echo "goコマンドの存在を確認します" >&2
+
+      - name: Check Go availability
+        run: |
+          if ! command -v go >/dev/null 2>&1; then
+            echo "goコマンドが見つからないためジョブを失敗扱いにします" >&2
+            exit 1
+          fi
+
+      - name: Install reviewdog
+        run: |
+          go install github.com/reviewdog/reviewdog/cmd/reviewdog@v0.21.0
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+
+      - name: Log Mermaidブロック抽出開始
+        run: echo "Mermaidブロック抽出を開始します" >&2
 
       - name: Extract Mermaid blocks
         run: |
@@ -37,16 +77,27 @@ jobs:
           const fs = require('fs')
           const path = require('path')
 
-          let diagramCounter = 0
+          // Mermaid抽出ファイルと元Markdownの対応を「抽出ファイル:元ファイル:開始行」形式で記録
+          // 例: tmp/diagram-1.mmd:docs/example.md:42
           const mapPath = path.join('tmp', 'map.txt')
           fs.writeFileSync(mapPath, '')
 
+          // Mermaidブロックの件数
+          let index = 0
+
+          // 指定ディレクトリ以下のMarkdownを探索
           function walk(dir) {
             if (!fs.existsSync(dir)) return
-            fs.readdirSync(dir).forEach((file) => {
-              const full = path.join(dir, file)
-              if (fs.statSync(full).isDirectory()) walk(full)
-              else if (full.endsWith('.md')) processFile(full)
+            fs.readdirSync(dir).forEach((entry) => {
+              const full = path.join(dir, entry)
+              const stat = fs.statSync(full)
+              if (stat.isDirectory()) {
+                walk(full)
+                return
+              }
+              if (full.endsWith('.md')) {
+                processFile(full)
+              }
             })
           }
 
@@ -57,16 +108,19 @@ jobs:
             let startLine = 0
 
             lines.forEach((line, idx) => {
-              if (line.startsWith('```mermaid')) {
+              const trimmed = line.trim()
+              // Mermaidブロックの開始
+              if (!inside && trimmed.startsWith('```mermaid')) {
                 inside = true
                 buffer = []
                 startLine = idx + 1
                 return
               }
 
-              if (inside && line.startsWith('```')) {
+              // Mermaidブロックの終了
+              if (inside && trimmed.startsWith('```')) {
                 inside = false
-                const name = `tmp/diagram-${++diagramCounter}.mmd`
+                const name = `tmp/diagram-${++index}.mmd`
                 fs.writeFileSync(name, buffer.join('\n'))
                 fs.appendFileSync(mapPath, `${name}:${file}:${startLine}\n`)
                 return
@@ -74,33 +128,94 @@ jobs:
 
               if (inside) buffer.push(line)
             })
+
+            // ファイル末尾まで到達しても終了フェンスが無い場合（閉じ忘れ）もブロックを検証対象に含める
+            if (inside) {
+              const name = `tmp/diagram-${++index}.mmd`
+              fs.writeFileSync(name, buffer.join('\n'))
+              fs.appendFileSync(mapPath, `${name}:${file}:${startLine}\n`)
+            }
           }
 
           walk('docs')
           walk('.github')
+          console.error(`抽出したMermaid図: ${index}件`)
           EOF
+
+      - name: Log Mermaidブロック抽出完了
+        run: echo "Mermaidブロック抽出が完了しました" >&2
+
+      - name: Log Mermaid図検証開始
+        run: echo "Mermaid図の検証を開始します" >&2
 
       - name: Validate Mermaid diagrams
         run: |
-          : > result.txt
-
+          : > tmp/result.txt
+          MAX_ERROR_LENGTH=500
+          # Mermaid CLIの実行環境起因エラー（Puppeteer/ブラウザ起動失敗等）を判定するための正規表現パターン
+          # 各要素は正規表現として評価するため、必要に応じてメタ文字を使用/エスケープする
+          # 出力メッセージの大文字小文字揺れを吸収するため、grepは -i を使用する
+          MMD_CLI_EXEC_ERROR_PATTERNS=(
+            # Puppeteer関連のエラー文言（例: "Error: Puppeteer failed to connect"）
+            'error.*puppeteer'
+            # 実行ファイル未検出（例: "Executable doesn't exist at /path/to/chrome"）
+            "executable doesn't exist"
+            # browser executable.*exist は実行ファイル探索時の存在エラー検知を意図（例: "browser executable doesn't exist"）
+            'browser executable.*exist'
+            # 起動失敗の共通文言（例: "Failed to launch the browser process!"）
+            'failed to launch'
+            # browsertype.launch のドットはリテラルとして扱う（例: "browserType.launch: Executable doesn't exist ..."）
+            'browsertype\.launch'
+          )
+          # 配列要素を | で連結して正規表現文字列を生成（例: error.*puppeteer|...）
+          MMD_CLI_EXEC_ERROR_REGEX=$(IFS='|'; printf '%s' "${MMD_CLI_EXEC_ERROR_PATTERNS[*]}")
+          cat <<'JSON' > tmp/puppeteer-config.json
+          {
+            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+          }
+          JSON
           if [ -s tmp/map.txt ]; then
+            mmdc_exec_error=0
+            mmdc_exec_summary=""
             while IFS=":" read -r mmd src line; do
-              if ! output=$(mmdc -i "$mmd" -o "$mmd.svg" 2>&1); then
-                compact=$(printf "%s" "$output" | tr '\n' ' ')
-                echo "$src:$line: Mermaid図の構文エラー: $compact" >> result.txt
+              if [ -z "${mmd}" ]; then
+                continue
+              fi
+              if ! output=$(mmdc -p tmp/puppeteer-config.json -i "${mmd}" -o "${mmd}.svg" 2>&1); then
+                summary=$(printf "%s" "${output}" | tr '\n' ' ' | cut -c1-${MAX_ERROR_LENGTH})
+                if printf "%s" "${output}" | grep -qiE "${MMD_CLI_EXEC_ERROR_REGEX}"; then
+                  mmdc_exec_error=1
+                  mmdc_exec_summary="${summary}"
+                  echo "mmdcの実行に失敗しました: ${summary}" >&2
+                  # 実行環境エラーは全図に影響するため、以降の検証を中断してジョブを失敗扱いにする
+                  break
+                fi
+                echo "${src}:${line}: Mermaid図の構文検証に失敗しました: ${summary}" >> tmp/result.txt
               fi
             done < tmp/map.txt
+            if [ "${mmdc_exec_error}" -ne 0 ]; then
+              echo "Mermaid CLIの実行エラーのためジョブを失敗扱いにします: ${mmdc_exec_summary}" >&2
+              exit 1
+            fi
+          else
+            echo "Mermaidブロックが見つからなかったため検証をスキップします" >&2
           fi
 
+      - name: Log Mermaid図検証完了
+        run: echo "Mermaid図の検証が完了しました" >&2
+
+      - name: Log reviewdog通知開始
+        run: echo "reviewdogで結果を通知します" >&2
+
       - name: Report via reviewdog
-        run: |
-          if [ -s result.txt ]; then
-            cat result.txt | reviewdog \
-              -efm="%f:%l: %m" \
-              -name="Mermaid図チェック" \
-              -reporter=github-pr-review \
-              -level=error
-          fi
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          reviewdog < tmp/result.txt \
+            -efm="%f:%l: %m" \
+            -name="Mermaid図チェック" \
+            -reporter=github-pr-review \
+            -level=error
+
+      - name: Log reviewdog通知完了
+        run: echo "reviewdogの通知処理が完了しました" >&2
