@@ -49,7 +49,7 @@
 - UI 要件（progress 列の表示内容と編集時の基本挙動）:
   - 列ラベルは「進捗」とし、セル表示は `Task.progress` の数値（%記号なし）を表示する。
   - 編集時は `type="number"` 入力を使用し、`min=0`, `max=100`, `step=5` を指定する（OverlayEditor の columnId 判定で付与）。
-  - 表示値は `Task.progress` を `Number` 変換し、`Math.round(value / 5) * 5` で 5 刻みに丸めたうえで 0〜100 にクランプして表示する。`Task.progress` が `NaN` や `null` 等の場合は空表示にする。
+  - 表示値は `Task.progress` を `Number` 変換し、`Math.round(value / 5) * 5` で 5 刻みに丸めたうえで 0〜100 にクランプして表示する。`Task.progress` が `NaN` や非有限値の場合は空表示にする。
   - 編集確定時は入力値を `Number` 変換し、`Math.round(value / 5) * 5` で 5 刻みに丸めた値を 0〜100 にクランプして `onCellCommit` に渡す。`onCellCommit` の payload は `value: string` のため、丸め後の値を文字列化して渡し、必要に応じてホスト側で数値化する。
   - 小数を含む任意の数値入力を許容し、表示・編集確定のいずれのタイミングでも 5 刻みの整数値へ丸めて扱う。
   - 数値へ変換できない場合は commit を実行せず、編集 UI に `0〜100 の数値を入力してください` を表示して入力を促す（既存の OverlayEditor の error 表示領域を使用）。
