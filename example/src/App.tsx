@@ -100,14 +100,12 @@ const JapaneseTooltip: React.FC<{
 
 type TaskFieldValue = Task[VisibleField];
 
+const BASE_VISIBLE_FIELDS: VisibleField[] = ["name", "start", "end"];
+
 const VISIBLE_FIELDS_WITH_PROGRESS: VisibleField[] = [
-  "name",
-  "start",
-  "end",
+  ...BASE_VISIBLE_FIELDS,
   "progress",
-  ...DEFAULT_VISIBLE_FIELDS.filter(field =>
-    !["name", "start", "end"].includes(field)
-  ),
+  ...DEFAULT_VISIBLE_FIELDS.filter(field => !BASE_VISIBLE_FIELDS.includes(field)),
 ];
 
 const resolveCellCommitValue = (
@@ -124,10 +122,7 @@ const resolveCellCommitValue = (
       return Number.isNaN(parsedDate.getTime()) ? fallbackValue : parsedDate;
     }
     case "plannedEffort":
-    case "actualEffort": {
-      const parsedNumber = Number(value);
-      return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
-    }
+    case "actualEffort":
     case "progress": {
       const parsedNumber = Number(value);
       return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
