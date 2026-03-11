@@ -79,7 +79,7 @@ export const sanitizeEffortInput = (value: string) => {
 const clampProgress = (value: number) => Math.min(100, Math.max(0, value));
 
 export const normalizeProgress = (progress?: number) => {
-  if (progress === undefined || progress === null || !Number.isFinite(progress)) {
+  if (progress === undefined || !Number.isFinite(progress)) {
     return null;
   }
   const rounded = Math.round(progress / 5) * 5;

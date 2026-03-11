@@ -229,7 +229,7 @@ const visibleFields: VisibleField[] = [
 />;
 ```
 
-progress セルの編集は `step=5` で確定し、`onCellCommit` には `"0"〜"100"` の文字列が通知されます。
+progress セルの編集では、入力値は 5 の倍数に丸められ、`onCellCommit` には `"0"〜"100"` の文字列が通知されます。
 
 ### Task
 
