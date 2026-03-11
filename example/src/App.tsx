@@ -106,7 +106,9 @@ const BASE_VISIBLE_FIELDS: VisibleField[] = ["name", "start", "end"];
 const VISIBLE_FIELDS_WITH_PROGRESS: VisibleField[] = [
   ...BASE_VISIBLE_FIELDS,
   "progress",
-  ...DEFAULT_VISIBLE_FIELDS.filter(field => !BASE_VISIBLE_FIELDS.includes(field)),
+  ...DEFAULT_VISIBLE_FIELDS.filter(
+    field => !BASE_VISIBLE_FIELDS.includes(field) && field !== "progress"
+  ),
 ];
 
 const resolveCellCommitValue = (
