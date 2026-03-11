@@ -100,15 +100,13 @@ const JapaneseTooltip: React.FC<{
 
 type TaskFieldValue = Task[VisibleField];
 
-// 表示順と重複除外の両方に使う基準列（進捗列を含む定義は後続で構築）
+// 表示順と重複除外の両方に使う基準列（進捗列を含む定義は以下で構築する）
 const BASE_VISIBLE_FIELDS: VisibleField[] = ["name", "start", "end"];
 
 const VISIBLE_FIELDS_WITH_PROGRESS: VisibleField[] = [
   ...BASE_VISIBLE_FIELDS,
   "progress",
-  ...DEFAULT_VISIBLE_FIELDS.filter(
-    field => !BASE_VISIBLE_FIELDS.includes(field) && field !== "progress"
-  ),
+  ...DEFAULT_VISIBLE_FIELDS.filter(field => !BASE_VISIBLE_FIELDS.includes(field)),
 ];
 
 const resolveCellCommitValue = (
