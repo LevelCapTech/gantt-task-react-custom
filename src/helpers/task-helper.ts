@@ -76,6 +76,33 @@ export const sanitizeEffortInput = (value: string) => {
   return parsed;
 };
 
+const clampProgress = (value: number) => Math.min(100, Math.max(0, value));
+
+export const normalizeProgress = (progress?: number) => {
+  if (progress === undefined || progress === null || !Number.isFinite(progress)) {
+    return null;
+  }
+  const rounded = Math.round(progress / 5) * 5;
+  return clampProgress(rounded);
+};
+
+export const formatProgress = (progress?: number): string => {
+  const normalized = normalizeProgress(progress);
+  return normalized === null ? "" : `${normalized}`;
+};
+
+export const parseProgressInput = (value: string) => {
+  if (value.trim() === "") {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  const rounded = Math.round(parsed / 5) * 5;
+  return clampProgress(rounded);
+};
+
 const DEFAULT_TASK_PROCESS: TaskProcess = (
   TASK_PROCESS_OPTIONS.includes("その他")
     ? "その他"

@@ -164,6 +164,7 @@ describe("OverlayEditor", () => {
     ["name", "INPUT", "text", "タスク名"],
     ["start", "INPUT", "date", "2026-01-01"],
     ["plannedEffort", "INPUT", "number", 8],
+    ["progress", "INPUT", "number", 45],
     ["process", "SELECT", "", "レビュー"],
     ["status", "SELECT", "", "完了"],
   ])(
@@ -210,6 +211,47 @@ describe("OverlayEditor", () => {
       rafSpy.mockRestore();
     }
   );
+
+  it("sets progress input constraints", async () => {
+    const rectSpy = jest
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue(rect as DOMRect);
+    const rafSpy = jest
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation(callback => {
+        callback(0);
+        return 1;
+      });
+    const { taskListRef, headerRef, bodyRef } = createRefs();
+
+    render(
+      <div ref={taskListRef}>
+        <div ref={headerRef} />
+        <div ref={bodyRef}>
+          <div data-row-id="task-1" data-column-id="progress">
+            45
+          </div>
+        </div>
+        <OverlayEditor
+          editingState={createEditingState("progress", false)}
+          taskListRef={taskListRef}
+          headerContainerRef={headerRef}
+          bodyContainerRef={bodyRef}
+          onCommit={jest.fn().mockResolvedValue(undefined)}
+          onCancel={jest.fn()}
+        />
+      </div>
+    );
+
+    const overlayInput = await screen.findByTestId("overlay-editor-input");
+
+    expect(overlayInput).toHaveAttribute("min", "0");
+    expect(overlayInput).toHaveAttribute("max", "100");
+    expect(overlayInput).toHaveAttribute("step", "5");
+
+    rectSpy.mockRestore();
+    rafSpy.mockRestore();
+  });
 
   it("focuses the input when editing starts", async () => {
     const rectSpy = jest

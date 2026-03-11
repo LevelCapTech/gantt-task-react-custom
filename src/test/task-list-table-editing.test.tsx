@@ -299,6 +299,7 @@ describe("TaskListTable cell display", () => {
       createMockTask("task-1", "Task 1", {
         start: new Date(2026, 1, 1),
         end: new Date(2026, 1, 10),
+        progress: 42,
         process: "開発",
         assignee: "田中太郎",
         plannedStart: new Date(2026, 1, 1),
@@ -315,6 +316,7 @@ describe("TaskListTable cell display", () => {
       "name",
       "start",
       "end",
+      "progress",
       "process",
       "assignee",
       "plannedStart",
@@ -334,6 +336,7 @@ describe("TaskListTable cell display", () => {
     // start and plannedStart share the same date for this fixture
     expect(screen.getAllByText("2026-02-01")).toHaveLength(2);
     expect(screen.getByText("2026-02-10")).toBeInTheDocument();
+    expect(screen.getByText("40")).toBeInTheDocument();
     expect(screen.getByText("開発")).toBeInTheDocument();
     expect(screen.getByText("田中太郎")).toBeInTheDocument();
     expect(screen.getByText("2026-02-15")).toBeInTheDocument();
@@ -348,6 +351,17 @@ describe("TaskListTable cell display", () => {
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     expect(screen.queryAllByRole("combobox")).toHaveLength(0);
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+  });
+
+  it("does not render progress column when not included in visibleFields", () => {
+    render(
+      <TaskListTableDefault
+        {...defaultProps}
+        visibleFields={["name", "start", "end"] as VisibleField[]}
+      />
+    );
+
+    expect(document.querySelector('[data-column-id="progress"]')).toBeNull();
   });
 
   it("keeps edit triggers available for overlay editing", () => {

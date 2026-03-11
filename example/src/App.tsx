@@ -100,6 +100,16 @@ const JapaneseTooltip: React.FC<{
 
 type TaskFieldValue = Task[VisibleField];
 
+const VISIBLE_FIELDS_WITH_PROGRESS: VisibleField[] = [
+  "name",
+  "start",
+  "end",
+  "progress",
+  ...DEFAULT_VISIBLE_FIELDS.filter(field =>
+    !["name", "start", "end"].includes(field)
+  ),
+];
+
 const resolveCellCommitValue = (
   columnId: VisibleField,
   value: string,
@@ -115,6 +125,10 @@ const resolveCellCommitValue = (
     }
     case "plannedEffort":
     case "actualEffort": {
+      const parsedNumber = Number(value);
+      return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
+    }
+    case "progress": {
       const parsedNumber = Number(value);
       return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
     }
@@ -265,7 +279,7 @@ const App = () => {
         locale="ja-JP"
         calendar={calendarConfig}
         TooltipContent={JapaneseTooltip}
-        visibleFields={DEFAULT_VISIBLE_FIELDS}
+        visibleFields={VISIBLE_FIELDS_WITH_PROGRESS}
         onTaskUpdate={handleTaskUpdate}
         onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
@@ -287,7 +301,7 @@ const App = () => {
         locale="ja-JP"
         calendar={calendarConfig}
         TooltipContent={JapaneseTooltip}
-        visibleFields={DEFAULT_VISIBLE_FIELDS}
+        visibleFields={VISIBLE_FIELDS_WITH_PROGRESS}
         onTaskUpdate={handleTaskUpdate}
         onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}

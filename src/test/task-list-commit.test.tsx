@@ -28,6 +28,12 @@ const MockTaskListTable: React.FC = () => {
       >
         Start Effort
       </button>
+      <button
+        data-testid="start-edit-progress"
+        onClick={() => context?.startEditing("task-1", "progress", "enter")}
+      >
+        Start Progress
+      </button>
       <div data-row-id="task-1" data-column-id="name">
         Task 1
       </div>
@@ -36,6 +42,9 @@ const MockTaskListTable: React.FC = () => {
       </div>
       <div data-row-id="task-1" data-column-id="actualEffort">
         1
+      </div>
+      <div data-row-id="task-1" data-column-id="progress">
+        50
       </div>
     </div>
   );
@@ -54,7 +63,8 @@ const createTask = (overrides: Partial<Task> = {}): Task => ({
 const renderTaskList = (
   onCellCommit: jest.Mock,
   onUpdateTask?: jest.Mock,
-  tasks: Task[] = [createTask()]
+  tasks: Task[] = [createTask()],
+  visibleFields: VisibleField[] = ["name"]
 ) => {
   render(
     <TaskList
@@ -65,7 +75,7 @@ const renderTaskList = (
       rowHeight={40}
       ganttHeight={200}
       scrollY={0}
-      visibleFields={["name"] as VisibleField[]}
+      visibleFields={visibleFields}
       effortDisplayUnit="MH"
       tasks={tasks}
       taskListRef={React.createRef<HTMLDivElement>()}
@@ -193,5 +203,44 @@ describe("TaskList onCellCommit", () => {
     expect(update.start).toBeInstanceOf(Date);
     expect((update.start as Date).getHours()).toBe(13);
     expect((update.start as Date).getMinutes()).toBe(30);
+  });
+
+  it("normalizes progress commit to 5-step and clamps to 100", async () => {
+    const onCellCommit = jest.fn().mockResolvedValue(undefined);
+    renderTaskList(onCellCommit, undefined, [createTask({ progress: 50 })], [
+      "name",
+      "progress",
+    ]);
+
+    fireEvent.click(screen.getByTestId("start-edit-progress"));
+    const input = await screen.findByTestId("overlay-editor-input");
+    fireEvent.change(input, { target: { value: "103" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => expect(onCellCommit).toHaveBeenCalledTimes(1));
+    const commitPayload = onCellCommit.mock.calls[0][0];
+    expect(commitPayload.columnId).toBe("progress");
+    expect(commitPayload.value).toBe("100");
+  });
+
+  it("shows error when progress input is invalid", async () => {
+    const onCellCommit = jest.fn().mockResolvedValue(undefined);
+    renderTaskList(onCellCommit, undefined, [createTask({ progress: 50 })], [
+      "name",
+      "progress",
+    ]);
+
+    fireEvent.click(screen.getByTestId("start-edit-progress"));
+    const input = await screen.findByTestId("overlay-editor-input");
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "0〜100 の数値を入力してください"
+      )
+    );
+    expect(onCellCommit).not.toHaveBeenCalled();
+    expect(screen.getByTestId("overlay-editor-input")).toBeInTheDocument();
   });
 });

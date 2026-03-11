@@ -47,6 +47,7 @@ const resolveOverlayInputType = (
       return "date";
     case "plannedEffort":
     case "actualEffort":
+    case "progress":
       return "number";
     case "process":
     case "status":
@@ -116,6 +117,13 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
     }
     return [];
   }, [editingState.columnId]);
+  const numberInputAttributes = useMemo<React.InputHTMLAttributes<HTMLInputElement>>(
+    () =>
+      editingState.columnId === "progress"
+        ? { min: 0, max: 100, step: 5 }
+        : {},
+    [editingState.columnId]
+  );
 
   const portalRoot = useMemo(() => {
     if (typeof document === "undefined") {
@@ -416,6 +424,7 @@ export const OverlayEditor: React.FC<OverlayEditorProps> = ({
           defaultValue={defaultValueRef.current}
           style={{ height: "100%" }}
           ref={handleInputElementRef}
+          {...(inputType === "number" ? numberInputAttributes : {})}
           readOnly={editingState.pending}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}

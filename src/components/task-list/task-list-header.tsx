@@ -46,6 +46,7 @@ export const TaskListHeaderDefault: React.FC<{
     name: "タスク名",
     start: "開始日",
     end: "終了日",
+    progress: "進捗",
     process: "工程",
     assignee: "担当者",
     plannedStart: "予定開始",
