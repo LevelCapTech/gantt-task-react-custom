@@ -299,7 +299,7 @@ describe("TaskListTable cell display", () => {
       createMockTask("task-1", "Task 1", {
         start: new Date(2026, 1, 1),
         end: new Date(2026, 1, 10),
-        progress: 42,
+        progress: 40,
         process: "開発",
         assignee: "田中太郎",
         plannedStart: new Date(2026, 1, 1),
