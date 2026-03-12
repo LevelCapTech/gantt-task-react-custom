@@ -5,7 +5,6 @@ import { getDefaultWidth, TaskListEditingStateContext } from "./task-list";
 import {
   formatDate,
   formatEffort,
-  formatProgress,
   getStatusBadgeText,
   getStatusColor,
   normalizeProcess,

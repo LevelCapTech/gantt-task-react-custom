@@ -82,8 +82,7 @@ export const normalizeProgress = (progress?: number) => {
   if (progress === undefined || !Number.isFinite(progress)) {
     return null;
   }
-  const rounded = Math.round(progress / 5) * 5;
-  return clampProgress(rounded);
+  return clampProgress(progress);
 };
 
 export const formatProgress = (progress?: number): string => {

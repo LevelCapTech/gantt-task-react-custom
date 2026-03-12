@@ -299,7 +299,7 @@ describe("TaskListTable cell display", () => {
       createMockTask("task-1", "Task 1", {
         start: new Date(2026, 1, 1),
         end: new Date(2026, 1, 10),
-        progress: 40,
+        progress: 42,
         process: "開発",
         assignee: "田中太郎",
         plannedStart: new Date(2026, 1, 1),
@@ -336,7 +336,7 @@ describe("TaskListTable cell display", () => {
     // start and plannedStart share the same date for this fixture
     expect(screen.getAllByText("2026-02-01")).toHaveLength(2);
     expect(screen.getByText("2026-02-10")).toBeInTheDocument();
-    expect(screen.getByText("40")).toBeInTheDocument();
+    expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText("開発")).toBeInTheDocument();
     expect(screen.getByText("田中太郎")).toBeInTheDocument();
     expect(screen.getByText("2026-02-15")).toBeInTheDocument();

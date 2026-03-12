@@ -70,8 +70,8 @@ describe("task-helper sanitizeEffortInput", () => {
 });
 
 describe("task-helper progress helpers", () => {
-  it("formats progress with 5-step rounding and clamp", () => {
-    expect(formatProgress(42)).toBe("40");
+  it("formats progress with clamp only", () => {
+    expect(formatProgress(42)).toBe("42");
     expect(formatProgress(101)).toBe("100");
     expect(formatProgress(-3)).toBe("0");
   });
