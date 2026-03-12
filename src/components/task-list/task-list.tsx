@@ -22,6 +22,7 @@ import {
 import {
   formatDate,
   parseDateFromInput,
+  parseProgressInput,
   sanitizeEffortInput,
 } from "../../helpers/task-helper";
 import { ParsedTime, parseTimeString } from "../../helpers/time-helper";
@@ -306,6 +307,16 @@ export const TaskList: React.FC<TaskListProps> = ({
       const rowId = editingState.rowId;
       const columnId = editingState.columnId;
       const task = tasks.find(row => row.id === rowId);
+      const resolveProgressCommit = () => {
+        if (columnId !== "progress") {
+          return null;
+        }
+        const parsedValue = parseProgressInput(value);
+        if (parsedValue === null) {
+          return { invalid: true, normalizedValue: null };
+        }
+        return { invalid: false, normalizedValue: `${parsedValue}` };
+      };
       const resolveActualsCommit = () => {
         if (!task) {
           return null;
@@ -364,6 +375,21 @@ export const TaskList: React.FC<TaskListProps> = ({
           updatedFields: Object.keys(updatedFields).length > 0 ? updatedFields : null,
         };
       };
+      const progressCommit = resolveProgressCommit();
+      if (progressCommit?.invalid) {
+        setEditingState(prev => {
+          if (
+            prev.mode !== "editing" ||
+            prev.pending ||
+            prev.rowId !== rowId ||
+            prev.columnId !== columnId
+          ) {
+            return prev;
+          }
+          return { ...prev, errorMessage: "0〜100 の数値を入力してください" };
+        });
+        return;
+      }
       const actualsCommit = resolveActualsCommit();
       setEditingState(prev => {
         if (
@@ -377,7 +403,8 @@ export const TaskList: React.FC<TaskListProps> = ({
         return { ...prev, pending: true, errorMessage: null };
       });
       try {
-        const commitValue = actualsCommit?.normalizedValue ?? value;
+        const commitValue =
+          progressCommit?.normalizedValue ?? actualsCommit?.normalizedValue ?? value;
         await onCellCommit({ rowId, columnId, value: commitValue, trigger });
         if (actualsCommit?.updatedFields && onUpdateTask) {
           onUpdateTask(rowId, actualsCommit.updatedFields);

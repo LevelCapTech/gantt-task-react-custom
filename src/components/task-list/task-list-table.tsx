@@ -5,6 +5,7 @@ import { getDefaultWidth, TaskListEditingStateContext } from "./task-list";
 import {
   formatDate,
   formatEffort,
+  formatProgress,
   getStatusBadgeText,
   getStatusColor,
   normalizeProcess,
@@ -57,6 +58,7 @@ export const TaskListTableDefault: React.FC<{
     "name",
     "start",
     "end",
+    "progress",
     "process",
     "assignee",
     "plannedStart",
@@ -273,6 +275,8 @@ export const TaskListTableDefault: React.FC<{
               return <span>{formatDate(t.start)}</span>;
             case "end":
               return <span>{formatDate(t.end)}</span>;
+            case "progress":
+              return <span>{formatProgress(t.progress)}</span>;
             case "process":
               return <span>{normalizeProcess(t.process)}</span>;
             case "assignee":

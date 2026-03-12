@@ -100,6 +100,15 @@ const JapaneseTooltip: React.FC<{
 
 type TaskFieldValue = Task[VisibleField];
 
+// 表示順と重複除外に使う基準の列（進捗列を含む定義は以下で構築する）
+const BASE_VISIBLE_FIELDS: VisibleField[] = ["name", "start", "end"];
+
+const VISIBLE_FIELDS_WITH_PROGRESS: VisibleField[] = [
+  ...BASE_VISIBLE_FIELDS,
+  "progress",
+  ...DEFAULT_VISIBLE_FIELDS.filter(field => !BASE_VISIBLE_FIELDS.includes(field)),
+];
+
 const resolveCellCommitValue = (
   columnId: VisibleField,
   value: string,
@@ -114,7 +123,8 @@ const resolveCellCommitValue = (
       return Number.isNaN(parsedDate.getTime()) ? fallbackValue : parsedDate;
     }
     case "plannedEffort":
-    case "actualEffort": {
+    case "actualEffort":
+    case "progress": {
       const parsedNumber = Number(value);
       return Number.isNaN(parsedNumber) ? fallbackValue : parsedNumber;
     }
@@ -265,7 +275,7 @@ const App = () => {
         locale="ja-JP"
         calendar={calendarConfig}
         TooltipContent={JapaneseTooltip}
-        visibleFields={DEFAULT_VISIBLE_FIELDS}
+        visibleFields={VISIBLE_FIELDS_WITH_PROGRESS}
         onTaskUpdate={handleTaskUpdate}
         onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
@@ -287,7 +297,7 @@ const App = () => {
         locale="ja-JP"
         calendar={calendarConfig}
         TooltipContent={JapaneseTooltip}
-        visibleFields={DEFAULT_VISIBLE_FIELDS}
+        visibleFields={VISIBLE_FIELDS_WITH_PROGRESS}
         onTaskUpdate={handleTaskUpdate}
         onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}

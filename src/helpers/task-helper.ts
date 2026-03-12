@@ -76,6 +76,34 @@ export const sanitizeEffortInput = (value: string) => {
   return parsed;
 };
 
+const clampProgress = (value: number) => Math.min(100, Math.max(0, value));
+
+/** 表示用に 0〜100 の範囲へクランプする（5刻み丸めは行わない） */
+export const normalizeProgress = (progress?: number) => {
+  if (progress === undefined || !Number.isFinite(progress)) {
+    return null;
+  }
+  return clampProgress(progress);
+};
+
+export const formatProgress = (progress?: number): string => {
+  const normalized = normalizeProgress(progress);
+  return normalized === null ? "" : `${normalized}`;
+};
+
+/** commit 用に 5 刻みへ丸めたうえで 0〜100 にクランプする */
+export const parseProgressInput = (value: string) => {
+  if (value.trim() === "") {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  const rounded = Math.round(parsed / 5) * 5;
+  return clampProgress(rounded);
+};
+
 const DEFAULT_TASK_PROCESS: TaskProcess = (
   TASK_PROCESS_OPTIONS.includes("その他")
     ? "その他"

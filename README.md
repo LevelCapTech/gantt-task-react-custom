@@ -205,6 +205,32 @@ const calendarConfig: CalendarConfig = {
 - TaskListHeader: `React.FC<{ headerHeight: number; rowWidth: string; fontFamily: string; fontSize: string;}>;`
 - TaskListTable: `React.FC<{ rowHeight: number; rowWidth: string; fontFamily: string; fontSize: string; locale: string; tasks: Task[]; selectedTaskId: string; setSelectedTask: (taskId: string) => void; }>;`
 
+### TaskList 列の表示制御（visibleFields）
+
+TaskList の表示列は `visibleFields` で指定します。`DEFAULT_VISIBLE_FIELDS` に progress 列は含まれないため、**進捗列は opt-in** です。
+
+```typescript
+import { DEFAULT_VISIBLE_FIELDS, VisibleField } from "@levelcaptech/gantt-task-react-custom";
+
+const visibleFields: VisibleField[] = [
+  "name",
+  "start",
+  "end",
+  "progress",
+  ...DEFAULT_VISIBLE_FIELDS.filter(field =>
+    !["name", "start", "end"].includes(field)
+  ),
+];
+
+<Gantt
+  tasks={tasks}
+  visibleFields={visibleFields}
+  onCellCommit={onCellCommit}
+/>;
+```
+
+progress セルの編集では、入力値は 5 の倍数に丸められ、`onCellCommit` には `"0"〜"100"` の文字列が通知されます。
+
 ### Task
 
 | パラメーター名 | 型       | 説明                                                                                                  |

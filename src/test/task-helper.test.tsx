@@ -3,6 +3,8 @@ import {
   parseDateFromInput,
   formatEffort,
   sanitizeEffortInput,
+  formatProgress,
+  parseProgressInput,
   normalizeProcess,
   normalizeStatus,
   getStatusBadgeText,
@@ -64,6 +66,28 @@ describe("task-helper sanitizeEffortInput", () => {
   it("returns undefined for invalid", () => {
     expect(sanitizeEffortInput("-1")).toBeUndefined();
     expect(sanitizeEffortInput("abc")).toBeUndefined();
+  });
+});
+
+describe("task-helper progress helpers", () => {
+  it("formats progress with clamp only", () => {
+    expect(formatProgress(42)).toBe("42");
+    expect(formatProgress(101)).toBe("100");
+    expect(formatProgress(-3)).toBe("0");
+  });
+
+  it("returns empty string when progress is invalid", () => {
+    expect(formatProgress(Number.NaN)).toBe("");
+  });
+
+  it("parses progress input with rounding", () => {
+    expect(parseProgressInput("47")).toBe(45);
+    expect(parseProgressInput("100")).toBe(100);
+  });
+
+  it("rejects invalid progress input", () => {
+    expect(parseProgressInput("")).toBeNull();
+    expect(parseProgressInput("abc")).toBeNull();
   });
 });
 

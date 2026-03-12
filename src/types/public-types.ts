@@ -7,6 +7,7 @@ export type VisibleField =
   | "name"
   | "start"
   | "end"
+  | "progress"
   | "process"
   | "assignee"
   | "plannedStart"
