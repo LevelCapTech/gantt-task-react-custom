@@ -78,6 +78,7 @@ export const sanitizeEffortInput = (value: string) => {
 
 const clampProgress = (value: number) => Math.min(100, Math.max(0, value));
 
+/** 表示用に 0〜100 の範囲へクランプする（5刻み丸めは行わない） */
 export const normalizeProgress = (progress?: number) => {
   if (progress === undefined || !Number.isFinite(progress)) {
     return null;
@@ -90,6 +91,7 @@ export const formatProgress = (progress?: number): string => {
   return normalized === null ? "" : `${normalized}`;
 };
 
+/** commit 用に 5 刻みへ丸めたうえで 0〜100 にクランプする */
 export const parseProgressInput = (value: string) => {
   if (value.trim() === "") {
     return null;
