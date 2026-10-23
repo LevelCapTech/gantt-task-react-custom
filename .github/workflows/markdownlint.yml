@@ -64,10 +64,13 @@ jobs:
           set -eu
           # 複数コマンドをパイプで繋いでいないため pipefail は省略
           exit_code=0
-          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || exit_code=$?
+          # markdownlint-cli は違反を stderr に出力するため 2>&1 で併せて保存する
+          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt 2>&1 || exit_code=$?
           reviewdog_exit=0
+          # -efm 指定時は -f と併用できないため -f は指定しない
           reviewdog < markdownlint.txt \
-            -f=markdownlint \
+            -efm="%f:%l:%c %trror %m" \
+            -efm="%f:%l %trror %m" \
             -name="Markdownチェック" \
             -reporter="github-pr-review" \
             -level=warning || reviewdog_exit=$?
@@ -131,10 +134,13 @@ jobs:
           set -eu
           # 複数コマンドをパイプで繋いでいないため pipefail は省略
           exit_code=0
-          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || exit_code=$?
+          # markdownlint-cli は違反を stderr に出力するため 2>&1 で併せて保存する
+          markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt 2>&1 || exit_code=$?
           reviewdog_exit=0
+          # -efm 指定時は -f と併用できないため -f は指定しない
           reviewdog < markdownlint.txt \
-            -f=markdownlint \
+            -efm="%f:%l:%c %trror %m" \
+            -efm="%f:%l %trror %m" \
             -name="Markdownチェック" \
             -reporter="github-check" \
             -level=warning || reviewdog_exit=$?
