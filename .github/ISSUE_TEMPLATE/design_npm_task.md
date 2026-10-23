@@ -79,7 +79,7 @@ assignees: ""
 | `src/components/` | Reactコンポーネント（gantt / task-list / task-item / calendar / grid / other） |
 | `src/helpers/` | 日付・バー計算などの純粋関数ヘルパ |
 | `src/constants/` | 定数（タスク工程/ステータス等） |
-| `src/dnd/` | ドラッグ&ドロップ関連（`@dnd-kit`） |
+| `src/components/task-list/` | ドラッグ&ドロップ関連（`@dnd-kit`。現状は専用 `src/dnd/` ではなく task-list 配下に実装） |
 | `src/test/` | ユニットテスト（Jest + React Testing Library） |
 | `example/` | 動作確認用デモアプリ（手順は `docs/REBUILD.md` がSSOT） |
 
