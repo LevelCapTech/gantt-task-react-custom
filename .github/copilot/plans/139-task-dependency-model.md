@@ -1,0 +1,137 @@
+# 1. 機能要件 / 非機能要件
+- 機能要件:
+  - タスク依存関係で FS / SS / FF / SF を表現できる公開データモデルを追加する。
+  - 依存関係ごとに正負の lag（リード/ラグ）を指定できる。
+  - 循環依存（自己参照・相互参照・多段循環）を検出し、描画処理や折りたたみ処理で無限ループを防止する。
+  - 既存の `dependencies: string[]` を後方互換として受け付け、従来データをそのまま表示できる。
+  - 依存関係描画（Arrow）と編集時コールバック（`onDateChange` / `onProgressChange` の children 生成）を新モデルに対応させる。
+- 非機能要件:
+  - 公開 API の破壊的変更を避け、既存アプリの型エラーと表示崩れを発生させない。
+  - 不正依存はクラッシュさせず検出可能な形で隔離する（fail-safe）。
+  - 将来の自動スケジューリング / CPM / MS Project 互換に必要な依存メタデータを保持できる設計にする。
+
+# 2. スコープと変更対象
+- 変更ファイル（新規/修正/削除）:
+  - **本 DESIGN Issue の成果物**: `/.github/copilot/plans/139-task-dependency-model.md`（新規）
+  - **IMPLEMENT フェーズでの予定変更対象**:
+    - `src/types/public-types.ts`（公開依存型追加・Task型拡張）
+    - `src/types/bar-task.ts`（内部依存エッジ型追加）
+    - `src/helpers/bar-helper.ts`（依存正規化・検証・内部モデル変換）
+    - `src/helpers/other-helper.ts`（折りたたみ時の依存探索を循環安全化）
+    - `src/components/other/arrow.tsx`（依存種類/lagに応じた接続点描画）
+    - `src/components/gantt/task-gantt-content.tsx`（依存エッジ描画ループ更新）
+    - `src/components/task-item/task-item.tsx`（矢印余白判定を新依存モデル基準に更新）
+    - `src/index.tsx`（新公開型の export）
+    - `README.md`（依存関係 API の説明更新）
+    - `example/src/helper.tsx`（新モデル例の追加 + 既存形式併記）
+    - `src/test/*.test.tsx`（依存関係回帰/追加テスト）
+- 影響範囲・互換性リスク:
+  - `Task` の既存 `dependencies?: string[]` は維持（deprecated 扱い）し、挙動は従来どおり FS / lag=0 として解釈する。
+  - 新規フィールド `dependencyLinks?: TaskDependencyLink[]` を追加し、`dependencies` と共存可能にする。
+  - `dependencies` と `dependencyLinks` が同時指定された場合は、同一先行タスク ID について `dependencyLinks` を優先する。
+- 外部依存・Secrets の扱い:
+  - 新規ライブラリ追加なし。
+  - 依存検証エラー通知に機密情報を含めない（task id / dependency id / type / lag のみ）。
+
+# 3. 設計方針
+- 責務分離 / データフロー（必要なら Mermaid 1 枚）:
+  - 公開型（`public-types.ts`）
+    - `DependencyType = "FS" | "SS" | "FF" | "SF"`
+    - `TaskDependencyLink = { taskId: string; type?: DependencyType; lag?: number }`
+    - `Task` に `dependencyLinks?: TaskDependencyLink[]` を追加（`dependencies?: string[]` は維持）。
+  - 正規化（`bar-helper.ts`）
+    - `dependencies` を `{ taskId, type:"FS", lag:0 }` に変換。
+    - `dependencyLinks` をバリデーション（type, lag 数値性, id 存在）後に統合。
+    - 出力は `NormalizedDependency[]`（`fromId`, `toId`, `type`, `lagMinutes`, `source`）として扱う。
+  - 内部モデル（`bar-task.ts`）
+    - `barChildren: BarTask[]` は既存コールバック互換のため維持。
+    - 追加で `barDependencyChildren: BarTaskDependencyEdge[]` を持たせ、描画はこれを使用する。
+- 矢印接続点・lag 表現:
+  - 接続点マッピング（LTR）
+    - FS: `from.x2 -> to.x1`
+    - SS: `from.x1 -> to.x1`
+    - FF: `from.x2 -> to.x2`
+    - SF: `from.x1 -> to.x2`
+  - RTL は x1/x2 の向きを反転解釈して同じ論理を適用。
+  - lag は timeline スケールに基づき px 変換し、終端前の水平セグメント長に反映（lag 0 は現行と同等）。
+  - lag 単位は **分（minute）固定**。`Date` ベース計算との整合性を優先し、稼働日換算は将来拡張（calendar 設定を用いた変換層）として分離する。
+- 循環依存 / 不正依存の扱い:
+  - 検出場所は依存正規化直後（`convertToBarTasks` 内）と折りたたみ探索（`getChildren`）の二箇所。
+  - DFS（訪問状態: unvisited/visiting/visited）で循環エッジを検出。
+  - 循環に属するエッジは描画/children展開対象から除外し、無限再帰を防止。
+  - 通知は新規オプショナル callback（例: `onDependencyValidationError`）を追加し、未指定時は `console.warn` で degrade。
+- 存在しない ID の扱い:
+  - 従来互換として描画からは除外（無視）を維持。
+  - ただし検証結果には warning として残す（callback/console）。
+- 編集処理（本フェーズでの仕様固定）:
+  - 依存関係そのものの編集 UI は今回スコープ外（従来どおり host が tasks 更新して再描画）。
+  - `onDateChange` / `onProgressChange` の第2引数 `children` は「有効な直接後続タスク集合」を維持。
+  - 依存種類/lag による自動日程調整は今回導入しない（将来の自動スケジューリングIssueで対応）。
+- 将来拡張（CPM / MS Project）:
+  - `type`（FS/SS/FF/SF）+ `lagMinutes` で MS Project predecessor 表現にマッピング可能。
+  - 正規化後グラフを CPM 計算入力として再利用できるよう、依存エッジを明示構造で保持する。
+
+# 4. テスト戦略
+- 対象（一覧）:
+  - `src/helpers/bar-helper.ts`（依存正規化、循環検出、missing id handling）
+  - `src/helpers/other-helper.ts`（折りたたみ時の循環安全性）
+  - `src/components/other/arrow.tsx`（接続点/lag/RTL描画）
+  - `src/components/gantt/task-gantt-content.tsx`（依存エッジ描画と children 受け渡し）
+  - `src/components/task-item/task-item.tsx`（矢印余白判定）
+- テスト観点（正常 / 例外 / 境界 / 回帰）:
+  - FS / SS / FF / SF が内部モデルへ正しく変換され、Arrow の接続点が型どおり。
+  - lag（正 / 0 / 負）が正しく保持・描画反映される。
+  - 循環依存（自己参照、2ノード循環、3ノード以上）を検出し、無限再帰しない。
+  - 既存 `dependencies: string[]` のみ指定時に現行と同じ矢印（FS, lag0）が描画される。
+  - 存在しない ID はクラッシュせず除外され、検証 warning になる。
+  - `onDateChange` / `onProgressChange` に渡る `children` が有効な直接後続集合のみである。
+  - 折りたたみ時に後続タスク非表示が維持され、循環があっても `getChildren` が停止する。
+- モック / フィクスチャ方針:
+  - 時刻依存は固定 Date フィクスチャで再現。
+  - SVG path は属性文字列比較または座標断片比較で検証。
+  - DOM 計測依存は既存 test セットアップ（JSDOM）で最小化。
+- 配置先:
+  - `src/test/bar-helper.test.tsx`（新規）
+  - `src/test/other-helper.test.tsx`（新規）
+  - `src/test/arrow.test.tsx`（新規）
+  - `src/test/task-gantt-content.test.tsx`（新規または既存ガント描画テストへ追記）
+- テスト追加の実行コマンド:
+  - 局所確認: `npm run test:unit -- bar-helper`
+  - CI 相当: `npm test`
+
+# 5. CI 品質ゲート
+- 実行コマンド（format / lint / typecheck / test / security）:
+  - install: `npm ci`
+  - test: `npm test`
+    - `test:unit`: `cross-env CI=1 react-scripts test --env=jsdom`
+    - `test:lint`: `eslint --ext .tsx src/**/*`
+    - `test:build`: `microbundle-crl --no-compress --format modern,cjs --tsconfig tsconfig.build.json`
+  - security: `npm audit`
+- 通過基準と失敗時の対応:
+  - lint/build/unit すべて成功でマージ可。
+  - `npm audit` で脆弱性が出た場合は重大度と影響範囲を記録し、直接依存で修正可能なら同PRで解消。修正不能な場合は根拠付きで別Issue化して追跡。
+- example 動作確認（`docs/REBUILD.md` 準拠）:
+  - ルートで `npm ci && npm run build`
+  - `example/` で `rm -rf node_modules && npm install && npm start`
+  - `dependencyLinks` と `dependencies` の双方サンプルで矢印表示を目視確認。
+
+# 6. ロールアウト・運用
+- ロールバック方法:
+  - 公開型の追加に起因する不具合時は `dependencyLinks` 利用を停止し、`dependencies` のみ運用に戻す。
+  - 実装PRは機能単位コミットに分割し、依存モデル変更のみを `git revert` できる状態を維持する。
+- 監視・運用上の注意:
+  - 検証 warning 件数（循環/missing id）を開発時ログで確認し、利用側データ品質の早期検知に使う。
+  - 既存利用者向けに README で legacy/new 形式の併記と移行例を提示する。
+
+# 7. オープンな課題 / ADR 要否
+- 未確定事項:
+  - TBD（理由: lag の表示ラベル（例: +2d, -4h）を今回描画に含めるとUI仕様追加が必要なため。決定条件: デザインレビューで表示要件が明文化された場合に採用判断。期限: 2026-10-30（担当: 設計担当 + プロダクトオーナー））
+- ADR に残すべき判断:
+  - **要否: 要（作成）**
+  - 理由:
+    - 公開API（`Task`）に新規フィールドを追加し、長期互換方針（legacy `dependencies` の扱い）を固定するため。
+    - lag 単位を minute とする設計判断、および循環検出時の fail-safe 方針は将来機能（自動スケジューリング/CPM/MS Project）の前提になるため。
+  - ADR 記載項目:
+    - `dependencies` と `dependencyLinks` の共存・優先順位
+    - `DependencyType`/`lagMinutes` の正規化仕様
+    - 循環・missing id の検証ポリシーと通知契約
