@@ -67,7 +67,9 @@ jobs:
           markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || exit_code=$?
           reviewdog_exit=0
           reviewdog < markdownlint.txt \
-            -f=markdownlint \
+            -f=errorformat \
+            -efm="%f:%l:%c %trror %m" \
+            -efm="%f:%l %trror %m" \
             -name="Markdownチェック" \
             -reporter="github-pr-review" \
             -level=warning || reviewdog_exit=$?
@@ -134,7 +136,9 @@ jobs:
           markdownlint "docs/**/*.md" ".github/**/*.md" > markdownlint.txt || exit_code=$?
           reviewdog_exit=0
           reviewdog < markdownlint.txt \
-            -f=markdownlint \
+            -f=errorformat \
+            -efm="%f:%l:%c %trror %m" \
+            -efm="%f:%l %trror %m" \
             -name="Markdownチェック" \
             -reporter="github-check" \
             -level=warning || reviewdog_exit=$?
