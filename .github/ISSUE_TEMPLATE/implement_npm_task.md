@@ -18,7 +18,7 @@ assignees: ""
 プレースホルダー種類: 6種類（★ここに機能名★ / <issue-number> / <slug> / <design-issue-number> / <design-pr-number> / <owner>/<repo>）
 -->
 
-# [IMPLEMENT] ★ここに機能名★
+## [IMPLEMENT] ★ここに機能名★
 
 ## 0. AI Agent 契約（最初に読む）
 
@@ -42,11 +42,11 @@ assignees: ""
 
 ### 2.2 DESIGN Issue（仕様の背景・補助）
 
-* https://github.com/<owner>/<repo>/issues/<design-issue-number>
+* [DESIGN Issue](https://github.com/<owner>/<repo>/issues/<design-issue-number>)
 
 ### 2.3 DESIGN PR（設計差分・合意点）
 
-* https://github.com/<owner>/<repo>/pull/<design-pr-number>
+* [DESIGN PR](https://github.com/<owner>/<repo>/pull/<design-pr-number>)
 
 ### 2.4 UIモック/画像（UIの形状合わせ用・仕様追加は禁止）
 

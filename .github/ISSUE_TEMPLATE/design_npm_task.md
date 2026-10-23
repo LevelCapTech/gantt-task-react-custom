@@ -15,7 +15,7 @@ assignees: ""
 プレースホルダー種類: 3種類（★ここに機能名★ / <issue-number> / <slug>）
 -->
 
-# [DESIGN] ★ここに機能名★
+## [DESIGN] ★ここに機能名★
 
 ## 0. AI Agent 契約（最初に読む）
 

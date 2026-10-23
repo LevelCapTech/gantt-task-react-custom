@@ -14,7 +14,7 @@ assignees: ""
 4. <関連Issue/ADRのリンク>: 関連するIssueやADRのリンクに置換する（なければ「なし」）
 -->
 
-# [RESEARCH] ★ここに調査テーマ★
+## [RESEARCH] ★ここに調査テーマ★
 
 ## 0. AI Agent 契約（最初に読む）
 
