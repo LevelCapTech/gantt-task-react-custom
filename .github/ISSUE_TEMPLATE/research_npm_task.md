@@ -44,7 +44,7 @@ assignees: ""
 
 ### 2.2 関連Issue/ADR
 
-* <関連IssueやADRのリンク>
+* <関連Issue/ADRのリンク>
 
 ## 3. スコープ / 非ゴール
 
