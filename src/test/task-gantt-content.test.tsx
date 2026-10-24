@@ -88,6 +88,47 @@ describe("TaskGanttContent", () => {
     expect(screen.getAllByTestId("dependency-arrow")).toHaveLength(2);
   });
 
+  it("ドラッグ後の依存先は最新の task 配列を参照して追従する", () => {
+    const taskA = createBarTask("A", 0, 10, 30);
+    const staleTaskB = createBarTask("B", 1, 60, 90);
+    const liveTaskB = { ...staleTaskB, x1: 80, x2: 110, y: 30 };
+    taskA.barDependencyChildren = [
+      { task: staleTaskB, type: "FS", lagMinutes: 0, source: "dependencies" },
+    ];
+
+    const svgRef = createSvgRef();
+    render(
+      <svg>
+        <TaskGanttContent
+          tasks={[taskA, liveTaskB]}
+          dates={[
+            new Date("2026-01-01T00:00:00.000Z"),
+            new Date("2026-01-02T00:00:00.000Z"),
+          ]}
+          ganttEvent={{ action: "" }}
+          selectedTask={undefined}
+          rowHeight={30}
+          columnWidth={40}
+          timeStep={24 * 60 * 60 * 1000}
+          svg={svgRef}
+          svgWidth={400}
+          taskHeight={16}
+          arrowColor="#000"
+          arrowIndent={12}
+          fontSize="12"
+          fontFamily="sans-serif"
+          rtl={false}
+          setGanttEvent={jest.fn()}
+          setFailedTask={jest.fn()}
+          setSelectedTask={jest.fn()}
+        />
+      </svg>
+    );
+
+    const path = screen.getByTestId("dependency-arrow-path").getAttribute("d") || "";
+    expect(path).toContain("H 80");
+  });
+
   it("onDateChange の children は barChildren（直接後続）を維持する", async () => {
     const original = createBarTask("A", 0, 10, 30);
     const child = createBarTask("B", 1, 60, 90);
