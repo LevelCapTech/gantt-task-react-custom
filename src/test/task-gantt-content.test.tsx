@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TaskGanttContent } from "../components/gantt/task-gantt-content";
 import { BarTask } from "../types/bar-task";
 
@@ -57,7 +57,7 @@ describe("TaskGanttContent", () => {
     ];
 
     const svgRef = createSvgRef();
-    const { container } = render(
+    render(
       <svg>
         <TaskGanttContent
           tasks={[taskA, taskB, taskC]}
@@ -85,7 +85,7 @@ describe("TaskGanttContent", () => {
       </svg>
     );
 
-    expect(container.querySelectorAll(".arrow")).toHaveLength(2);
+    expect(screen.getAllByTestId("dependency-arrow")).toHaveLength(2);
   });
 
   it("onDateChange の children は barChildren（直接後続）を維持する", async () => {

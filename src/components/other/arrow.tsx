@@ -47,9 +47,9 @@ export const Arrow: React.FC<ArrowProps> = ({
   }
 
   return (
-    <g className="arrow">
-      <path strokeWidth="1.5" d={path} fill="none" />
-      <polygon points={trianglePoints} />
+    <g className="arrow" data-testid="dependency-arrow">
+      <path data-testid="dependency-arrow-path" strokeWidth="1.5" d={path} fill="none" />
+      <polygon data-testid="dependency-arrow-head" points={trianglePoints} />
     </g>
   );
 };

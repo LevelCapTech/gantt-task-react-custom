@@ -1,5 +1,5 @@
 import React from "react";
-import { render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { Arrow } from "../components/other/arrow";
 import { BarTask } from "../types/bar-task";
@@ -36,10 +36,11 @@ const createBarTask = (
   },
 });
 
-const renderArrowPath = (dependencyType: "FS" | "SS" | "FF" | "SF", rtl = false, lagPx = 0) => {
+const getArrowPath = (dependencyType: "FS" | "SS" | "FF" | "SF", rtl = false, lagPx = 0) => {
+  cleanup();
   const taskFrom = createBarTask("from", 0, 10, 30);
   const taskTo = createBarTask("to", 1, 60, 90);
-  const { container } = render(
+  render(
     <svg>
       <Arrow
         taskFrom={taskFrom}
@@ -53,26 +54,27 @@ const renderArrowPath = (dependencyType: "FS" | "SS" | "FF" | "SF", rtl = false,
       />
     </svg>
   );
-  const path = container.querySelector("path");
-  return path?.getAttribute("d") || "";
+  const path = screen.getByTestId("dependency-arrow-path").getAttribute("d") || "";
+  cleanup();
+  return path;
 };
 
 describe("Arrow", () => {
   it("依存タイプごとに接続点を切り替える", () => {
-    expect(renderArrowPath("FS")).toContain("M 30 5");
-    expect(renderArrowPath("SS")).toContain("M 10 5");
-    expect(renderArrowPath("FF")).toContain("H 90");
-    expect(renderArrowPath("SF")).toContain("H 90");
+    expect(getArrowPath("FS")).toContain("M 30 5");
+    expect(getArrowPath("SS")).toContain("M 10 5");
+    expect(getArrowPath("FF")).toContain("H 90");
+    expect(getArrowPath("SF")).toContain("H 90");
   });
 
   it("lag を終端前水平セグメントへ反映する", () => {
-    const withoutLag = renderArrowPath("FS", false, 0);
-    const withLag = renderArrowPath("FS", false, 30);
+    const withoutLag = getArrowPath("FS", false, 0);
+    const withLag = getArrowPath("FS", false, 30);
     expect(withLag).not.toBe(withoutLag);
   });
 
   it("RTL では x1/x2 の向きを反転して描画する", () => {
-    const rtlPath = renderArrowPath("FS", true, 0);
+    const rtlPath = getArrowPath("FS", true, 0);
     expect(rtlPath).toContain("M 10 5");
     expect(rtlPath).toContain("H 90");
   });
