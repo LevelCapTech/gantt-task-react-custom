@@ -6,6 +6,29 @@ import {
   countWorkingDays,
   formatJapaneseDate,
 } from "../helpers/calendar-helper";
+import { JP_HOLIDAYS_SET } from "../helpers/jp-holidays";
+
+const JP_2007_HOLIDAY_DATES = [
+  "2007-01-01",
+  "2007-01-08",
+  "2007-02-11",
+  "2007-02-12",
+  "2007-03-21",
+  "2007-04-29",
+  "2007-04-30",
+  "2007-05-03",
+  "2007-05-04",
+  "2007-05-05",
+  "2007-07-16",
+  "2007-09-17",
+  "2007-09-23",
+  "2007-09-24",
+  "2007-10-08",
+  "2007-11-03",
+  "2007-11-23",
+  "2007-12-23",
+  "2007-12-24",
+];
 
 describe("normalizeISODate", () => {
   test("valid date", () => {
@@ -129,6 +152,72 @@ describe("isWorkingDay", () => {
     const config = normalizeCalendarConfig({ enableJPHoliday: false });
     // New Year's Day 2024-01-01 (Monday)
     expect(isWorkingDay(new Date(2024, 0, 1), config)).toBe(true);
+  });
+
+  test("2007 Japanese holidays are non-working days", () => {
+    const config = normalizeCalendarConfig({});
+
+    JP_2007_HOLIDAY_DATES.forEach((dateStr) => {
+      const date = new Date(
+        Number(dateStr.slice(0, 4)),
+        Number(dateStr.slice(5, 7)) - 1,
+        Number(dateStr.slice(8, 10))
+      );
+      expect(isWorkingDay(date, config)).toBe(false);
+    });
+  });
+
+  test("2007 substitute holidays and regular weekday are handled correctly", () => {
+    const config = normalizeCalendarConfig({});
+    expect(isWorkingDay(new Date(2007, 1, 12), config)).toBe(false);
+    expect(isWorkingDay(new Date(2007, 3, 30), config)).toBe(false);
+    expect(isWorkingDay(new Date(2007, 8, 24), config)).toBe(false);
+    expect(isWorkingDay(new Date(2007, 11, 24), config)).toBe(false);
+    expect(isWorkingDay(new Date(2007, 0, 9), config)).toBe(true);
+  });
+
+  test("2007 holidays are working when Japanese holidays are disabled", () => {
+    const config = normalizeCalendarConfig({ enableJPHoliday: false });
+    expect(isWorkingDay(new Date(2007, 0, 1), config)).toBe(true);
+    expect(isWorkingDay(new Date(2007, 0, 9), config)).toBe(true);
+  });
+
+  test("existing 2024-2026 holiday checks remain stable", () => {
+    const config = normalizeCalendarConfig({});
+    expect(isWorkingDay(new Date(2024, 0, 1), config)).toBe(false);
+    expect(isWorkingDay(new Date(2025, 4, 5), config)).toBe(false);
+    expect(isWorkingDay(new Date(2026, 8, 21), config)).toBe(false);
+    expect(isWorkingDay(new Date(2026, 8, 23), config)).toBe(true);
+  });
+
+  test("2007 holiday data is included in JP_HOLIDAYS_SET", () => {
+    JP_2007_HOLIDAY_DATES.forEach((date) => {
+      expect(JP_HOLIDAYS_SET.has(date)).toBe(true);
+    });
+  });
+
+  test("extraWorkingDays override a 2007 substitute holiday while extraHolidays still mark dates as non-working", () => {
+    const config = normalizeCalendarConfig({
+      extraHolidays: ["2007-01-08"],
+      extraWorkingDays: ["2007-02-12"],
+    });
+
+    expect(isWorkingDay(new Date(2007, 0, 8), config)).toBe(false);
+    expect(isWorkingDay(new Date(2007, 1, 12), config)).toBe(true);
+  });
+
+  test("extraWorkingDays overrides holiday status for a 2007 holiday", () => {
+    const config = normalizeCalendarConfig({
+      extraWorkingDays: ["2007-01-01"],
+    });
+    expect(isWorkingDay(new Date(2007, 0, 1), config)).toBe(true);
+  });
+
+  test("extraHolidays override 2007 working day", () => {
+    const config = normalizeCalendarConfig({
+      extraHolidays: ["2007-01-09"],
+    });
+    expect(isWorkingDay(new Date(2007, 0, 9), config)).toBe(false);
   });
 
   test("extraHolidays makes working day non-working", () => {
