@@ -167,7 +167,7 @@ describe("isWorkingDay", () => {
     });
   });
 
-  test("2007 holiday weekends and regular weekday are handled correctly", () => {
+  test("2007 substitute holidays and regular weekday are handled correctly", () => {
     const config = normalizeCalendarConfig({});
     expect(isWorkingDay(new Date(2007, 1, 12), config)).toBe(false);
     expect(isWorkingDay(new Date(2007, 3, 30), config)).toBe(false);
