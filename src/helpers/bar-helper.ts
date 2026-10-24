@@ -1,6 +1,121 @@
-import { Task } from "../types/public-types";
-import { BarTask, TaskTypeInternal } from "../types/bar-task";
+import {
+  DependencyType,
+  Task,
+  TaskDependencyLink,
+} from "../types/public-types";
+import {
+  BarTask,
+  BarTaskDependencyEdge,
+  TaskTypeInternal,
+} from "../types/bar-task";
 import { BarMoveAction } from "../types/gantt-task-actions";
+
+const DEPENDENCY_TYPE_SET: Record<DependencyType, true> = {
+  FS: true,
+  SS: true,
+  FF: true,
+  SF: true,
+};
+
+export type NormalizedDependency = {
+  fromId: string;
+  toId: string;
+  type: DependencyType;
+  lagMinutes: number;
+  source: "dependencies" | "dependencyLinks";
+};
+
+const isValidDependencyType = (
+  type: TaskDependencyLink["type"]
+): type is DependencyType => {
+  return !!type && !!DEPENDENCY_TYPE_SET[type];
+};
+
+const normalizeDependencyLink = (
+  link: TaskDependencyLink,
+  fromId: string,
+  toId: string,
+  source: "dependencyLinks"
+): NormalizedDependency | null => {
+  if (!isValidDependencyType(link.type) && link.type !== undefined) {
+    return null;
+  }
+  if (link.lag !== undefined && !Number.isFinite(link.lag)) {
+    return null;
+  }
+  return {
+    fromId,
+    toId,
+    type: link.type ?? "FS",
+    lagMinutes: link.lag ?? 0,
+    source,
+  };
+};
+
+const dependencyKey = (dependency: NormalizedDependency) => {
+  return `${dependency.fromId}::${dependency.toId}::${dependency.type}::${dependency.lagMinutes}`;
+};
+
+export const normalizeTaskDependencies = (tasks: Task[]) => {
+  const taskIds = new Set(tasks.map(task => task.id));
+  const normalizedDependencies: NormalizedDependency[] = [];
+  const dedupe = new Set<string>();
+
+  tasks.forEach(task => {
+    const toId = task.id;
+    const dependencyLinks = task.dependencyLinks || [];
+    const prioritizedFromIds = new Set(
+      dependencyLinks
+        .map(link => link.taskId)
+        .filter((id): id is string => !!id && typeof id === "string")
+    );
+
+    dependencyLinks.forEach(link => {
+      if (!link.taskId || !taskIds.has(link.taskId)) {
+        return;
+      }
+      const normalized = normalizeDependencyLink(
+        link,
+        link.taskId,
+        toId,
+        "dependencyLinks"
+      );
+      if (!normalized) {
+        return;
+      }
+      const key = dependencyKey(normalized);
+      if (dedupe.has(key)) {
+        return;
+      }
+      dedupe.add(key);
+      normalizedDependencies.push(normalized);
+    });
+
+    (task.dependencies || []).forEach(dependencyId => {
+      if (!dependencyId || prioritizedFromIds.has(dependencyId)) {
+        return;
+      }
+      if (!taskIds.has(dependencyId)) {
+        return;
+      }
+      const normalized: NormalizedDependency = {
+        fromId: dependencyId,
+        toId,
+        type: "FS",
+        lagMinutes: 0,
+        source: "dependencies",
+      };
+      const key = dependencyKey(normalized);
+      if (dedupe.has(key)) {
+        return;
+      }
+      dedupe.add(key);
+      normalizedDependencies.push(normalized);
+    });
+  });
+
+  return normalizedDependencies;
+};
 
 export const convertToBarTasks = (
   tasks: Task[],
@@ -46,17 +161,36 @@ export const convertToBarTasks = (
     );
   });
 
-  // set dependencies
-  barTasks = barTasks.map(task => {
-    const dependencies = task.dependencies || [];
-    for (let j = 0; j < dependencies.length; j++) {
-      const dependence = barTasks.findIndex(
-        value => value.id === dependencies[j]
-      );
-      if (dependence !== -1) barTasks[dependence].barChildren.push(task);
+  const barTaskMap = new Map(barTasks.map(task => [task.id, task]));
+  const normalizedDependencies = normalizeTaskDependencies(tasks);
+  const childrenMap = new Map<string, Map<string, BarTask>>();
+  const edgeMap = new Map<string, BarTaskDependencyEdge[]>();
+
+  normalizedDependencies.forEach(dependency => {
+    const fromTask = barTaskMap.get(dependency.fromId);
+    const toTask = barTaskMap.get(dependency.toId);
+    if (!fromTask || !toTask) {
+      return;
     }
-    return task;
+    const childTaskMap = childrenMap.get(fromTask.id) ?? new Map();
+    childTaskMap.set(toTask.id, toTask);
+    childrenMap.set(fromTask.id, childTaskMap);
+
+    const edges = edgeMap.get(fromTask.id) ?? [];
+    edges.push({
+      task: toTask,
+      type: dependency.type,
+      lagMinutes: dependency.lagMinutes,
+      source: dependency.source,
+    });
+    edgeMap.set(fromTask.id, edges);
   });
+
+  barTasks = barTasks.map(task => ({
+    ...task,
+    barChildren: Array.from(childrenMap.get(task.id)?.values() ?? []),
+    barDependencyChildren: edgeMap.get(task.id) ?? [],
+  }));
 
   return barTasks;
 };
@@ -196,6 +330,7 @@ const convertToBar = (
     hideChildren,
     height: taskHeight,
     barChildren: [],
+    barDependencyChildren: [],
     styles,
   };
 };
@@ -242,6 +377,7 @@ const convertToMilestone = (
     height: rotatedHeight,
     hideChildren: undefined,
     barChildren: [],
+    barDependencyChildren: [],
     styles,
   };
 };

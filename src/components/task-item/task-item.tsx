@@ -107,7 +107,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
 
   const getX = () => {
     const width = task.x2 - task.x1;
-    const hasChild = task.barChildren.length > 0;
+    const hasChild = task.barDependencyChildren.length > 0;
     if (isTextInside) {
       return task.x1 + width * 0.5;
     }

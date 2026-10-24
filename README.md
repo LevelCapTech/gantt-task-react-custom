@@ -241,7 +241,8 @@ progress セルの編集では、入力値は 5 の倍数に丸められ、`onCe
 | start\*        | Date     | タスク開始日。                                                                                          |
 | end\*          | Date     | タスク終了日。                                                                                          |
 | progress\*     | number   | タスクの進捗。0〜100 のパーセントで設定します。                                                         |
-| dependencies   | string[] | 親依存関係の ID を指定します。                                                                          |
+| dependencies   | string[] | 旧形式の依存関係です。各IDは `FS` / `lag=0` として扱われます（後方互換用）。                           |
+| dependencyLinks | { taskId: string; type?: "FS" \| "SS" \| "FF" \| "SF"; lag?: number; }[] | 新形式の依存関係です。`lag` の単位は分（minute）です。`dependencies` と同時指定時は同一 `taskId` で `dependencyLinks` を優先します。 |
 | styles         | object   | タスクバーのローカルスタイル設定を指定します。次の属性を持つオブジェクトを渡します:                       |
 |                |          | - **backgroundColor**: String。タスクバー背景の塗り色をローカルに指定します。                            |
 |                |          | - **backgroundSelectedColor**: String。選択時のタスクバー背景の塗り色をローカルに指定します。            |
@@ -253,6 +254,29 @@ progress セルの編集では、入力値は 5 の倍数に丸められ、`onCe
 | hideChildren   | bool     | 子要素を非表示にします。パラメーターは project タイプのときのみ有効です。                                |
 
 \*必須
+
+### 依存関係モデル（legacy/new 併記）
+
+- legacy: `dependencies: string[]`
+- new: `dependencyLinks: { taskId, type, lag }[]`
+- `lag` は分単位の見た目上の時間差として矢印描画に反映されます。タスク日程の自動調整は行いません。
+
+```typescript
+const tasks: Task[] = [
+  {
+    id: "B",
+    name: "実装",
+    type: "task",
+    start: new Date(2026, 0, 3),
+    end: new Date(2026, 0, 5),
+    progress: 0,
+    // legacy 形式（FS/lag0 として解釈）
+    dependencies: ["A"],
+    // new 形式（同一 taskId の場合はこちらが優先）
+    dependencyLinks: [{ taskId: "A", type: "SS", lag: 120 }],
+  },
+];
+```
 
 ## ライセンス
 

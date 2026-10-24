@@ -1,5 +1,6 @@
 import { BarTask } from "../types/bar-task";
 import { Task } from "../types/public-types";
+import { normalizeTaskDependencies } from "./bar-helper";
 
 export function isKeyboardEvent(
   event: React.MouseEvent | React.KeyboardEvent | React.FocusEvent
@@ -21,31 +22,72 @@ export function removeHiddenTasks(tasks: Task[]) {
   const groupedTasks = tasks.filter(
     t => t.hideChildren && t.type === "project"
   );
-  if (groupedTasks.length > 0) {
-    for (let i = 0; groupedTasks.length > i; i++) {
-      const groupedTask = groupedTasks[i];
-      const children = getChildren(tasks, groupedTask);
-      tasks = tasks.filter(t => children.indexOf(t) === -1);
-    }
+  if (groupedTasks.length === 0) {
+    return tasks;
+  }
+
+  const dependencyChildrenMap = buildDependencyChildrenMap(tasks);
+  for (let i = 0; groupedTasks.length > i; i++) {
+    const groupedTask = groupedTasks[i];
+    const children = getChildren(tasks, groupedTask, dependencyChildrenMap);
+    tasks = tasks.filter(t => children.indexOf(t) === -1);
   }
   return tasks;
 }
 
-function getChildren(taskList: Task[], task: Task) {
-  let tasks: Task[] = [];
-  if (task.type !== "project") {
-    tasks = taskList.filter(
-      t => t.dependencies && t.dependencies.indexOf(task.id) !== -1
-    );
-  } else {
-    tasks = taskList.filter(t => t.project && t.project === task.id);
+const buildDependencyChildrenMap = (tasks: Task[]) => {
+  const taskMap = new Map(tasks.map(task => [task.id, task]));
+  const childrenMap = new Map<string, Task[]>();
+  normalizeTaskDependencies(tasks).forEach(dependency => {
+    const parent = taskMap.get(dependency.fromId);
+    const child = taskMap.get(dependency.toId);
+    if (!parent || !child) {
+      return;
+    }
+    const children = childrenMap.get(parent.id) ?? [];
+    if (!children.some(task => task.id === child.id)) {
+      children.push(child);
+      childrenMap.set(parent.id, children);
+    }
+  });
+  return childrenMap;
+};
+
+function getChildren(
+  taskList: Task[],
+  task: Task,
+  dependencyChildrenMap: Map<string, Task[]>,
+  visited = new Set<string>(),
+  inStack = new Set<string>()
+) {
+  if (inStack.has(task.id)) {
+    return [] as Task[];
   }
-  var taskChildren: Task[] = [];
-  tasks.forEach(t => {
-    taskChildren.push(...getChildren(taskList, t));
-  })
-  tasks = tasks.concat(tasks, taskChildren);
-  return tasks;
+
+  const nextInStack = new Set(inStack);
+  nextInStack.add(task.id);
+
+  let directChildren: Task[] = [];
+  if (task.type !== "project") {
+    directChildren = dependencyChildrenMap.get(task.id) || [];
+  } else {
+    directChildren = taskList.filter(t => t.project && t.project === task.id);
+  }
+
+  const taskChildren: Task[] = [];
+  const nextVisited = new Set(visited);
+  directChildren.forEach(childTask => {
+    if (nextVisited.has(childTask.id) || nextInStack.has(childTask.id)) {
+      return;
+    }
+
+    nextVisited.add(childTask.id);
+    taskChildren.push(childTask);
+    taskChildren.push(
+      ...getChildren(taskList, childTask, dependencyChildrenMap, nextVisited, nextInStack)
+    );
+  });
+  return taskChildren;
 }
 
 export const sortTasks = (taskA: Task, taskB: Task) => {

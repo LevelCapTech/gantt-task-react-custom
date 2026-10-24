@@ -1,9 +1,12 @@
 import React from "react";
 import { BarTask } from "../../types/bar-task";
+import { DependencyType } from "../../types/public-types";
 
 type ArrowProps = {
   taskFrom: BarTask;
   taskTo: BarTask;
+  dependencyType: DependencyType;
+  lagPx: number;
   rowHeight: number;
   taskHeight: number;
   arrowIndent: number;
@@ -12,6 +15,8 @@ type ArrowProps = {
 export const Arrow: React.FC<ArrowProps> = ({
   taskFrom,
   taskTo,
+  dependencyType,
+  lagPx,
   rowHeight,
   taskHeight,
   arrowIndent,
@@ -23,6 +28,8 @@ export const Arrow: React.FC<ArrowProps> = ({
     [path, trianglePoints] = drownPathAndTriangleRTL(
       taskFrom,
       taskTo,
+      dependencyType,
+      lagPx,
       rowHeight,
       taskHeight,
       arrowIndent
@@ -31,6 +38,8 @@ export const Arrow: React.FC<ArrowProps> = ({
     [path, trianglePoints] = drownPathAndTriangle(
       taskFrom,
       taskTo,
+      dependencyType,
+      lagPx,
       rowHeight,
       taskHeight,
       arrowIndent
@@ -38,9 +47,9 @@ export const Arrow: React.FC<ArrowProps> = ({
   }
 
   return (
-    <g className="arrow">
-      <path strokeWidth="1.5" d={path} fill="none" />
-      <polygon points={trianglePoints} />
+    <g className="arrow" data-testid="dependency-arrow">
+      <path data-testid="dependency-arrow-path" strokeWidth="1.5" d={path} fill="none" />
+      <polygon data-testid="dependency-arrow-head" points={trianglePoints} />
     </g>
   );
 };
@@ -48,59 +57,120 @@ export const Arrow: React.FC<ArrowProps> = ({
 const drownPathAndTriangle = (
   taskFrom: BarTask,
   taskTo: BarTask,
+  dependencyType: DependencyType,
+  lagPx: number,
   rowHeight: number,
   taskHeight: number,
   arrowIndent: number
 ) => {
-  const indexCompare = taskFrom.index > taskTo.index ? -1 : 1;
-  const taskToEndPosition = taskTo.y + taskHeight / 2;
-  const taskFromEndPosition = taskFrom.x2 + arrowIndent * 2;
-  const taskFromHorizontalOffsetValue =
-    taskFromEndPosition < taskTo.x1 ? "" : `H ${taskTo.x1 - arrowIndent}`;
-  const taskToHorizontalOffsetValue =
-    taskFromEndPosition > taskTo.x1
-      ? arrowIndent
-      : taskTo.x1 - taskFrom.x2 - arrowIndent;
-
-  const path = `M ${taskFrom.x2} ${taskFrom.y + taskHeight / 2} 
-  h ${arrowIndent} 
-  v ${(indexCompare * rowHeight) / 2} 
-  ${taskFromHorizontalOffsetValue}
-  V ${taskToEndPosition} 
-  h ${taskToHorizontalOffsetValue}`;
-
-  const trianglePoints = `${taskTo.x1},${taskToEndPosition} 
-  ${taskTo.x1 - 5},${taskToEndPosition - 5} 
-  ${taskTo.x1 - 5},${taskToEndPosition + 5}`;
-  return [path, trianglePoints];
+  return drawPathAndTriangleByType(
+    taskFrom,
+    taskTo,
+    dependencyType,
+    lagPx,
+    rowHeight,
+    taskHeight,
+    arrowIndent,
+    false
+  );
 };
 
 const drownPathAndTriangleRTL = (
   taskFrom: BarTask,
   taskTo: BarTask,
+  dependencyType: DependencyType,
+  lagPx: number,
   rowHeight: number,
   taskHeight: number,
   arrowIndent: number
 ) => {
+  return drawPathAndTriangleByType(
+    taskFrom,
+    taskTo,
+    dependencyType,
+    lagPx,
+    rowHeight,
+    taskHeight,
+    arrowIndent,
+    true
+  );
+};
+
+const drawPathAndTriangleByType = (
+  taskFrom: BarTask,
+  taskTo: BarTask,
+  dependencyType: DependencyType,
+  lagPx: number,
+  rowHeight: number,
+  taskHeight: number,
+  arrowIndent: number,
+  rtl: boolean
+) => {
+  const anchor = getAnchorByType(dependencyType);
+  const fromX = getAnchorX(taskFrom, anchor.from, rtl);
+  const toX = getAnchorX(taskTo, anchor.to, rtl);
   const indexCompare = taskFrom.index > taskTo.index ? -1 : 1;
-  const taskToEndPosition = taskTo.y + taskHeight / 2;
-  const taskFromEndPosition = taskFrom.x1 - arrowIndent * 2;
-  const taskFromHorizontalOffsetValue =
-    taskFromEndPosition > taskTo.x2 ? "" : `H ${taskTo.x2 + arrowIndent}`;
-  const taskToHorizontalOffsetValue =
-    taskFromEndPosition < taskTo.x2
-      ? -arrowIndent
-      : taskTo.x2 - taskFrom.x1 + arrowIndent;
+  const fromY = taskFrom.y + taskHeight / 2;
+  const toY = taskTo.y + taskHeight / 2;
+  const fromDirection = getSourceDirection(anchor.from, rtl);
+  const toDirection = getTargetDirection(anchor.to, rtl);
+  const firstX = fromX + fromDirection * arrowIndent;
+  const maxLagRange = Math.max(Math.abs(toX - firstX) + arrowIndent * 2, arrowIndent);
+  const limitedLag = Math.max(Math.min(lagPx, maxLagRange), -maxLagRange);
+  const tailLength = Math.max(
+    Math.min(arrowIndent + limitedLag, maxLagRange),
+    -maxLagRange
+  );
+  const preEndX = toX - toDirection * tailLength;
 
-  const path = `M ${taskFrom.x1} ${taskFrom.y + taskHeight / 2} 
-  h ${-arrowIndent} 
+  const path = `M ${fromX} ${fromY} 
+  h ${fromDirection * arrowIndent} 
   v ${(indexCompare * rowHeight) / 2} 
-  ${taskFromHorizontalOffsetValue}
-  V ${taskToEndPosition} 
-  h ${taskToHorizontalOffsetValue}`;
+  H ${preEndX}
+  V ${toY} 
+  H ${toX}`;
 
-  const trianglePoints = `${taskTo.x2},${taskToEndPosition} 
-  ${taskTo.x2 + 5},${taskToEndPosition + 5} 
-  ${taskTo.x2 + 5},${taskToEndPosition - 5}`;
+  const trianglePoints = `${toX},${toY} 
+  ${toX - toDirection * 5},${toY - 5} 
+  ${toX - toDirection * 5},${toY + 5}`;
   return [path, trianglePoints];
+};
+
+const getAnchorByType = (dependencyType: DependencyType) => {
+  switch (dependencyType) {
+    case "SS":
+      return { from: "start", to: "start" } as const;
+    case "FF":
+      return { from: "end", to: "end" } as const;
+    case "SF":
+      return { from: "start", to: "end" } as const;
+    case "FS":
+    default:
+      return { from: "end", to: "start" } as const;
+  }
+};
+
+const getAnchorX = (
+  task: BarTask,
+  side: "start" | "end",
+  rtl: boolean
+) => {
+  if (side === "start") {
+    return rtl ? task.x2 : task.x1;
+  }
+  return rtl ? task.x1 : task.x2;
+};
+
+const getSourceDirection = (side: "start" | "end", rtl: boolean) => {
+  if (side === "start") {
+    return rtl ? 1 : -1;
+  }
+  return rtl ? -1 : 1;
+};
+
+const getTargetDirection = (side: "start" | "end", rtl: boolean) => {
+  if (side === "start") {
+    return rtl ? -1 : 1;
+  }
+  return rtl ? 1 : -1;
 };

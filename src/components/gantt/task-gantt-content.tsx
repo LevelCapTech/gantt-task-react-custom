@@ -263,16 +263,31 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     }
   };
 
+  const minuteToPx = (minutes: number) => {
+    const dateDelta = dates[1]?.getTime() - dates[0]?.getTime();
+    if (!dateDelta) {
+      return 0;
+    }
+    const px = (minutes * columnWidth) / (dateDelta / 60000);
+    const limit = Math.max(columnWidth * 10, 1);
+    return Math.max(-limit, Math.min(limit, px));
+  };
+
+  const taskMap = new Map(tasks.map(task => [task.id, task]));
+
   return (
     <g className="content">
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
         {tasks.map(task => {
-          return task.barChildren.map(child => {
+          return task.barDependencyChildren.map(edge => {
+            const liveTaskTo = taskMap.get(edge.task.id) ?? edge.task;
             return (
               <Arrow
-                key={`Arrow from ${task.id} to ${tasks[child.index].id}`}
+                key={`Arrow from ${task.id} to ${edge.task.id} (${edge.type}:${edge.lagMinutes})`}
                 taskFrom={task}
-                taskTo={tasks[child.index]}
+                taskTo={liveTaskTo}
+                dependencyType={edge.type}
+                lagPx={minuteToPx(edge.lagMinutes)}
                 rowHeight={rowHeight}
                 taskHeight={taskHeight}
                 arrowIndent={arrowIndent}
