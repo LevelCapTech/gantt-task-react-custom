@@ -1,0 +1,199 @@
+# タスク依存関係モデル拡張の設計plan
+
+## 1. 機能要件 / 非機能要件
+
+- 機能要件:
+  - タスク依存関係で FS / SS / FF / SF を表現できる公開データモデルを追加する。
+  - 依存関係ごとに正負の lag（リード/ラグ）を指定できる。
+  - 循環依存（自己参照・相互参照・多段循環）を検出し、描画処理や折りたたみ処理で無限ループを防止する。
+  - 既存の `dependencies: string[]` を後方互換として受け付け、従来データをそのまま表示できる。
+  - 依存関係描画（Arrow）と編集時コールバック（`onDateChange` / `onProgressChange` の children 生成）を新モデルに対応させる。
+- 非機能要件:
+  - 公開 API の破壊的変更を避け、既存アプリの型エラーと表示崩れを発生させない。
+  - 不正依存はクラッシュさせず検出可能な形で隔離する（fail-safe）。
+  - 将来の自動スケジューリング / CPM / MS Project 互換に必要な依存メタデータを保持できる設計にする。
+  - 依存の正規化・検証を一箇所でまとめ、描画・折りたたみ・編集時コールバックで同じ `NormalizedDependency[]` を参照することで、各機能間で `dependencies` / `children` の解釈がズレないことを保証する。
+  - 外部ライブラリ追加なし、依存グラフの正規化と検証は 1 パスまたは線形近似の探索で実行し、タスク数と依存線数に対して見通しの良い処理時間を目標にする。
+  - `lag` の表示ラベル（`+2d` など）は今回の範囲外とし、描画は線の形状と `lag` 値の保持に限定する。
+  - 公開通知 callback / `console.warn` は必須仕様にしない。診断用の詳細は別 Issue / ADR で扱う。
+
+## 2. スコープと変更対象
+
+- 変更ファイル（新規/修正/削除）:
+  - **本 DESIGN Issue の成果物**: `/.github/copilot/plans/139-task-dependency-model.md`（新規）
+  - **IMPLEMENT フェーズでの予定変更対象**:
+    - `src/types/public-types.ts`（公開依存型追加・Task型拡張）
+    - `src/types/bar-task.ts`（内部依存エッジ型追加）
+    - `src/helpers/bar-helper.ts`（依存正規化・検証・内部モデル変換）
+    - `src/helpers/other-helper.ts`（折りたたみ時の依存探索を循環安全化）
+    - `src/components/other/arrow.tsx`（依存種類/lagに応じた接続点描画）
+    - `src/components/gantt/task-gantt-content.tsx`（依存エッジ描画ループ更新）
+    - `src/components/task-item/task-item.tsx`（矢印余白判定を新依存モデル基準に更新）
+    - `src/index.tsx`（新公開型の export）
+    - `README.md`（依存関係 API の説明更新）
+    - `example/src/helper.tsx`（新モデル例の追加 + 既存形式併記）
+    - `src/test/*.test.tsx`（依存関係回帰/追加テスト）
+  - 追加の設計明確化事項:
+    - `README` / `example` で `lag` を「見た目の時間差」扱いと明記する。
+    - `src/test` で循環依存の除外ルールと `dependencyLinks` / `dependencies` の同時指定時の優先順位を検証する。
+    - 依存線のラベル表示（`+2d` など）は今回の範囲外とし、`lag` の値そのものと依存線の描画は維持する。
+- 影響範囲・互換性リスク:
+  - `Task` の既存 `dependencies?: string[]` は維持（deprecated 扱い）し、挙動は従来どおり FS / lag=0 として解釈する。
+  - 新規フィールド `dependencyLinks?: TaskDependencyLink[]` を追加し、`dependencies` と共存可能にする。
+  - `dependencies` と `dependencyLinks` が同時指定された場合は、同一先行タスク ID について `dependencyLinks` を優先する。
+- 外部依存・Secrets の扱い:
+  - 新規ライブラリ追加なし。
+  - 依存検証エラー通知に機密情報を含めない（task id / dependency id / type / lag のみ）。ただし公開通知コールバックは追加せず、内部診断は別 Issue / ADR で検討する。
+
+## 3. 設計方針
+
+- 責務分離 / データフロー（必要なら Mermaid 1 枚）:
+  - 公開型（`public-types.ts`）
+    - `DependencyType = "FS" | "SS" | "FF" | "SF"`
+    - `TaskDependencyLink = { taskId: string; type?: DependencyType; lag?: number }`
+    - `Task` に `dependencyLinks?: TaskDependencyLink[]` を追加（`dependencies?: string[]` は維持）。
+  - 正規化（`bar-helper.ts`）
+    - `dependencies` を `{ taskId, type:"FS", lag:0 }` に変換。
+    - `dependencyLinks` をバリデーション（type, lag 数値性, id 存在）後に統合。
+    - 出力は `NormalizedDependency[]`（`fromId`, `toId`, `type`, `lagMinutes`, `source`）として扱う。
+  - 内部モデル（`bar-task.ts`）
+    - `barChildren: BarTask[]` は既存コールバック互換のため維持。
+    - 追加で `barDependencyChildren: BarTaskDependencyEdge[]` を持たせ、描画はこれを使用する。
+- 矢印接続点・lag 表現:
+  - 接続点マッピング（LTR）
+    - FS: `from.x2 -> to.x1`
+    - SS: `from.x1 -> to.x1`
+    - FF: `from.x2 -> to.x2`
+    - SF: `from.x1 -> to.x2`
+  - RTL は x1/x2 の向きを反転解釈して同じ論理を適用。
+  - lag は timeline スケールに基づき px 変換し、終端前の水平セグメント長に反映（lag 0 は現行と同等）。
+  - lag 単位は **分（minute）固定**。`Date` ベース計算との整合性を優先し、稼働日換算は将来拡張（calendar 設定を用いた変換層）として分離する。
+  - 重要な制約: `lag` は「日程を自動変更する制約」ではなく、矢印の見た目と依存種別の説明専用のメタデータとして扱う。`A` 終了 +2 日後に `B` 開始と指定しても、`B` の開始日自体は自動更新しない。README / example ではこの点を明記し、利用者が「制約が守られた」と誤解しないようにする。
+  - 表示における lag 変換は `minute -> px` の簡潔な線形変換を使用し、月表示・夏時間・負の lag は「時間差を描画対象として扱うが、日付計算には反映しない」前提で設計し、最大値/最小値が 0 近傍で破綻しないよう `Math.min/max` で制約をかける。
+  - 依存線のラベル（例: `+2d`）は今回の範囲外とし、`lag` の値と線の形状を保持するだけで十分とする。
+- 循環依存 / 不正依存の扱い:
+  - Issue #139 の「循環検出」は、依存の事前全件走査や矢印の事前除外ではなく、実際に再帰探索が必要な箇所 (`getChildren` / 折りたたみ伝播) で再訪問を止めることとして扱う。描画前に循環を全件チェックする追加処理は行わず、通常描画の性能を不必要に悪化させない。
+  - 折りたたみ・再帰時に `visited` / `inStack` を持ち、親ノードへの再訪問を防止する。これは循環入力でも「再帰が必ず終了する」ための最小限の安全策であり、依存の元データを変更しない。
+  - 自己参照（A→A）や 2 ノード/3 ノードの循環でも、描画は通常の非再帰処理を継続し、循環矢印を機械的に消す前提にはしない。`dependencyLinks` の正規化は既存の描画・children 生成に必要な範囲に限定し、循環検出のためだけの別全件走査を追加しない。
+  - 新規公開通知 callback は追加せず、異常依存は安全に除外して描画を継続する。診断 API が必要な場合は別 Issue / ADR で扱う。
+- 存在しない ID の扱い:
+  - 従来互換として描画からは除外（無視）を維持。
+  - 存在しない ID、欠損した `taskId`、破損した依存は「描画不能な依存」として除外するが、これは循環の有無とは独立に扱う。
+  - 循環だけを理由に矢印や依存の全件除外は行わない。循環は折りたたみ時の再訪問防止で安全に扱い、描画前の全件検査や事前除外は行わない。
+  - 参照先が未定義の依存は検証 issue として記録可能だが、公開 callback / `console.warn` を必須仕様にはしない。必要になった場合は別 Issue / ADR で診断契約を定義する。
+  - `taskId` の重複や `dependencyLinks` / `dependencies` の重複がある場合は、正規化時に同一の依存キー（fromId, toId, type, lag）に集約してから各機能へ渡す。
+- 編集処理（本フェーズでの仕様固定）:
+  - 依存関係そのものの編集 UI は今回スコープ外（従来どおり host が tasks 更新して再描画）。
+  - `onDateChange` / `onProgressChange` の第2引数 `children` は「有効な直接後続タスク集合」を維持。
+  - 依存種類/lag による自動日程調整は今回導入しない（将来の自動スケジューリングIssueで対応）。
+- 将来拡張（CPM / MS Project）:
+  - `type`（FS/SS/FF/SF）+ `lagMinutes` で MS Project predecessor 表現にマッピング可能。
+  - 正規化後グラフを CPM 計算入力として再利用できるよう、依存エッジを明示構造で保持する。
+
+## 4. テスト戦略
+
+- 対象（一覧）:
+  - `src/helpers/bar-helper.ts`（依存正規化、循環検出、missing id handling）
+  - `src/helpers/other-helper.ts`（折りたたみ時の循環安全性）
+  - `src/components/other/arrow.tsx`（接続点/lag/RTL描画）
+  - `src/components/gantt/task-gantt-content.tsx`（依存エッジ描画と children 受け渡し）
+  - `src/components/task-item/task-item.tsx`（矢印余白判定）
+- テスト観点（正常 / 例外 / 境界 / 回帰）:
+  - FS / SS / FF / SF が内部モデルへ正しく変換され、Arrow の接続点が型どおり。
+  - lag（正 / 0 / 負）が正しく保持・描画反映される。
+  - 循環依存（自己参照、2ノード循環、3ノード以上）でも `getChildren` / 折りたたみ再帰が必ず終了する。
+  - 既存 `dependencies: string[]` のみ指定時に現行と同じ矢印（FS, lag0）が描画される。
+  - 存在しない ID はクラッシュせず除外され、必要時のみ診断用の検証情報に残す。
+  - `onDateChange` / `onProgressChange` に渡る `children` が有効な直接後続集合のみである。
+  - 折りたたみ時に後続タスク非表示が維持され、循環があっても `getChildren` が停止する。
+  - 従来形式のみのケースで表示・折りたたみ・編集が変わらず、代表的なタスク数/依存線数で従来版との処理時間比較を行い、性能劣化が観測された場合は原因と対策をレビューできるようにする。
+  - 受入条件として「循環入力でも折りたたみが必ず終了する」および「通常描画の性能が不必要に悪化しない」を必須とする。
+- モック / フィクスチャ方針:
+  - 時刻依存は固定 Date フィクスチャで再現。
+  - SVG path は属性文字列比較または座標断片比較で検証。
+  - DOM 計測依存は既存 test セットアップ（JSDOM）で最小化。
+- 配置先:
+  - `src/test/bar-helper.test.tsx`（新規）
+  - `src/test/other-helper.test.tsx`（新規）
+  - `src/test/arrow.test.tsx`（新規）
+  - `src/test/task-gantt-content.test.tsx`（新規または既存ガント描画テストへ追記）
+- テスト追加の実行コマンド:
+  - 局所確認: `npm run test:unit -- bar-helper`
+  - CI 相当: `npm test`
+
+## 5. CI 品質ゲート
+
+- 実行コマンド（format / lint / typecheck / test / security）:
+  - install: `npm ci`
+  - test: `npm test`
+    - `test:unit`: `cross-env CI=1 react-scripts test --env=jsdom`
+    - `test:lint`: `eslint --ext .tsx src/**/*`
+    - `test:build`: `microbundle-crl --no-compress --format modern,cjs --tsconfig tsconfig.build.json`
+  - security: `npm audit`
+- 通過基準と失敗時の対応:
+  - lint/build/unit すべて成功でマージ可。
+  - `npm audit` で脆弱性が出た場合は重大度と影響範囲を記録し、直接依存で修正可能なら同PRで解消。修正不能な場合は根拠付きで別Issue化して追跡。
+- example 動作確認（`docs/REBUILD.md` 準拠）:
+  - ルートで `npm ci && npm run build`
+  - `example/` で `rm -rf node_modules && npm install && npm start`
+  - `dependencyLinks` と `dependencies` の双方サンプルで矢印表示を目視確認。
+
+## 6. ロールアウト・運用
+
+- ロールバック方法:
+  - 公開型の追加に起因する不具合時は `dependencyLinks` 利用を停止し、`dependencies` のみ運用に戻す。
+  - 実装PRは機能単位コミットに分割し、依存モデル変更のみを `git revert` できる状態を維持する。
+- 監視・運用上の注意:
+  - 検証 warning 件数（循環/missing id）を開発時ログで確認し、利用側データ品質の早期検知に使う。ただしこれは公開 API / 必須 `console.warn` ではなく、例外的な診断用途として扱う。
+  - ただし公開通知コールバックや `console.warn` を必須仕様にはせず、異常依存を安全に除外して表示を継続することを優先する。
+  - 既存利用者向けに README で legacy/new 形式の併記と移行例を提示する。
+
+## 7. オープンな課題 / ADR 要否
+
+- 未確定事項:
+  - lag の表示ラベル（例: `+2d`, `-4h`）は今回スコープ外とし、今後の UI 仕様変更時に別途扱う。
+  - 公開診断 API 名は今回設計対象外とし、必要時は別 Issue / ADR で決定する。
+- ADR に残すべき判断:
+  - **要否: 要（作成）**
+  - 理由:
+    - 公開API（`Task`）に新規フィールドを追加し、長期互換方針（legacy `dependencies` の扱い）を固定するため。
+    - lag 単位を minute とする設計判断、および循環検出時の fail-safe 方針は将来機能（自動スケジューリング/CPM/MS Project）の前提になるため。
+  - ADR 記載項目:
+    - `dependencies` と `dependencyLinks` の共存・優先順位
+    - `DependencyType`/`lagMinutes` の正規化仕様
+    - 循環・missing id の検証ポリシーと通知契約
+
+## コードレビューフィードバック対応（Review Feedback Response）
+
+## 追記（今回分）
+
+- フィードバック（要約）：循環エッジの除外ルールが曖昧
+  - 対応（何を変えた）：事前の全件 DFS による矢印除外を前提にせず、実際に再帰探索が必要な箇所でのみ `visited` / `inStack` による再訪問防止を行う方針へ整理した。`cycleId` 連結成分の全件除外は採用しない。
+  - 対象（見出し/ADR/Commit）：`# 3. 設計方針` / `循環依存 / 不正依存の扱い`
+  - 状態（対応済）：対応済
+- フィードバック（要約）：lag は日程自動変更ではなく見た目の時間差である点が曖昧
+  - 対応（何を変えた）：`lag` は「見た目の時間差」限定とし、依存線ラベル表示は今回の範囲外、内部の `lag` 値と線の形状を保持する方針へ整理した。
+  - 対象（見出し/ADR/Commit）：`# 3. 設計方針` / `矢印接続点・lag 表現`
+  - 状態（対応済）：対応済
+- フィードバック（要約）：依存の解釈が描画・折りたたみ・children で不一致になるリスク
+  - 対応（何を変えた）：正規化・検証を `bar-helper.ts` で一元化し、`NormalizedDependency[]` を各機能が共通参照する方針を追加した。
+  - 対象（見出し/ADR/Commit）：`# 1. 機能要件 / 非機能要件` / `# 3. 設計方針` / `# 2. スコープと変更対象`
+  - 状態（対応済）：対応済
+- フィードバック（要約）：公開通知コールバックと表示ラベルの設計が重い
+  - 対応（何を変えた）：新規公開通知 callback は追加しない方針に変更し、依存直線のラベル表示は今後の UI 仕様変更時に別途扱うと整理した。なお、PR 本文の既存記述は維持し、末尾の本追記を優先することを明記する。
+  - 対象（見出し/ADR/Commit）：`# 2. スコープと変更対象` / `# 6. ロールアウト・運用` / `# 7. オープンな課題 / ADR 要否`
+  - 状態（対応済）：対応済
+- フィードバック（要約）：reviewdog / markdownlint の指摘
+  - 対応（何を変えた）：見出しレベルと空行、リスト記法を markdownlint 準拠に統一した。
+  - 対象（見出し/ADR/Commit）：`# 3. 設計方針` / `# 2. スコープと変更対象` / 本PRレビュー指摘
+  - 状態（対応済）：対応済
+- フィードバック（要約）：PR 本文の既存記述と末尾追記の優先順位が曖昧
+  - 対応（何を変えた）：既存 PR 本文は維持し、末尾の `コードレビューフィードバック対応` を最新方針の優先記録として扱うことを明記する。旧記述は履歴として残しつつ、最新の設計要点をこの追記で上書きする。今回の修正では循環検出を「事前全件除外」ではなく「再帰時の再訪問防止」に統一し、lag ラベルなし / 公開通知 callback なし / 事前全件検査なしを明示した。
+  - 対象（見出し/ADR/Commit）：`# コードレビューフィードバック対応` / `本PR本文末尾記録`
+  - 状態（対応済）：対応済
+
+## 既存ログ（前回まで）
+
+```text
+<<keep_existing_lines>>
+```
