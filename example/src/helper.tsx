@@ -87,6 +87,7 @@ export function initTasks() {
       id: "Task 2",
       progress: 10,
       dependencies: ["Task 1"],
+      dependencyLinks: [{ taskId: "Task 1", type: "SS", lag: 120 }],
       type: "task",
       project: "ProjectSample",
       displayOrder: 4,
@@ -113,6 +114,7 @@ export function initTasks() {
       id: "Task 3",
       progress: 2,
       dependencies: ["Task 2"],
+      dependencyLinks: [{ taskId: "Task 2", type: "FF", lag: -60 }],
       type: "task",
       project: "ProjectSample",
       displayOrder: 5,
@@ -140,6 +142,7 @@ export function initTasks() {
       type: "task",
       progress: 70,
       dependencies: ["Task 2"],
+      dependencyLinks: [{ taskId: "Task 2", type: "SF", lag: 30 }],
       project: "ProjectSample",
       displayOrder: 6,
       process: "レビュー",
@@ -208,6 +211,7 @@ export function initTasks() {
       status: "保留",
     },
   ];
+  // lag は分単位の見た目上の時間差として矢印描画へ反映されます（日程の自動調整は行いません）。
   return tasks;
 }
 

@@ -1,4 +1,11 @@
-import { Task, TaskType } from "./public-types";
+import { DependencyType, Task, TaskType } from "./public-types";
+
+export type BarTaskDependencyEdge = {
+  task: BarTask;
+  type: DependencyType;
+  lagMinutes: number;
+  source: "dependencies" | "dependencyLinks";
+};
 
 export interface BarTask extends Task {
   index: number;
@@ -12,6 +19,7 @@ export interface BarTask extends Task {
   barCornerRadius: number;
   handleWidth: number;
   barChildren: BarTask[];
+  barDependencyChildren: BarTaskDependencyEdge[];
   styles: {
     backgroundColor: string;
     backgroundSelectedColor: string;
