@@ -19,16 +19,18 @@ export function isBarTask(task: Task | BarTask): task is BarTask {
 }
 
 export function removeHiddenTasks(tasks: Task[]) {
-  const dependencyChildrenMap = buildDependencyChildrenMap(tasks);
   const groupedTasks = tasks.filter(
     t => t.hideChildren && t.type === "project"
   );
-  if (groupedTasks.length > 0) {
-    for (let i = 0; groupedTasks.length > i; i++) {
-      const groupedTask = groupedTasks[i];
-      const children = getChildren(tasks, groupedTask, dependencyChildrenMap);
-      tasks = tasks.filter(t => children.indexOf(t) === -1);
-    }
+  if (groupedTasks.length === 0) {
+    return tasks;
+  }
+
+  const dependencyChildrenMap = buildDependencyChildrenMap(tasks);
+  for (let i = 0; groupedTasks.length > i; i++) {
+    const groupedTask = groupedTasks[i];
+    const children = getChildren(tasks, groupedTask, dependencyChildrenMap);
+    tasks = tasks.filter(t => children.indexOf(t) === -1);
   }
   return tasks;
 }
@@ -75,9 +77,10 @@ function getChildren(
   const taskChildren: Task[] = [];
   const nextVisited = new Set(visited);
   directChildren.forEach(childTask => {
-    if (nextVisited.has(childTask.id)) {
+    if (nextVisited.has(childTask.id) || nextInStack.has(childTask.id)) {
       return;
     }
+
     nextVisited.add(childTask.id);
     taskChildren.push(childTask);
     taskChildren.push(

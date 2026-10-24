@@ -38,4 +38,55 @@ describe("other-helper removeHiddenTasks", () => {
 
     expect(visible.map(task => task.id).sort()).toEqual(["OUT", "P"]);
   });
+
+  it("再帰で経路が重複展開しても stack overflow にならず、親プロジェクトは残す", () => {
+    const project: Task = {
+      ...createTask("P"),
+      type: "project",
+      hideChildren: true,
+      dependencies: ["A"],
+    };
+    const taskA: Task = {
+      ...createTask("A"),
+      project: "P",
+      dependencies: ["B", "C"],
+    };
+    const taskB: Task = {
+      ...createTask("B"),
+      project: "P",
+      dependencies: ["D"],
+    };
+    const taskC: Task = {
+      ...createTask("C"),
+      project: "P",
+      dependencies: ["D"],
+    };
+    const taskD: Task = {
+      ...createTask("D"),
+      project: "P",
+      dependencies: ["E"],
+    };
+    const taskE: Task = {
+      ...createTask("E"),
+      project: "P",
+      dependencies: ["B", "C"],
+    };
+
+    const visible = removeHiddenTasks([project, taskA, taskB, taskC, taskD, taskE]);
+
+    expect(visible.map(task => task.id).sort()).toEqual(["P"]);
+  });
+
+  it("折りたたみ対象の project がない場合は依存マップ生成を行わない", () => {
+    const taskA: Task = {
+      ...createTask("A"),
+      dependencies: ["B"],
+    };
+    const taskB: Task = {
+      ...createTask("B"),
+      dependencies: ["A"],
+    };
+
+    expect(removeHiddenTasks([taskA, taskB])).toEqual([taskA, taskB]);
+  });
 });

@@ -273,12 +273,14 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     return Math.max(-limit, Math.min(limit, px));
   };
 
+  const taskMap = new Map(tasks.map(task => [task.id, task]));
+
   return (
     <g className="content">
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
         {tasks.map(task => {
           return task.barDependencyChildren.map(edge => {
-            const liveTaskTo = tasks.find(currentTask => currentTask.id === edge.task.id) ?? edge.task;
+            const liveTaskTo = taskMap.get(edge.task.id) ?? edge.task;
             return (
               <Arrow
                 key={`Arrow from ${task.id} to ${edge.task.id} (${edge.type}:${edge.lagMinutes})`}
