@@ -160,8 +160,8 @@ export const TaskList: React.FC<TaskListProps> = ({
   enableColumnDrag = true,
   onHorizontalScroll,
 }) => {
-  const internalHorizontalRef = useRef<HTMLDivElement>(null);
-  const internalHeaderRef = useRef<HTMLDivElement>(null);
+  const internalHorizontalRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const internalHeaderRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const horizontalContainerRef = bodyContainerRef ?? internalHorizontalRef;
   const headerRef = headerContainerRef ?? internalHeaderRef;
   useEffect(() => {

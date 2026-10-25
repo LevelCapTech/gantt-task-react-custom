@@ -110,10 +110,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   );
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const taskListRef = useRef<HTMLDivElement>(null);
-  const taskListHeaderRef = useRef<HTMLDivElement>(null);
-  const taskListBodyRef = useRef<HTMLDivElement>(null);
-  const ganttContainerRef = useRef<HTMLDivElement>(null);
+  const taskListRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const taskListHeaderRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const taskListBodyRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const ganttContainerRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const splitStartXRef = useRef<number | null>(null);
   const splitStartWidthRef = useRef<number | null>(null);
   const splitMoveHandlerRef = useRef<((event: MouseEvent) => void) | null>(null);

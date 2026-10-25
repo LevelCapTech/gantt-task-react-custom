@@ -30,6 +30,6 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install React matrix version
-        run: npm install --no-save react@${{ matrix.react }} react-dom@${{ matrix.react }} @types/react@${{ matrix.react }} @types/react-dom@${{ matrix.react }}
+        run: npm install --no-save react@${{ matrix.react }} react-dom@${{ matrix.react }} @types/react@${{ matrix.react }} @types/react-dom@${{ matrix.react }} @testing-library/react@16 @testing-library/dom@10
       - run: npm test
       - run: node scripts/ci/check-npm-audit-gate.mjs --react=${{ matrix.react }}

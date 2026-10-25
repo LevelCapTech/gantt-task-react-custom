@@ -22,7 +22,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   scrollX,
   verticalGanttContainerRef,
 }) => {
-  const ganttSVGRef = useRef<SVGSVGElement>(null);
+  const ganttSVGRef = useRef<SVGSVGElement>(null) as React.RefObject<SVGSVGElement>;
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
   const internalVerticalRef = useRef<HTMLDivElement>(null);
   const ganttContainerRef = verticalGanttContainerRef || internalVerticalRef;
