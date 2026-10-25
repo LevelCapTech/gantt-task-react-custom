@@ -7,20 +7,23 @@
   - React 19 で削除・変更された API/型（`ReactChild`、グローバル `JSX` など）の利用箇所を洗い出し、React 18・19 双方で型が通る実装へ統一する。
   - 公開 API（`src/index.tsx` の export、`src/types/public-types.ts` の公開 Props/型）の後方互換性を維持する。
   - React 18・19 それぞれで `npm test`（unit/lint/build）を実行できる CI マトリクスを整備する。
+  - React 18・19 の各 CI ジョブで、既存の `high` / `critical` を例外管理しつつ、新規 `high` / `critical` を確実に検出して停止できる `npm audit` ゲートを導入する。
   - `example/` の公開版・GitHub Pages は React 18 のまま維持し、React 19 の検証は一時的な依存上書きで行う。`example/package.json` と lockfile は恒久更新せず、公開版へ残さない。
   - README の対応バージョン表記を React 18/19 正式対応に更新する。
 - 非機能要件:
   - 既存利用者の導入手順・ランタイム挙動を壊さない（破壊的変更なし）。
   - CI 品質ゲート（install/test/security）を React 18・19 の両軸で再現可能にする。
+  - 既存 42 件（high 38 / critical 4）が存在する状態でも、同一ルールで CI 合否を一意に判定できる。
   - 依存追加/更新は最小限とし、理由と影響範囲を明記する。
   - Secrets/PII を差分・ログ・ドキュメントに含めない。
 
 ## 2. スコープと変更対象
 
 - 変更ファイル（新規/修正/削除）:
-  - **本 DESIGN Issue の成果物**: `/.github/copilot/plans/141-react19-support.md`（新規）
+  - **本 DESIGN Issue の成果物**: `/.github/copilot/plans/141-react19-support.md`（更新）
   - **IMPLEMENT フェーズでの予定変更対象**:
     - `package.json`（peer/dev dependencies、scripts 追加が必要な場合）
+    - `package-lock.json`（React 19 対応で必須の最小差分のみ）
     - `src/components/calendar/calendar.tsx`（`ReactChild` 置換）
     - `src/components/grid/grid-body.tsx`（`ReactChild` 置換）
     - `src/components/task-item/task-item.tsx`（`JSX.Element` 型参照方式の置換）
@@ -28,16 +31,21 @@
     - `src/types/public-types.ts`（公開 Props 型互換性の確認と必要最小限の調整）
     - `src/index.tsx`（公開型 export の互換性確認）
     - `src/test/**/*.test.tsx`（必要な回帰テスト追加・更新）
-    - `.github/workflows/ci.yml`（React 18/19 マトリクス化）
+    - `.github/workflows/ci.yml`（React 18/19 マトリクス化 + audit ゲート導入）
+    - `scripts/ci/check-npm-audit-gate.mjs`（新規、依存追加なし）
+    - `.github/security/npm-audit-exceptions.json`（新規、例外管理台帳）
     - `README.md`（サポート React バージョン表記更新）
 - 影響範囲・互換性リスク:
-  - ランタイム API は維持し、互換性リスクは主に型定義・依存解決・CI 設定に集中する。
+  - ランタイム API は維持し、互換性リスクは型定義・依存解決・CI 設定に集中する。
   - 公開 Props（`TooltipContent` / `TaskListHeader` / `TaskListTable`）の受け口は維持し、利用者コンポーネントをそのまま渡せることを受入条件に固定する。
   - 破壊的変更（export 削除、Props 必須化、型名削除）は行わない。
+- 既存脆弱性 42 件の扱い（本 Issue での設計判断）:
+  - #141（React 19 対応）では「React 19 両対応に必要な最小依存更新」のみを実施し、既存 42 件の一括解消はスコープ外とする。
+  - 既存 42 件は初期例外台帳に登録し、`approvedBy`・`reason`・`expiresAt`・`trackingIssue` を必須化する。
+  - 25 件（互換範囲更新で解消可能）/ 1 件（`gh-pages` メジャー更新）/ 16 件（`react-scripts`・`microbundle-crl` 系で修正手段なしまたは修正版なし）は、React 19 実装 PR とは分離してセキュリティ対応 Issue 群へ切り出す。
+  - 実装着手時に `npm audit --json` / `npm audit --omit=dev --json` を再取得し、取得日時付きで件数・内訳を plan 実装 PR に記録する（件数変動を許容）。
 - 外部依存・Secrets の扱い:
-  - 依存更新は React 18/19 両対応に必要な最小限（`@testing-library/react`、`@types/react*`、必要時 TypeScript）に限定する。
-  - `example/package.json` / `example/package-lock.json` の恒久更新を行わず、公開版と GitHub Pages は React 18 のまま維持する。React 19 の検証は CI またはローカルで一時的な依存上書きで実施し、結果を公開版の lockfile に残さない。
-  - `npm audit` の結果は重大度と直接/間接依存を記録し、修正可否を判断する。
+  - audit 判定は Node.js 標準機能のみで実装し、追加 npm パッケージは導入しない。
   - シークレット値は扱わない（固定値・トークンの追加禁止）。
 
 ## 3. 設計方針
@@ -49,55 +57,48 @@
   - 型互換:
     - `ReactChild` は `React.ReactNode`（または用途に応じた `ReactElement`）へ置換し、React 19 型での削除影響を解消する。
     - グローバル `JSX.Element` は `React.JSX.Element` または `ReactElement` へ置換し、React 19 型空間に合わせる。
-    - `src/typings.d.ts` の `interface SvgrComponent extends React.StatelessComponent<...>` は `React.FunctionComponent` / `React.FC` へ置換し、`@types/react` 19 で削除された `StatelessComponent` を回避する。
+    - `src/typings.d.ts` の `React.StatelessComponent` は `React.FunctionComponent` / `React.FC` へ置換する。
     - `useRef()` 引数省略の有無を再走査し、該当があれば初期値を明示する。
-  - 公開 API:
-    - `TooltipContent` / `TaskListHeader` / `TaskListTable` の公開契約は維持し、型の受け口のみ互換的に調整する。
-    - 生成される `dist/*.d.ts` に `ReactChild` / グローバル `JSX` が残らないことを確認する。
-  - CI マトリクス:
-    - `matrix.react: [18, 19]` を導入し、各ジョブで `npm ci` 後に対象バージョンの `react` / `react-dom` / `@types/react*` を `--no-save` で上書きインストールして `npm test` を実行する。
-    - `package-lock.json` は固定しつつ、CI では検証目的の一時上書きで両バージョンの互換を担保する。
-- テスト環境方針:
-  - `react-scripts` 5 + Jest 27 を維持してまず両バージョンで検証する。
-  - `@testing-library/react` は React 18/19 両対応版へ更新（候補: 16系）し、Jest 27 との組み合わせで失敗した場合のみ段階的に代替案（バージョン再選定）を適用する。
-  - `example/` の公開版は React 18 のまま維持し、React 19 での動作確認は一時的な `npm install --no-save` / `npm install --no-save react@19 ...` による上書きで実施し、公開 branch への lockfile 反映は行わない。
+  - 監査ゲート（例外あり fail-closed）:
+    - `scripts/ci/check-npm-audit-gate.mjs` が各ジョブで `npm audit --json` と `npm audit --omit=dev --json` を実行し、JSON 解析結果で合否を判定する。
+    - 例外単位は「勧告ID（GHSA/CVE/`via.source`）× パッケージ名 × 重大度 × 対象ジョブ（react18/react19/both）」とし、パッケージ単位より粒度を細かくする。
+    - 例外台帳（`.github/security/npm-audit-exceptions.json`）の必須項目は `id`, `package`, `severity`, `appliesTo`, `approvedBy`, `approvedAt`, `reason`, `trackingIssue`, `expiresAt`。
+    - 合否ルール:
+      - `--omit=dev` 側に `high` / `critical` が 1 件でもあれば即失敗（公開パッケージ利用者影響のため例外不可）。
+      - 全依存側で `high` / `critical` が検出された場合、未登録の検出は失敗。
+      - 登録済みでも `expiresAt` 超過は失敗（期限切れを自動検出）。
+      - audit コマンドの実行失敗（ネットワーク障害・JSON 壊れ等）は失敗（fail-closed）。
+  - React 18/19 差分の扱い:
+    - 同一ルールを両ジョブに適用し、CI 全体成功条件は「react18 と react19 の両方が成功」。
+    - 片系統のみで出る検出は `appliesTo` で個別管理し、未承認なら当該ジョブを失敗させる。
 - エッジケース / 例外系 / リトライ方針:
-  - React 19 型のみで失敗するケース（`ReactChild`、`JSX`、ref 初期値）を優先修正し、React 18 型での後方互換を回帰テストで固定する。
-  - CI マトリクスの片系統失敗時は、依存上書き手順・型差分・ランタイム差分を分離して原因を記録し、修正後に両系統を再実行する。
+  - npm advisory 更新により無関係 PR が失敗した場合も、ルールどおり失敗を維持する（監査無視は禁止）。
+  - 運用上は、期限付き例外を追加する PR（または同一 PR への追コミット）を作成し、同時に追跡 Issue を起票して恒久対処へ接続する。
 - ログと観測性（漏洩防止を含む）:
-  - 追加ログは原則不要。必要時も依存名/バージョン/エラー種別のみを扱い、機密情報は出力しない。
+  - CI ログには「検出キー、重大度、ジョブ種別、例外一致/期限切れ、判定結果」のみを出力し、脆弱性詳細 JSON 全量は artifact として保存する。
 
 ## 4. テスト戦略
 
 - 対象（コンポーネント/ヘルパ一覧）:
   - 既存テスト一式（`src/test/*.test.tsx`）を React 18・19 で再実行し、既存機能回帰を確認する。
-  - 重点確認対象:
-    - ガント描画（timeline / bar 描画）
-    - バードラッグによる日付・進捗更新
-    - タスク選択
-    - 展開・折りたたみ
-    - タスクリストセル編集とオーバーレイエディタ
-    - 列ドラッグ・リサイズ
-    - カレンダー表示
-  - 型互換確認対象:
-    - `TooltipContent` / `TaskListHeader` / `TaskListTable` に利用者定義コンポーネントを渡せること（React 18/19 型の双方）。
+  - 監査ゲート検証対象: `scripts/ci/check-npm-audit-gate.mjs`（ユニット相当の fixture テスト or `node` 実行テスト）。
 - 方式（何で守るか）:
   - ヘルパ/ロジック: 既存ユニットテストを継続利用。
   - UI/相互作用: React Testing Library の既存コンポーネントテストを継続利用し、不足ケースのみ追加。
-  - 型: `test:build`（microbundle + TS）で `dist` 型生成を含めて検証。
+  - 監査ゲート: 固定 fixture（既存42件相当・新規検出・期限切れ・コマンド失敗）を与えて判定を検証する。
 - ケース（正常 / 例外 / 境界 / 回帰）:
-  - 正常系: React 18/19 で `npm run test:unit` 成功。
-  - 例外系: React 19 型定義下での型エラー（`ReactChild`/`JSX` 由来）が再発しない。
-  - 境界値: カスタムコンポーネント Props を最小構成で渡した場合も型が成立。
-  - 回帰: 既存テストの全成功を前提とし、機能挙動に差分が出ない。
+  - 正常系: 既存 42 件のみ（すべて期限内かつ承認済み）の場合に react18/react19 とも成功。
+  - 例外系: 例外未登録の `high` / `critical` が 1 件でも増えた場合に失敗。
+  - 境界値: 例外の `expiresAt` 当日/翌日で判定が切り替わること。
+  - 例外系: audit コマンド失敗時（通信障害・不正 JSON）に失敗。
+  - 回帰: 既存 React 19 対応テスト方針（描画/編集/ドラッグ等）を変更せず維持。
 - モック方針:
-  - 時刻・DOM 計測など既存モック戦略を維持し、React バージョン差異による非決定性を持ち込まない。
+  - 時刻依存（`expiresAt` 判定）は固定日時注入でテストし、環境依存を排除する。
 - 配置先:
   - 既存: `src/test/*.test.tsx`
-  - 追加が必要な場合: `src/test/<対象>.test.tsx` に最小追加。
+  - 追加: `src/test/check-npm-audit-gate.test.ts`（または既存 CI テスト配置方針に準拠）
 - 実行コマンド:
-  - ローカル最小確認: `npm run test:unit` / `npm run test:build`
-  - CI 基準: `npm test`
+  - `npm run test:unit`（CI では `npm test`）
 
 ## 5. CI 品質ゲート
 
@@ -107,40 +108,48 @@
     - `test:unit`: `cross-env CI=1 react-scripts test --env=jsdom`
     - `test:lint`: `eslint --ext .tsx src/**/*`
     - `test:build`: `microbundle-crl --no-compress --format modern,cjs --tsconfig tsconfig.build.json`
-  - security: `npm audit`
-  - 実行タイミング: `install` 後に各 React バージョンのジョブで `npm audit` を実行し、`npm test` の前後で失敗時の調査記録を残す。`npm audit` は matrix の各ジョブで独立実行し、同時に npm の lockfile を固定した公開版の integrity も維持する。
+  - security:
+    - `node scripts/ci/check-npm-audit-gate.mjs --react=18`
+    - `node scripts/ci/check-npm-audit-gate.mjs --react=19`
 - React 18・19 の CI マトリクス実行方法:
   - `strategy.matrix.react: [18, 19]` を設定。
-  - 実行順序は `npm ci` → 対象 React/型の一時上書き (`npm install --no-save react@<matrix> react-dom@<matrix> @types/react@<matrix対応> @types/react-dom@<matrix対応>`) → `npm audit --audit-level=high` → `npm test` と固定する。
-  - 監査ゲートは各ジョブで `npm audit --audit-level=high` を実行する。`high` / `critical` の検出はリリースブロッカーとして扱い、検出時点でジョブを失敗させる。`npm audit` の失敗を「無視して通過させる」運用はしない。
-  - 重大度 `high` / `critical` が出た場合は、修正または受容理由を PR/Issue に明示記録し、未解消時は別 Issue へ切り出して追跡する。記録にはタイムスタンプ・依存名・重大度・対処結果を含める。
-  - lockfile はコミット対象にせず、検証の再現性は workflow 手順で担保する。
-- 通過基準と失敗時の対応:
-  - React 18・19 の両ジョブで `npm ci` → `npm audit --audit-level=high` → `npm test` の順で全成功。
-  - `npm audit --audit-level=high` が `high` / `critical` を出した場合は、直ちにジョブ失敗として扱う。例外を認める場合は、事前にレビュアー承認を受けた「受容理由」へ明示的に切り替え、リリース判定には含めない。
-  - 監査結果の記録は、タイムスタンプ・依存名・重大度・対処結果を CIログまたは issue / PR コメントに残す。
+  - 各ジョブは `npm ci` 後、`react@<matrix>` / `react-dom@<matrix>` / `@types/react*` を `--no-save` で上書きして `npm test` と audit gate を実行する。
+  - `continue-on-error`、`|| true`、失敗無視は使用しない。
+- 通過基準と失敗時の対応（一意判定ルール）:
+  - CI 全体成功条件: react18/react19 の両ジョブで install + security + test がすべて成功。
+  - 失敗条件:
+    - `--omit=dev` で `high` / `critical` を検出。
+    - 全依存監査で例外未登録の `high` / `critical` を検出。
+    - 例外期限切れを検出。
+    - audit 実行自体の失敗。
+  - 失敗時は PR に「検出キー / 重大度 / 発生ジョブ / 既存例外との差分 / 対応方針（修正 or 期限付き例外）」を追記する。
+- 実行タイミング:
+  - 必須: `pull_request` / `push(main)`。
+  - 早期検知: `schedule`（日次）でも同ゲートを実行し、main 側で新規勧告を先に検知する。
 - example アプリ動作確認（`docs/REBUILD.md` 準拠）:
   - ルート: `npm ci && npm run build`
   - `example/`: `rm -rf node_modules && npm install && npm start`
-  - `example/` の公開版・GitHub Pages は React 18 のまま維持し、React 19 の動作確認は一時的な `npm install --no-save react@19 react-dom@19 @types/react@19 @types/react-dom@19` による上書きで行う。上書き結果は公開版の `example/package.json` / lockfile に残さず、実装フェーズで検証のためだけに扱う。
-  - React 19 検証時は `example` でも対象 React バージョンを上書きして起動確認し、主要操作（描画・編集・ドラッグ）を目視確認する。
+  - React 19 検証は一時上書き（`npm install --no-save react@19 react-dom@19 @types/react@19 @types/react-dom@19`）で実施し、公開版 lockfile に残さない。
 
 ## 6. ロールアウト・運用
 
 - ロールバック方法:
-  - 互換性問題が発生した場合は、`peerDependencies` と型置換コミットを個別に revert できる粒度で実装 PR を分割する。
-  - 緊急時は README のサポート表記を一時的に React 18 のみに戻し、React 19 対応を feature branch で継続する。
+  - 監査ゲート導入で想定外停止が起きた場合は、例外台帳更新コミットと React 19 対応本体コミットを分離して revert 可能にする。
 - 監視・運用上の注意:
-  - npm publish 前に React 18/19 両ジョブの最終成功を release 判定条件にする。
-  - 互換性問い合わせに備え、README に「検証済み Node/React 組み合わせ」を明記する。
+  - 例外承認者はリポジトリ maintainer（最低 1 名）とし、承認は「例外台帳変更 PR レビュー」で記録する。
+  - 例外期限は原則 30 日以内。延長には再承認と新しい期限設定を必須化する。
+  - 例外ごとに追跡 Issue を必須化し、修正完了時に例外台帳から削除する。
+  - #141 範囲外の対応は以下の優先度で別 Issue 化する:
+    - P1: `gh-pages` メジャー更新（critical）
+    - P1: `react-scripts` / `microbundle-crl` 起因の高重大度（置換方針検討を含む）
+    - P2: 互換範囲更新で解消可能な 25 件のまとめ対応
 
 ## 7. オープンな課題 / ADR 要否
 
 - 未確定事項:
-  - TBD（理由: React 19 公式アップグレードガイド照合結果を実装PRの証跡として固定するため / 決定条件: React 19 で削除・非推奨 API の未使用をチェックリストで全件確認 / 期限: IMPLEMENT PR の初回レビュー提出時）
-  - TBD（理由: TypeScript 4.9 + `microbundle-crl` が `@types/react` 19 で問題ないか実測が必要なため / 決定条件: React 19 ジョブで `test:build` が安定成功すること / 期限: IMPLEMENT PR 内で CI 2回連続成功時）
+  - TBD（理由: `npm audit --json` の実データで例外キー正規化ロジックの揺れを最終確認する必要があるため / 決定条件: React18・19 の最新 JSON を再取得し、同一勧告が安定して同一キーへ写像できることを確認 / 期限: #141 IMPLEMENT PR の最初の CI 通過前）
 - ADR に残すべき判断:
-  - **要否: 原則不要（公開 API 破壊なし前提）**
-  - ただし公開型の意味変更や必須化が必要になった場合のみ、`.github/copilot/70-adr/` に ADR を追加してから実装する。
+  - **要: 依存脆弱性の「期限付き例外 + 新規検出ブロック」運用は長期ルールのため ADR 化する。**
+  - ただし本 Issue では plan 反映までとし、ADR 文書化は別 DESIGN/ADR Issue で実施する。
 - BLOCKER 判定:
   - BLOCKER となる TBD は 0 件。
