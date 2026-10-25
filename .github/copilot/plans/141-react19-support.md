@@ -7,6 +7,7 @@
   - React 19 で削除・変更された API/型（`ReactChild`、グローバル `JSX` など）の利用箇所を洗い出し、React 18・19 双方で型が通る実装へ統一する。
   - 公開 API（`src/index.tsx` の export、`src/types/public-types.ts` の公開 Props/型）の後方互換性を維持する。
   - React 18・19 それぞれで `npm test`（unit/lint/build）を実行できる CI マトリクスを整備する。
+  - `example/` の公開版・GitHub Pages は React 18 のまま維持し、React 19 の検証は一時的な依存上書きで行う。`example/package.json` と lockfile は恒久更新せず、公開版へ残さない。
   - README の対応バージョン表記を React 18/19 正式対応に更新する。
 - 非機能要件:
   - 既存利用者の導入手順・ランタイム挙動を壊さない（破壊的変更なし）。
@@ -35,6 +36,7 @@
   - 破壊的変更（export 削除、Props 必須化、型名削除）は行わない。
 - 外部依存・Secrets の扱い:
   - 依存更新は React 18/19 両対応に必要な最小限（`@testing-library/react`、`@types/react*`、必要時 TypeScript）に限定する。
+  - `example/package.json` / `example/package-lock.json` の恒久更新を行わず、公開版と GitHub Pages は React 18 のまま維持する。React 19 の検証は CI またはローカルで一時的な依存上書きで実施し、結果を公開版の lockfile に残さない。
   - `npm audit` の結果は重大度と直接/間接依存を記録し、修正可否を判断する。
   - シークレット値は扱わない（固定値・トークンの追加禁止）。
 
@@ -58,6 +60,7 @@
 - テスト環境方針:
   - `react-scripts` 5 + Jest 27 を維持してまず両バージョンで検証する。
   - `@testing-library/react` は React 18/19 両対応版へ更新（候補: 16系）し、Jest 27 との組み合わせで失敗した場合のみ段階的に代替案（バージョン再選定）を適用する。
+  - `example/` の公開版は React 18 のまま維持し、React 19 での動作確認は一時的な `npm install --no-save` / `npm install --no-save react@19 ...` による上書きで実施し、公開 branch への lockfile 反映は行わない。
 - エッジケース / 例外系 / リトライ方針:
   - React 19 型のみで失敗するケース（`ReactChild`、`JSX`、ref 初期値）を優先修正し、React 18 型での後方互換を回帰テストで固定する。
   - CI マトリクスの片系統失敗時は、依存上書き手順・型差分・ランタイム差分を分離して原因を記録し、修正後に両系統を再実行する。
@@ -105,16 +108,20 @@
     - `test:lint`: `eslint --ext .tsx src/**/*`
     - `test:build`: `microbundle-crl --no-compress --format modern,cjs --tsconfig tsconfig.build.json`
   - security: `npm audit`
+  - 実行タイミング: `install` 後に各 React バージョンのジョブで `npm audit` を実行し、`npm test` の前後で失敗時の調査記録を残す。`npm audit` は matrix の各ジョブで独立実行し、同時に npm の lockfile を固定した公開版の integrity も維持する。
 - React 18・19 の CI マトリクス実行方法:
   - `strategy.matrix.react: [18, 19]` を設定。
   - 各ジョブで `npm ci` 実行後、`npm install --no-save react@<matrix> react-dom@<matrix> @types/react@<matrix対応> @types/react-dom@<matrix対応>` を適用し `npm test` を実行。
+  - 監査ゲートは各ジョブで `npm audit --audit-level=high` を実行し、重大度 `high` / `critical` の結果が出た場合は `修正または受容理由を PR/Issue に記録` して未解消時は別 Issue へ切り出す。最高優先度の検出はジョブ失敗として扱う。
   - lockfile はコミット対象にせず、検証の再現性は workflow 手順で担保する。
 - 通過基準と失敗時の対応:
   - React 18・19 の両ジョブで `npm test` 成功。
-  - `npm audit` で高/critical が出た場合は修正または受容理由を記録し、未解消時は別 Issue へ切り出して追跡する。
+  - `npm audit --audit-level=high` が high / critical を出した場合は修正または受容理由を記録し、未解消時は別 Issue へ切り出して追跡する。
+  - 監査結果の記録は、タイムスタンプ・依存名・重大度・対処結果を CIログまたは issue / PR コメントに残す。
 - example アプリ動作確認（`docs/REBUILD.md` 準拠）:
   - ルート: `npm ci && npm run build`
   - `example/`: `rm -rf node_modules && npm install && npm start`
+  - `example/` の公開版・GitHub Pages は React 18 のまま維持し、React 19 の動作確認は一時的な `npm install --no-save react@19 react-dom@19 @types/react@19 @types/react-dom@19` による上書きで行う。上書き結果は公開版の `example/package.json` / lockfile に残さず、実装フェーズで検証のためだけに扱う。
   - React 19 検証時は `example` でも対象 React バージョンを上書きして起動確認し、主要操作（描画・編集・ドラッグ）を目視確認する。
 
 ## 6. ロールアウト・運用
