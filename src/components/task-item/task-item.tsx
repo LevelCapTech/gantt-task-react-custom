@@ -43,7 +43,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     ...props,
   };
   const textRef = useRef<SVGTextElement>(null);
-  const [taskItem, setTaskItem] = useState<JSX.Element>(<div />);
+  const [taskItem, setTaskItem] = useState<React.ReactNode>(<div />);
   const [isTextInside, setIsTextInside] = useState(true);
   const normalizedStatus = normalizeStatus(task.status);
   const statusColor = getStatusColor(normalizedStatus);

@@ -1,0 +1,24 @@
+[
+  {
+    "id": "GHSA-8mmm-9v2q-x3f9",
+    "package": "gh-pages",
+    "severity": "critical",
+    "appliesTo": "both",
+    "approvedBy": "TBD",
+    "approvedAt": "TBD",
+    "reason": "Temporary exception for the existing React 18 lockfile while a separate major update is tracked.",
+    "trackingIssue": "TBD",
+    "expiresAt": "2030-12-31T00:00:00.000Z"
+  },
+  {
+    "id": "GHSA-fv7c-fp4j-7gwp",
+    "package": "@babel/plugin-transform-modules-systemjs",
+    "severity": "high",
+    "appliesTo": "both",
+    "approvedBy": "TBD",
+    "approvedAt": "TBD",
+    "reason": "Temporary dev-toolchain exception while the build toolchain is outside the React 19 compatibility scope.",
+    "trackingIssue": "TBD",
+    "expiresAt": "2030-12-31T00:00:00.000Z"
+  }
+]
