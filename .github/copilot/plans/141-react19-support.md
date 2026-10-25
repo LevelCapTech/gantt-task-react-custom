@@ -111,12 +111,13 @@
   - 実行タイミング: `install` 後に各 React バージョンのジョブで `npm audit` を実行し、`npm test` の前後で失敗時の調査記録を残す。`npm audit` は matrix の各ジョブで独立実行し、同時に npm の lockfile を固定した公開版の integrity も維持する。
 - React 18・19 の CI マトリクス実行方法:
   - `strategy.matrix.react: [18, 19]` を設定。
-  - 各ジョブで `npm ci` 実行後、`npm install --no-save react@<matrix> react-dom@<matrix> @types/react@<matrix対応> @types/react-dom@<matrix対応>` を適用し `npm test` を実行。
-  - 監査ゲートは各ジョブで `npm audit --audit-level=high` を実行し、重大度 `high` / `critical` の結果が出た場合は `修正または受容理由を PR/Issue に記録` して未解消時は別 Issue へ切り出す。最高優先度の検出はジョブ失敗として扱う。
+  - 実行順序は `npm ci` → 対象 React/型の一時上書き (`npm install --no-save react@<matrix> react-dom@<matrix> @types/react@<matrix対応> @types/react-dom@<matrix対応>`) → `npm audit --audit-level=high` → `npm test` と固定する。
+  - 監査ゲートは各ジョブで `npm audit --audit-level=high` を実行する。`high` / `critical` の検出はリリースブロッカーとして扱い、検出時点でジョブを失敗させる。`npm audit` の失敗を「無視して通過させる」運用はしない。
+  - 重大度 `high` / `critical` が出た場合は、修正または受容理由を PR/Issue に明示記録し、未解消時は別 Issue へ切り出して追跡する。記録にはタイムスタンプ・依存名・重大度・対処結果を含める。
   - lockfile はコミット対象にせず、検証の再現性は workflow 手順で担保する。
 - 通過基準と失敗時の対応:
-  - React 18・19 の両ジョブで `npm test` 成功。
-  - `npm audit --audit-level=high` が high / critical を出した場合は修正または受容理由を記録し、未解消時は別 Issue へ切り出して追跡する。
+  - React 18・19 の両ジョブで `npm ci` → `npm audit --audit-level=high` → `npm test` の順で全成功。
+  - `npm audit --audit-level=high` が `high` / `critical` を出した場合は、直ちにジョブ失敗として扱う。例外を認める場合は、事前にレビュアー承認を受けた「受容理由」へ明示的に切り替え、リリース判定には含めない。
   - 監査結果の記録は、タイムスタンプ・依存名・重大度・対処結果を CIログまたは issue / PR コメントに残す。
 - example アプリ動作確認（`docs/REBUILD.md` 準拠）:
   - ルート: `npm ci && npm run build`
