@@ -42,67 +42,33 @@
 - 既存脆弱性 42 件の扱い（本 Issue での設計判断）:
   - #141（React 19 対応）では「React 19 両対応に必要な最小依存更新」のみを実施し、既存 42 件の一括解消はスコープ外とする。
   - 既存 42 件は初期例外台帳に登録し、`approvedBy`・`reason`・`expiresAt`・`trackingIssue` を必須化する。ただし、例外キーは「勧告ID×パッケージ×重大度×ジョブ」で定義し、42 件は package 数の総数であり、例外レコード数はそのまま 42 と同一ではない（同一 package に複数勧告や `via` の分岐があるため）ことを明記する。
-  - 25 件（互換範囲更新で解消可能）/ 1 件（`gh-pages` メジャー更新）/ 16 件（`react-scripts`・`microbundle-crl` 系で修正手段なしまたは修正版なし）は、React 19 実装 PR とは分離してセキュリティ対応 Issue 群へ切り出す。
-  - 実装着手時に `npm audit --json` / `npm audit --omit=dev --json` を再取得し、取得日時・全件の依存元・勧告ID・影響範囲・検出件数を記録する。分類根拠は「React 19 対応で直せるもの」「期限付き例外にするもの」「別 Issue で直すもの」に整理し、plan 実装 PR に記録する（件数変動を許容）。
-  - `via` の複数勧告・文字列項目の正規化方針を明記する: 例外キーは `id` を優先し、`via` が配列/オブジェクトを含む場合は `via[<n>].source` / `url` / `title` を正規化し、同一アドバイスが複数経路で出ても一意へマップする。未確定事項は初期台帳作成前の `TBD` とし、BLOCKER は「同一勧告の正規化が不安定な場合のみ」に限定する。
+  - `25 / 1 / 16` 分類は修正方法別で、表の `classification` は例外運用別のカテゴリである。両者は一致しないため、各 package へは `fixAvailable` / `requiredUpdate` / `trackingIssue` を併記し、どの package が lockfile のみ更新で解決可能か、どれがメジャー更新必須か、どれが修正版なしで別 Issue かを明示する。
+  - 実装着手時に `npm audit --json` / `npm audit --omit=dev --json` を再取得し、取得日時・依存元（manifest での直依存）・勧告ID・影響範囲・検出件数を記録する。分類根拠は「React 19 対応で直せるもの」「期限付き例外にするもの」「別 Issue で直すもの」に整理し、plan 実装 PR に記録する（件数変動を許容）。
+  - `via` の複数勧告・文字列項目の正規化方針を明記する: 例外キーは `id` を優先し、`via` が配列/オブジェクトを含む場合は `via[<n>].source` / `url` / `title` を正規化し、同一アドバイスが複数経路で出ても一意へマップする。`advisoryIds` が `—` の行は自動許容しない; その行は `source` / `title` の補完が可能な場合のみ `identityKey` を生成し、未補完のままなら fail-closed で要確認扱いとする。
+  - 例外照合と識別キー（重要）:
+    - 正常系の照合キーは `package + advisoryId + severity + job` を優先し、`advisoryId` は GHSA/CVE 値そのものまたは `via[*].source` / `url` / `title` の正規化値を使用する。
+    - `advisoryId` が取れない行は `package + severity + job` だけで例外一致させない。識別不能な脆弱性は「未登録・不明」扱いで fail-closed にし、新規検出として失敗させる。
+    - `dependencyPath` は `node_modules/...` の設置場所であり、依存木の「誰がどこから到達したか」を表すものではない。直接依存の起点は `package.json` / lockfile の `nodes` と manifest 解析で補う。設計 PR の表では `dependencyPath` を「設置場所」、`directDependency` を「依存元の補足情報」、`affectedRange` を「advisory の影響バージョン範囲」などに分離し、実測データがない列は `unknown` とし、`auto-allow` しない。
   - 設計 PR での調査証跡（必須・実測値）:
     - 取得日時: `2026-10-25T10:09:13Z`（ローカル実測）
     - 実測コマンド:
       - `npm audit --json` → exit code `1`, `high 38 / critical 4`（= 42 packages）
       - `npm audit --omit=dev --json` → exit code `0`, vulnerabilities `0`（prod 依存は clean）
-    - 対象一覧: package / 依存経路 / 勧告ID / 影響範囲 / 分類（React 19 内修正 / 期限付き例外 / 別 Issue） / 根拠 / 例外レコード対応関係
+    - 対象一覧: package / directDependency / dependencyPath / advisoryIds / affectedRange / fixAvailable / requiredUpdate / classification / reason
+    - `directDependency` と `affectedRange` は `npm audit --json` の標準出力からは完全には導出できないため、`directDependency` は manifest と lockfile で補完し、`affectedRange` は advisory が持つ `range` / `severity` / `url` を優先して記録する。取得できない値は `unknown` とし、例外照合のキーに使わない。
     - 例外レコード数対応関係: `42 package` と `例外レコード数` は 1:1 ではない。`npm audit --json` の `via` は 1 package に複数 advisory / via ノードを持ち得るため、例外キーは「package × advisoryID × severity × job」単位で管理する。`brace-expansion` を例に取ると、1 package に 7 個の一意 GHSA と 14 件の `via` エントリが存在するが、例外レコードは GHSA 単位で生成される。
-    - `dependencyPath` は `node_modules/...` のインストール経路であり、`npm audit --json` に含まれる node 参照の最も近い実体パスである。完全な依存木（`A -> B -> C`）は `nodes` が示すが、各行の `dependencyPath` は実測上の配置パスに置換し、`impact` は package 直下の影響スコープ（`dev/build tooling` / `publish tooling`）に変換する。
-    - `advisoryIds` が `—` の行は、`via` に advisory オブジェクトが無く、間接的な package 依存として検出されたか、あるいは `npm audit --json` がオブジェクト形式で ID を返していないケースを指す。この場合、例外キー生成時は `package` と `severity` を優先し、GHSA が明示されない行は `source` / `title` の補完を要する。実運用では `—` を「不明」ではなく「GHSA なしの indirect finding」として扱う。
-    - 実測一覧 (high/critical):
+    - `advisoryIds` が `—` の行は `package × severity` だけで例外照合しない。`via` に advisory オブジェクトが無く、間接的な package 依存として検出されたか、あるいは `npm audit --json` がオブジェクト形式で ID を返していないケースが該当する。この場合、識別キーは `via.source` / `title` / `url` の補完ができる場合に限り生成し、補完できない場合は fail-closed とする。
+    - 実測一覧 (high/critical) は package 42 件を目安とし、`directDependency` / `affectedRange` / `fixAvailable` / `requiredUpdate` の情報は `package.json` / lockfile を参照して補完する。設計 PR ではこの情報を「実測を重ねた上で確認したかどうか」を区別し、実測できない列は `unknown` と明記する。
+    - 分類の整合: 25/1/16 は「修正方法別の分類（fix available / exception / separate issue）」であり、表の `classification` は「例外運用別の分類」である。対応関係は以下の通りに固定する:
 
-      | package | severity | dependencyPath | advisoryIds | impactScope | classification | reason |
-      | --- | --- | --- | --- | --- | --- | --- |
-      | `@babel/plugin-transform-modules-systemjs` | high | `node_modules/@babel/plugin-transform-modules-systemjs` | `GHSA-fv7c-fp4j-7gwp` | dev/build tooling | 期限付き例外 | 既存 dev toolchain / 実測 JSON により高重大度を確認 |
-      | `@rollup/plugin-node-resolve` | high | `node_modules/@rollup/plugin-node-resolve` | — | dev/build tooling | 期限付き例外 | advisory metadata が `via` で明示されず、package 単位の例外対象として扱う |
-      | `@svgr/plugin-svgo` | high | `node_modules/@svgr/plugin-svgo` | — | dev/build tooling | 期限付き例外 | advisory metadata が `via` で明示されず、package 単位の例外対象として扱う |
-      | `@svgr/rollup` | high | `node_modules/@svgr/rollup` | — | dev/build tooling | 期限付き例外 | advisory metadata が `via` で明示されず、package 単位の例外対象として扱う |
-      | `@svgr/webpack` | high | `node_modules/@svgr/webpack` | — | dev/build tooling | 期限付き例外 | advisory metadata が `via` で明示されず、package 単位の例外対象として扱う |
-      | `body-parser` | high | `node_modules/body-parser` | `GHSA-v422-hmwv-36x6`, `GHSA-27r3-jxmh-p828` | dev/build tooling | 期限付き例外 | 複数 advisory を持つ dev-only dependency |
-      | `brace-expansion` | high | `node_modules/brace-expansion > node_modules/filelist/node_modules/brace-expansion` | `GHSA-f886-m6hf-6m8v`, `GHSA-3jxr-9vmj-r5cp`, `GHSA-mh99-v99m-4gvg`, `GHSA-rgw5-rvv9-x895`, `GHSA-q2hr-2g5m-vwhr`, `GHSA-qhr7-859c-m2p7`, `GHSA-6j4f-fj2g-mc7p` | dev/build tooling | 期限付き例外 | 1 package に 7 unique GHSA、14 via entries を持つ |
-      | `browserslist` | high | `node_modules/browserslist` | `GHSA-c83g-rgw3-j3cx`, `GHSA-73wf-gq98-2v4g` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `compression` | high | `node_modules/compression` | `GHSA-vc2v-76pw-4v95` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `css-select` | high | `node_modules/svgo/node_modules/css-select` | — | dev/build tooling | 期限付き例外 | indirect dependency / GHSA 未明示 |
-      | `fast-uri` | high | `node_modules/fast-uri` | `GHSA-v2hh-gcrm-f6hx`, `GHSA-7p8r-x3mc-p8w7`, `GHSA-q3j6-qgpj-74h6`, `GHSA-v39h-62p7-jpjc`, `GHSA-f65p-4m7j-42xc`, `GHSA-jqff-g426-hqxp`, `GHSA-4c8g-83qw-93j6`, `GHSA-qw65-cvwx-89v3`, `GHSA-hrr3-gc8f-f4qj`, `GHSA-w74x-v6f9-j3xg`, `GHSA-xhq7-xmqj-769h`, `GHSA-333x-w4r6-6crp` | dev/build tooling | 期限付き例外 | 1 package に多重 advisory を持つ |
-      | `flatted` | high | `node_modules/flatted` | `GHSA-25h7-pfq9-p65f`, `GHSA-rf6f-7fwh-wjgh` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `form-data` | high | `node_modules/form-data` | `GHSA-hmw2-7cc7-3qxx` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `gh-pages` | critical | `node_modules/gh-pages` | `GHSA-8mmm-9v2q-x3f9` | publish tooling | 別 Issue | `gh-pages` はメジャー更新が前提で React 19 本体とは別スコープ |
-      | `js-yaml` | high | `node_modules/@eslint/eslintrc/node_modules/js-yaml > node_modules/eslint/node_modules/js-yaml > node_modules/js-yaml` | `GHSA-h67p-54hq-rp68`, `GHSA-52cp-r559-cp3m`, `GHSA-5p4m-2wfm-xmqj`, `GHSA-2883-xcg3-v3hh` | dev/build tooling | 期限付き例外 | 一つの package に複数 advisory が紐づく |
-      | `jsonpath` | high | `node_modules/jsonpath` | `GHSA-6c59-mwgh-r2x6`, `GHSA-87r5-mp6g-5w5j` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `launch-editor` | high | `node_modules/launch-editor` | `GHSA-v6wh-96g9-6wx3`, `GHSA-698v-4r3x-3vcv`, `GHSA-r825-w8mm-5pxw`, `GHSA-587h-7wmj-h5pm` | dev/build tooling | 期限付き例外 | 4 advisory を持つ dev-only dependency |
-      | `lodash` | high | `node_modules/lodash` | `GHSA-r5fr-rjxr-66jc`, `GHSA-f23m-r3pf-42rh` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `microbundle-crl` | high | `node_modules/microbundle-crl` | — | build tooling | 別 Issue | `react-scripts` / `microbundle-crl` 系は修正方針検討が別件 |
-      | `minimatch` | high | `node_modules/filelist/node_modules/minimatch > node_modules/minimatch` | `GHSA-3ppc-4f35-3m26`, `GHSA-7r86-cg39-jmmj`, `GHSA-23c5-xmqv-rm74` | dev/build tooling | 期限付き例外 | 一つの package に複数 advisory が紐づく |
-      | `nanoid` | high | `node_modules/nanoid` | `GHSA-28wg-ghj8-5hjv`, `GHSA-2v37-7h3g-55p8`, `GHSA-xwg4-73v4-xw9w` | dev/build tooling | 期限付き例外 | 3 advisory を持つ dev-only dependency |
-      | `node-forge` | high | `node_modules/node-forge` | `GHSA-2328-f5f3-gj25`, `GHSA-q67f-28xg-22rw`, `GHSA-5m6q-g25r-mvwx`, `GHSA-ppp5-5v6c-4jwp`, `GHSA-86w9-cpqp-85rv` | dev/build tooling | 期限付き例外 | 5 advisory を持つ dev-only dependency |
-      | `nth-check` | high | `node_modules/svgo/node_modules/nth-check` | `GHSA-rp65-9cf3-cjxr` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `path-to-regexp` | high | `node_modules/path-to-regexp` | `GHSA-37ch-88jc-xwx2` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `picomatch` | high | `node_modules/picomatch > node_modules/tinyglobby/node_modules/picomatch` | `GHSA-3v7f-55p6-f55p`, `GHSA-c2c7-rcm5-vvqj` | dev/build tooling | 期限付き例外 | 2 advisory を持つ indirect dependency |
-      | `postcss` | high | `node_modules/autoprefixer/node_modules/postcss > ... > node_modules/stylehacks/node_modules/postcss` | `GHSA-566m-qj78-rww5`, `GHSA-7fh5-64p2-3v2j`, `GHSA-qx2v-qp2m-jg93`, `GHSA-6g55-p6wh-862q`, `GHSA-fxqj-rqcc-2cmp`, `GHSA-r28c-9q8g-f849` | dev/build tooling | 期限付き例外 | 6 advisory を持つ deeply nested dev dependency |
-      | `postcss-svgo` | high | `node_modules/postcss-svgo` | — | dev/build tooling | 期限付き例外 | indirect dependency / GHSA 未明示 |
-      | `proxy-addr` | critical | `node_modules/proxy-addr` | `GHSA-jqcg-44mw-7w3h` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `react-scripts` | high | `node_modules/react-scripts` | — | app build tooling | 別 Issue | React 19 対応と切り分けが必要な dev toolchain |
-      | `rollup` | high | `node_modules/rollup > node_modules/workbox-build/node_modules/rollup` | `GHSA-gcx4-mw62-g8wm`, `GHSA-mw96-cpmx-2vgc` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `rollup-plugin-terser` | high | `node_modules/rollup-plugin-terser > node_modules/workbox-build/node_modules/rollup-plugin-terser` | — | dev/build tooling | 期限付き例外 | indirect dependency / GHSA 未明示 |
-      | `serialize-javascript` | high | `node_modules/rollup-plugin-terser/node_modules/serialize-javascript > ... > node_modules/workbox-build/node_modules/serialize-javascript` | `GHSA-5c6j-r48x-rmvq`, `GHSA-qj8w-gfj5-8c6v`, `GHSA-m5mm-p8h7-m29v` | dev/build tooling | 期限付き例外 | 3 advisory を持つ deeply nested dev dependency |
-      | `shell-quote` | critical | `node_modules/shell-quote` | `GHSA-w7jw-789q-3m8p`, `GHSA-395f-4hp3-45gv` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `source-map-js` | high | `node_modules/source-map-js` | `GHSA-68fv-2mgg-jv7q` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `svgo` | high | `node_modules/css-minimizer-webpack-plugin/node_modules/svgo > node_modules/svgo` | `GHSA-xpqw-6gx7-v673`, `GHSA-2p49-hgcm-8545`, `GHSA-w27v-7q3p-w38r`, `GHSA-4vpr-x523-8j87` | dev/build tooling | 期限付き例外 | 4 advisory を持つ dev-only dependency |
-      | `underscore` | high | `node_modules/underscore` | `GHSA-qpx9-hpmf-5gmw` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `webpack-dev-middleware` | high | `node_modules/webpack-dev-middleware` | `GHSA-g84c-rxfj-3j2c` | dev/build tooling | 期限付き例外 | 実測 JSON 上で単一 advisory |
-      | `webpack-dev-server` | high | `node_modules/webpack-dev-server` | `GHSA-9jgg-88mc-972h`, `GHSA-4v9v-hfq4-rm2v`, `GHSA-79cf-xcqc-c78w`, `GHSA-mx8g-39q3-5c79`, `GHSA-f5vj-f2hx-8m93`, `GHSA-m28w-2pqf-7qgj` | dev/build tooling | 期限付き例外 | 6 advisory を持つ dev-only dependency |
-      | `websocket-driver` | critical | `node_modules/websocket-driver` | `GHSA-mp7j-qc5w-4988`, `GHSA-xv26-6w52-cph6` | dev/build tooling | 期限付き例外 | 2 advisory を持つ dev-only dependency |
-      | `workbox-build` | high | `node_modules/workbox-build` | — | dev/build tooling | 期限付き例外 | indirect dependency / GHSA 未明示 |
-      | `workbox-webpack-plugin` | high | `node_modules/workbox-webpack-plugin` | — | dev/build tooling | 期限付き例外 | indirect dependency / GHSA 未明示 |
-      | `ws` | high | `node_modules/webpack-dev-server/node_modules/ws > node_modules/ws` | `GHSA-58qx-3vcg-4xpx`, `GHSA-96hv-2xvq-fx4p` | dev/build tooling | 期限付き例外 | 2 advisory を持つ nested dependency |
+      | 区分 | 件数 | fixAvailable | requiredUpdate | 例 | 根拠 |
+      | --- | ---: | --- | --- | --- | --- |
+      | 互換範囲更新で解消可能 | 25 | Yes | lockfile or minor/patch bump | `body-parser`, `browserslist` 等 | 依存更新範囲内 |
+      | 期限付き例外 | 1 (または実測時の例外対象) | No | 承認済み期限付き例外 | `gh-pages`/`microbundle-crl` 等 | 既存脆弱性で React 19 とは切り分け |
+      | 別 Issue / 修正版未確定 | 16 | No | major update or upstream fix required | `react-scripts`, `microbundle-crl` など | 修正手段が別件 |
 
-    - 分類の整合: 25/1/16 は「修正方法別の分類（fix available / exception / separate issue）」であり、上記 `classification` 列は「設計上の例外管理カテゴリ」そのものである。`gh-pages` / `microbundle-crl` / `react-scripts` は `25/1/16` の別 Issue 側に当てはまり、残りの package は `期限付き例外` として扱う。React 19 自体の実測は本表では行わず、当該ロックファイルの実測結果であることを明記する。
-    - 結論: 実測上、`npm audit --omit=dev --json` は 0 件のため、公開依存の影響なし。残る 42 件は dev/build tooling を中心に、1 package に複数 advisory / `via` が発生するため、例外レコード数は package 数と一致しない。設計上の例外キーは `id × package × severity × job` を主軸とし、`via` の複数 advisory は同一 package 内でまとめて判定する。実データに基づき、未実測の雛形は `TBD` としない。
+      `namespace` の件数は実測時の package 集計と対応させ、各 package は `fixAvailable` + `requiredUpdate` を明示して `25 / 1 / 16` の内容と対応させる。React 19 の実測と React 18 の現行 lockfile 実測は別物であり、未測定の React 19 ジョブは `未実測` として保持する。
+    - 結論: 実測上、`npm audit --omit=dev --json` は 0 件のため、公開依存の影響なし。残る 42 件は dev/build tooling を中心に、1 package に複数 advisory / `via` が発生するため、例外レコード数は package 数と一致しない。設計上の例外キーは `id × package × severity × job` を主軸とし、`via` の複数 advisory は同一 package 内でまとめて判定する。`id` が取得不能な行は `package + severity` で自動例外許可しない; 代わりに `source` / `title` / `url` の補完を試み、補完できない場合は fail-closed で失敗する。実データに基づき、未実測の雛形は `TBD` としない。
 - 外部依存・Secrets の扱い:
   - audit 判定は Node.js 標準機能のみで実装し、追加 npm パッケージは導入しない。
   - シークレット値は扱わない（固定値・トークンの追加禁止）。
