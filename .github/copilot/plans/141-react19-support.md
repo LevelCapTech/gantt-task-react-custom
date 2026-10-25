@@ -23,6 +23,7 @@
     - `src/components/calendar/calendar.tsx`（`ReactChild` 置換）
     - `src/components/grid/grid-body.tsx`（`ReactChild` 置換）
     - `src/components/task-item/task-item.tsx`（`JSX.Element` 型参照方式の置換）
+    - `src/typings.d.ts`（SVG 型定義の `React.StatelessComponent` を `React.FunctionComponent`/`React.FC` へ置換）
     - `src/types/public-types.ts`（公開 Props 型互換性の確認と必要最小限の調整）
     - `src/index.tsx`（公開型 export の互換性確認）
     - `src/test/**/*.test.tsx`（必要な回帰テスト追加・更新）
@@ -46,6 +47,7 @@
   - 型互換:
     - `ReactChild` は `React.ReactNode`（または用途に応じた `ReactElement`）へ置換し、React 19 型での削除影響を解消する。
     - グローバル `JSX.Element` は `React.JSX.Element` または `ReactElement` へ置換し、React 19 型空間に合わせる。
+    - `src/typings.d.ts` の `interface SvgrComponent extends React.StatelessComponent<...>` は `React.FunctionComponent` / `React.FC` へ置換し、`@types/react` 19 で削除された `StatelessComponent` を回避する。
     - `useRef()` 引数省略の有無を再走査し、該当があれば初期値を明示する。
   - 公開 API:
     - `TooltipContent` / `TaskListHeader` / `TaskListTable` の公開契約は維持し、型の受け口のみ互換的に調整する。
