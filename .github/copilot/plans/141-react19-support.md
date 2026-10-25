@@ -48,7 +48,7 @@
   - 例外照合と識別キー（重要）:
     - 照合キーは `package + advisoryId + severity + job`。`advisoryId` は上記の再帰解決で得た GHSA ID、または GHSA がなければ `via` 勧告オブジェクトの `source` を名前空間付きで用いる。URL・source の対応が変わった場合は不一致として停止する。同一 package の複数 ID はすべて個別に照合し、一つでも未承認なら失敗する。
     - `advisoryId` が取れない行は `package + severity + job` だけで例外一致させない。識別不能な脆弱性は「未登録・不明」扱いで fail-closed にし、新規検出として失敗させる。
-    - `dependencyPath` は `node_modules/...` の設置場所であり、依存木の「誰がどこから到達したか」を表すものではない。依存経路の正確な起点は `package.json` / lockfile の `nodes` と manifest 解析で補う。設計 PR の表では `dependencyPath` を「設置場所」、`directDependency` を「依存元の補足情報」、`affectedRange` を「advisory の影響バージョン範囲」などに分離し、取得できない値は `unknown` と明示し、`auto-allow` しない。
+    - `dependencyPath` は `npm audit` の `nodes` が示す設置場所で、依存元そのものではない。依存起点は `package.json` の直接依存と lockfile の依存辺をたどり、各行の `rootDevDependencies` / `exampleDependencyChain` に分けて記録する。経路が確認できない新規項目は自動許容しない。
   - 修正方法別分類（25 / 1 / 16）:
     - 25 件: compatible bump で解消可能（lockfile / patch / minor update の範囲で処理可能）
     - 1 件: major update 必須（`gh-pages` のメジャー更新が前提）
@@ -230,7 +230,7 @@
 ## 7. オープンな課題 / ADR 要否
 
 - 未確定事項:
-  - React 19 job の監査結果と npm advisory の更新は未実測（TBD: React 19 CI 初回実行時に再取得し、再帰解決・例外照合・差分を確認する）。解決不能な参照や承認されていない新規 ID があれば CI は fail-closed とし、台帳承認または修正まで通過させない。
+  - TBD（理由: React 19 job の依存上書き後の監査結果は未実測で、npm advisory も更新され得る／決定条件: React 19 CI で監査 JSON を取得し、再帰解決した全 ID・例外照合・React 18 との差分を確定する／期限: #141 IMPLEMENT PR の最初の CI 通過前）。解決不能な参照や承認されていない新規 ID があれば CI は fail-closed とし、台帳承認または修正まで通過させない。
   - 42 件の具体的な各項目は、`npm audit --json` の実データで依存元・勧告ID・影響範囲・`via` を再確認してから初期例外台帳への記録を確定する。
 - ADR に残すべき判断:
   - **要: 依存脆弱性の「期限付き例外 + 新規検出ブロック」運用は長期ルールのため ADR 化する。**
@@ -255,7 +255,7 @@
   - 対象（見出し/ADR/Commit）：`# 4. テスト戦略` / `# 5. CI 品質ゲート` / `525f6c8`
   - 状態（対応済）：対応済
 - フィードバック（要約）：Issue #150 の再取得・全件記録要件が満たされていない
-  - 対応（何を変えた）：`# 2. スコープと変更対象` に実測値を追記し、`npm audit --json` / `npm audit --omit=dev --json` の取得日時、42 package の一覧、依存経路、advisory ID、影響範囲、分類理由、および `package × advisory × severity × job` で例外レコード数が 1:1 ではないことを明示した。`TBD` を削除し、実数に基づく調査証跡へ置換した。
+  - 対応（何を変えた）：`# 2. スコープと変更対象` に実測値を追記し、`npm audit --json` / `npm audit --omit=dev --json` の取得日時、42 package の一覧、依存経路、advisory ID、影響範囲、分類理由、および `package × advisory × severity × job` で例外レコード数が 1:1 ではないことを明示した。React 18 側の雛形 `TBD` を実数に基づく調査証跡へ置換した。React 19 側の未実測事項は 7章に条件・期限付きで残した。
   - 対象（見出し/ADR/Commit）：`# 2. スコープと変更対象` / `# 7. オープンな課題 / ADR 要否` / `c5c5bd1`
   - 状態（対応済）：対応済
 - フィードバック（要約）：PR 本文の既存記述と末尾追記の優先順位が曖昧だった
