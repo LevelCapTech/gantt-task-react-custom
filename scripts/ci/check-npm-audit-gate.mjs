@@ -134,12 +134,41 @@ function parseExceptions(filePath) {
 
 function isExpired(exception) {
   if (!exception || !exception.expiresAt) return true;
-  return new Date(exception.expiresAt).getTime() <= Date.now();
+  const timestamp = Date.parse(exception.expiresAt);
+  if (Number.isNaN(timestamp)) return true;
+  return timestamp <= Date.now();
+}
+
+function validateAuditPayload(label, auditJson) {
+  if (!auditJson || typeof auditJson !== "object") {
+    throw new Error(`${label} is missing or invalid`);
+  }
+
+  const vulnerabilities = auditJson.vulnerabilities;
+  if (vulnerabilities === undefined || vulnerabilities === null || typeof vulnerabilities !== "object") {
+    throw new Error(`${label} is missing a valid vulnerabilities object`);
+  }
+
+  const metadata = auditJson.metadata;
+  if (metadata && metadata.vulnerabilities && typeof metadata.vulnerabilities === "object") {
+    const counts = metadata.vulnerabilities;
+    if (counts.high !== undefined && typeof counts.high !== "number") {
+      throw new Error(`${label} has a non-numeric high vulnerability count`);
+    }
+    if (counts.critical !== undefined && typeof counts.critical !== "number") {
+      throw new Error(`${label} has a non-numeric critical vulnerability count`);
+    }
+  }
 }
 
 function evaluateAudit({ auditJson, omitDevJson, exceptions, reactVersion }) {
+  validateAuditPayload("Audit JSON", auditJson);
   const auditEntries = auditJson && auditJson.vulnerabilities ? auditJson.vulnerabilities : {};
   const omitDevEntries = omitDevJson && omitDevJson.vulnerabilities ? omitDevJson.vulnerabilities : {};
+
+  if (omitDevJson) {
+    validateAuditPayload("Omit dev audit JSON", omitDevJson);
+  }
 
   if (omitDevJson && ((omitDevJson.metadata?.vulnerabilities?.high || 0) > 0 || (omitDevJson.metadata?.vulnerabilities?.critical || 0) > 0)) {
     throw new Error(`Production dependency scan failed: high/critical vulnerabilities remain in --omit=dev`);
@@ -156,6 +185,7 @@ function evaluateAudit({ auditJson, omitDevJson, exceptions, reactVersion }) {
     }
 
     for (const advisoryId of advisoryIds) {
+      const expectedAppliesTo = `react${reactVersion}`;
       const matched = exceptions.find((exception) => {
         return (
           exception.package === packageName &&
@@ -163,13 +193,13 @@ function evaluateAudit({ auditJson, omitDevJson, exceptions, reactVersion }) {
           exception.severity === severity &&
           exception.appliesTo && (
             exception.appliesTo === "both" ||
-            exception.appliesTo === reactVersion
+            exception.appliesTo === expectedAppliesTo
           )
         );
       });
 
       if (!matched) {
-        highCriticalKeys.push({ packageName, advisoryId, severity, job: `react${reactVersion}` });
+        highCriticalKeys.push({ packageName, advisoryId, severity, job: expectedAppliesTo });
         continue;
       }
 
