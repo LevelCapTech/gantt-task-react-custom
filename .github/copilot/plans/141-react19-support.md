@@ -45,6 +45,19 @@
   - 25 件（互換範囲更新で解消可能）/ 1 件（`gh-pages` メジャー更新）/ 16 件（`react-scripts`・`microbundle-crl` 系で修正手段なしまたは修正版なし）は、React 19 実装 PR とは分離してセキュリティ対応 Issue 群へ切り出す。
   - 実装着手時に `npm audit --json` / `npm audit --omit=dev --json` を再取得し、取得日時・全件の依存元・勧告ID・影響範囲・検出件数を記録する。分類根拠は「React 19 対応で直せるもの」「期限付き例外にするもの」「別 Issue で直すもの」に整理し、plan 実装 PR に記録する（件数変動を許容）。
   - `via` の複数勧告・文字列項目の正規化方針を明記する: 例外キーは `id` を優先し、`via` が配列/オブジェクトを含む場合は `via[<n>].source` / `url` / `title` を正規化し、同一アドバイスが複数経路で出ても一意へマップする。未確定事項は初期台帳作成前の `TBD` とし、BLOCKER は「同一勧告の正規化が不安定な場合のみ」に限定する。
+  - 設計 PR での調査証跡（必須）:
+    - 取得日時: `TBD（Issue #150 の再取得日時）`
+    - 対象一覧: package / 依存経路 / 勧告ID / 影響範囲 / 分類（React 19 内修正 / 期限付き例外 / 別 Issue） / 根拠 / 例外レコード対応関係
+    - 例外レコード数対応関係: `42 package` と `例外レコード数` は 1:1 ではないため、同一 package に複数 `via`/複数 advisory が発生した場合を併記する。
+    - 形式例:
+      - `package`: `TBD`
+      - `dependencyPath`: `TBD`
+      - `advisoryId`: `TBD`
+      - `impact`: `TBD`
+      - `classification`: `TBD`
+      - `reason`: `TBD`
+      - `exceptionRecordCountRelation`: `TBD（例: 2 advisory → 1 exception or 1 advisory → 1 exception）`
+    - 未実データで「対応済み」とはせず、上記調査証跡を `npm audit --json` 再取得後に実数で確定する。
 - 外部依存・Secrets の扱い:
   - audit 判定は Node.js 標準機能のみで実装し、追加 npm パッケージは導入しない。
   - シークレット値は扱わない（固定値・トークンの追加禁止）。
