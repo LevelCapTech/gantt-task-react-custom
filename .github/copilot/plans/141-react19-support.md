@@ -42,32 +42,87 @@
 - 既存脆弱性 42 件の扱い（本 Issue での設計判断）:
   - #141（React 19 対応）では「React 19 両対応に必要な最小依存更新」のみを実施し、既存 42 件の一括解消はスコープ外とする。
   - 既存 42 件は初期例外台帳に登録し、`approvedBy`・`reason`・`expiresAt`・`trackingIssue` を必須化する。ただし、例外キーは「勧告ID×パッケージ×重大度×ジョブ」で定義し、42 件は package 数の総数であり、例外レコード数はそのまま 42 と同一ではない（同一 package に複数勧告や `via` の分岐があるため）ことを明記する。
-  - `25 / 1 / 16` 分類は修正方法別で、表の `classification` は例外運用別のカテゴリである。両者は一致しないため、各 package へは `fixAvailable` / `requiredUpdate` / `trackingIssue` を併記し、どの package が lockfile のみ更新で解決可能か、どれがメジャー更新必須か、どれが修正版なしで別 Issue かを明示する。
-  - 実装着手時に `npm audit --json` / `npm audit --omit=dev --json` を再取得し、取得日時・依存元（manifest での直依存）・勧告ID・影響範囲・検出件数を記録する。分類根拠は「React 19 対応で直せるもの」「期限付き例外にするもの」「別 Issue で直すもの」に整理し、plan 実装 PR に記録する（件数変動を許容）。
-  - `via` の複数勧告・文字列項目の正規化方針を明記する: 例外キーは `id` を優先し、`via` が配列/オブジェクトを含む場合は `via[<n>].source` / `url` / `title` を正規化し、同一アドバイスが複数経路で出ても一意へマップする。`advisoryIds` が `—` の行は自動許容しない; その行は `source` / `title` の補完が可能な場合のみ `identityKey` を生成し、未補完のままなら fail-closed で要確認扱いとする。
+  - `25 / 1 / 16` 分類は修正方法別で、表の `classification` は例外運用別のカテゴリである。両者は別軸であり、要件では「どの package が lockfile のみ更新で解決可能か」「どれが major update 必須か」「どれが upstream fix 未確定で別 Issue か」を個別に追跡する。
+  - 実装着手時に `npm audit --json` / `npm audit --omit=dev --json` を再取得し、取得日時・依存元（manifest での直依存）・勧告ID・影響範囲・検出件数と `fixAvailable` / `requiredUpdate` を記録する。分類根拠は「React 19 対応で直せるもの」「期限付き例外にするもの」「別 Issue で直すもの」に整理し、plan 実装 PR に記録する（件数変動を許容）。
+  - `via` の複数勧告・文字列項目の正規化方針を明記する: 例外キーは `id` を優先し、`via` が配列/オブジェクトを含む場合は `via[<n>].source` / `url` / `title` を正規化し、同一アドバイスが複数経路で出ても一意へマップする。`advisoryIds` が `—` の行は自動許容しない; その行は `source` / `title` / `url` の補完が可能な場合のみ `identityKey` を生成し、未補完のままなら fail-closed で要確認扱いとする。
   - 例外照合と識別キー（重要）:
     - 正常系の照合キーは `package + advisoryId + severity + job` を優先し、`advisoryId` は GHSA/CVE 値そのものまたは `via[*].source` / `url` / `title` の正規化値を使用する。
     - `advisoryId` が取れない行は `package + severity + job` だけで例外一致させない。識別不能な脆弱性は「未登録・不明」扱いで fail-closed にし、新規検出として失敗させる。
-    - `dependencyPath` は `node_modules/...` の設置場所であり、依存木の「誰がどこから到達したか」を表すものではない。直接依存の起点は `package.json` / lockfile の `nodes` と manifest 解析で補う。設計 PR の表では `dependencyPath` を「設置場所」、`directDependency` を「依存元の補足情報」、`affectedRange` を「advisory の影響バージョン範囲」などに分離し、実測データがない列は `unknown` とし、`auto-allow` しない。
+    - `dependencyPath` は `node_modules/...` の設置場所であり、依存木の「誰がどこから到達したか」を表すものではない。依存経路の正確な起点は `package.json` / lockfile の `nodes` と manifest 解析で補う。設計 PR の表では `dependencyPath` を「設置場所」、`directDependency` を「依存元の補足情報」、`affectedRange` を「advisory の影響バージョン範囲」などに分離し、取得できない値は `unknown` と明示し、`auto-allow` しない。
+  - 修正方法別分類（25 / 1 / 16）:
+    - 25 件: compatible bump で解消可能（lockfile / patch / minor update の範囲で処理可能）
+    - 1 件: major update 必須（`gh-pages` のメジャー更新が前提）
+    - 16 件: 対応手段が別 Issue / upstream fix 未定（`react-scripts`, `microbundle-crl` 等）
+    - ここでの「1」および「16」は修正方法別分類であり、例外運用別の `classification`（期限付き例外 / 別 Issue / 修正内）とは別軸である。個別 package には両方の分類が並ぶことを要件とする。
   - 設計 PR での調査証跡（必須・実測値）:
     - 取得日時: `2026-10-25T10:09:13Z`（ローカル実測）
     - 実測コマンド:
       - `npm audit --json` → exit code `1`, `high 38 / critical 4`（= 42 packages）
       - `npm audit --omit=dev --json` → exit code `0`, vulnerabilities `0`（prod 依存は clean）
     - 対象一覧: package / directDependency / dependencyPath / advisoryIds / affectedRange / fixAvailable / requiredUpdate / classification / reason
-    - `directDependency` と `affectedRange` は `npm audit --json` の標準出力からは完全には導出できないため、`directDependency` は manifest と lockfile で補完し、`affectedRange` は advisory が持つ `range` / `severity` / `url` を優先して記録する。取得できない値は `unknown` とし、例外照合のキーに使わない。
-    - 例外レコード数対応関係: `42 package` と `例外レコード数` は 1:1 ではない。`npm audit --json` の `via` は 1 package に複数 advisory / via ノードを持ち得るため、例外キーは「package × advisoryID × severity × job」単位で管理する。`brace-expansion` を例に取ると、1 package に 7 個の一意 GHSA と 14 件の `via` エントリが存在するが、例外レコードは GHSA 単位で生成される。
-    - `advisoryIds` が `—` の行は `package × severity` だけで例外照合しない。`via` に advisory オブジェクトが無く、間接的な package 依存として検出されたか、あるいは `npm audit --json` がオブジェクト形式で ID を返していないケースが該当する。この場合、識別キーは `via.source` / `title` / `url` の補完ができる場合に限り生成し、補完できない場合は fail-closed とする。
-    - 実測一覧 (high/critical) は package 42 件を目安とし、`directDependency` / `affectedRange` / `fixAvailable` / `requiredUpdate` の情報は `package.json` / lockfile を参照して補完する。設計 PR ではこの情報を「実測を重ねた上で確認したかどうか」を区別し、実測できない列は `unknown` と明記する。
-    - 分類の整合: 25/1/16 は「修正方法別の分類（fix available / exception / separate issue）」であり、表の `classification` は「例外運用別の分類」である。対応関係は以下の通りに固定する:
+    - 実測一覧 (high/critical; React 18 現行 lockfile 実測, React 19 job は未実測):
 
-      | 区分 | 件数 | fixAvailable | requiredUpdate | 例 | 根拠 |
-      | --- | ---: | --- | --- | --- | --- |
-      | 互換範囲更新で解消可能 | 25 | Yes | lockfile or minor/patch bump | `body-parser`, `browserslist` 等 | 依存更新範囲内 |
-      | 期限付き例外 | 1 (または実測時の例外対象) | No | 承認済み期限付き例外 | `gh-pages`/`microbundle-crl` 等 | 既存脆弱性で React 19 とは切り分け |
-      | 別 Issue / 修正版未確定 | 16 | No | major update or upstream fix required | `react-scripts`, `microbundle-crl` など | 修正手段が別件 |
+      | package | directDependency | dependencyPath | advisoryIds | affectedRange | fixAvailable | requiredUpdate | classification | reason |
+      | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+      | `@babel/plugin-transform-modules-systemjs` | transitive via build tooling | `node_modules/@babel/plugin-transform-modules-systemjs` | `GHSA-fv7c-fp4j-7gwp` | `>=7.12.0 <=7.29.3` | Yes | lockfile / patch bump | 期限付き例外 | dev toolchain; fix available but outside the React 19 code change scope |
+      | `@rollup/plugin-node-resolve` | transitive via build tooling | `node_modules/@rollup/plugin-node-resolve` | `unknown` | `<=7.1.1` | Yes | lockfile / patch bump | 期限付き例外 | `via` に advisory id が無く、補完不能なら fail-closed ; 現状は `unknown` を保持 |
+      | `@svgr/plugin-svgo` | transitive via `react-scripts` | `node_modules/@svgr/plugin-svgo` | `unknown` | `<=5.5.0` | Yes | major update or upstream patch | 期限付き例外 | `react-scripts` 系の追跡が必要; `id` 未補完のため fail-closed 適用を要する |
+      | `@svgr/rollup` | transitive via `react-scripts` | `node_modules/@svgr/rollup` | `unknown` | `4.0.0 - 5.5.0` | No | major update or upstream patch | 期限付き例外 | `id` 未補完; 一時許容ではなく要確認扱い |
+      | `@svgr/webpack` | transitive via `react-scripts` | `node_modules/@svgr/webpack` | `unknown` | `4.0.0 - 5.5.0` | Yes | major update or upstream patch | 期限付き例外 | `id` 未補完; `react-scripts` 側の更新が切り分け要因 |
+      | `body-parser` | direct dev dependency | `node_modules/body-parser` | `GHSA-v422-hmwv-36x6`, `GHSA-27r3-jxmh-p828` | `<1.20.6` / `<=1.20.8 || 2.0.0-beta.1 - 2.0.2` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories; direct dependency but dev-only toolchain |
+      | `brace-expansion` | transitive via `filelist` | `node_modules/brace-expansion > node_modules/filelist/node_modules/brace-expansion` | `GHSA-f886-m6hf-6m8v`, `GHSA-3jxr-9vmj-r5cp`, `GHSA-mh99-v99m-4gvg`, `GHSA-rgw5-rvv9-x895`, `GHSA-q2hr-2g5m-vwhr`, `GHSA-qhr7-859c-m2p7`, `GHSA-6j4f-fj2g-mc7p` | `<1.1.13` / `<=1.1.20 || 2.0.0 - 2.1.6` | Yes | lockfile / patch bump | 期限付き例外 | 1 package with 7 unique GHSA and 14 via entries; exception records keyed by GHSA |
+      | `browserslist` | transitive via build tooling | `node_modules/browserslist` | `GHSA-c83g-rgw3-j3cx`, `GHSA-73wf-gq98-2v4g` | `<=4.28.6` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories but fix available |
+      | `compression` | transitive via build tooling | `node_modules/compression` | `GHSA-vc2v-76pw-4v95` | `<1.8.2` | Yes | lockfile / patch bump | 期限付き例外 | single advisory; fix available |
+      | `css-select` | transitive via `svgo` | `node_modules/svgo/node_modules/css-select` | `unknown` | `<=3.1.0` | Yes | major update or upstream patch | 期限付き例外 | no stable advisory id from this entry; treat as fail-closed if unresolved |
+      | `fast-uri` | transitive via build tooling | `node_modules/fast-uri` | `GHSA-v2hh-gcrm-f6hx`, `GHSA-7p8r-x3mc-p8w7`, `GHSA-q3j6-qgpj-74h6`, `GHSA-v39h-62p7-jpjc`, `GHSA-f65p-4m7j-42xc`, `GHSA-jqff-g426-hqxp`, `GHSA-4c8g-83qw-93j6`, `GHSA-qw65-cvwx-89v3`, `GHSA-hrr3-gc8f-f4qj`, `GHSA-w74x-v6f9-j3xg`, `GHSA-xhq7-xmqj-769h`, `GHSA-333x-w4r6-6crp` | `>=3.0.0 <=3.1.3` / `3.0.0 - 3.1.8` | Yes | lockfile / patch bump | 期限付き例外 | many advisories on a single package; unique GHSA count is the exception key |
+      | `flatted` | transitive via build tooling | `node_modules/flatted` | `GHSA-25h7-pfq9-p65f`, `GHSA-rf6f-7fwh-wjgh` | `<=3.4.1` | Yes | lockfile / patch bump | 期限付き例外 | fix available |
+      | `form-data` | transitive via build tooling | `node_modules/form-data` | `GHSA-hmw2-7cc7-3qxx` | `>=3.0.0 <3.0.5` | Yes | lockfile / patch bump | 期限付き例外 | single advisory; direct update path available |
+      | `gh-pages` | direct dev dependency | `node_modules/gh-pages` | `GHSA-8mmm-9v2q-x3f9` | `<5.0.0` | No | major update required | 別 Issue | 1件の修正方法別分類: major update required; not an exception bundle item |
+      | `js-yaml` | transitive via `eslint` / `@eslint/eslintrc` | `node_modules/@eslint/eslintrc/node_modules/js-yaml > node_modules/eslint/node_modules/js-yaml > node_modules/js-yaml` | `GHSA-h67p-54hq-rp68`, `GHSA-52cp-r559-cp3m`, `GHSA-5p4m-2wfm-xmqj`, `GHSA-2883-xcg3-v3hh` | `<3.15.0` / `<=3.15.1 || 4.0.0 - 4.3.1` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories in a nested install path |
+      | `jsonpath` | transitive via build tooling | `node_modules/jsonpath` | `GHSA-6c59-mwgh-r2x6`, `GHSA-87r5-mp6g-5w5j` | `<1.2.0` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories; fix available |
+      | `launch-editor` | transitive via build tooling | `node_modules/launch-editor` | `GHSA-v6wh-96g9-6wx3`, `GHSA-698v-4r3x-3vcv`, `GHSA-r825-w8mm-5pxw`, `GHSA-587h-7wmj-h5pm` | `<=2.14.0` / `<=2.14.1` | Yes | lockfile / patch bump | 期限付き例外 | 4 advisories, single package |
+      | `lodash` | transitive via build tooling | `node_modules/lodash` | `GHSA-r5fr-rjxr-66jc`, `GHSA-f23m-r3pf-42rh` | `>=4.0.0 <=4.17.23` | Yes | lockfile / patch bump | 期限付き例外 | fix available |
+      | `microbundle-crl` | direct dev dependency | `node_modules/microbundle-crl` | `unknown` | `*` | No | major update or upstream fix | 別 Issue | vulnerable package with no stable advisory id in current output; treat as fail-closed if unresolved |
+      | `minimatch` | transitive via `filelist` | `node_modules/filelist/node_modules/minimatch > node_modules/minimatch` | `GHSA-3ppc-4f35-3m26`, `GHSA-7r86-cg39-jmmj`, `GHSA-23c5-xmqv-rm74` | `<3.1.3` / `<=3.1.3 || 5.0.0 - 5.1.7` | Yes | lockfile / patch bump | 期限付き例外 | 3 advisories from nested install path |
+      | `nanoid` | transitive via build tooling | `node_modules/nanoid` | `GHSA-28wg-ghj8-5hjv`, `GHSA-2v37-7h3g-55p8`, `GHSA-xwg4-73v4-xw9w` | `<=3.3.17` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories; fix available |
+      | `node-forge` | transitive via build tooling | `node_modules/node-forge` | `GHSA-2328-f5f3-gj25`, `GHSA-q67f-28xg-22rw`, `GHSA-5m6q-g25r-mvwx`, `GHSA-ppp5-5v6c-4jwp`, `GHSA-86w9-cpqp-85rv` | `<=1.3.3` / `*` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories; fix available |
+      | `nth-check` | transitive via `svgo` | `node_modules/svgo/node_modules/nth-check` | `GHSA-rp65-9cf3-cjxr` | `<2.0.1` | Yes | major update or upstream patch | 期限付き例外 | `react-scripts` / `svgo` chain; no stable direct fix within scope |
+      | `path-to-regexp` | transitive via build tooling | `node_modules/path-to-regexp` | `GHSA-37ch-88jc-xwx2` | `<0.1.13` | Yes | lockfile / patch bump | 期限付き例外 | single advisory |
+      | `picomatch` | transitive via `tinyglobby` | `node_modules/picomatch > node_modules/tinyglobby/node_modules/picomatch` | `GHSA-3v7f-55p6-f55p`, `GHSA-c2c7-rcm5-vvqj` | `<=2.3.1 || 4.0.0 - 4.0.3` | Yes | lockfile / patch bump | 期限付き例外 | two advisories in nested path |
+      | `postcss` | transitive via `autoprefixer` / `stylehacks` | `node_modules/autoprefixer/node_modules/postcss > ... > node_modules/stylehacks/node_modules/postcss` | `GHSA-566m-qj78-rww5`, `GHSA-7fh5-64p2-3v2j`, `GHSA-qx2v-qp2m-jg93`, `GHSA-6g55-p6wh-862q`, `GHSA-fxqj-rqcc-2cmp`, `GHSA-r28c-9q8g-f849` | `<=8.5.22` | Yes | major update or upstream patch | 期限付き例外 | many advisories on nested package; fix path exists upstream but outside the immediate React 19 scope |
+      | `postcss-svgo` | transitive via build tooling | `node_modules/postcss-svgo` | `unknown` | `<=5.0.0-rc.2` | Yes | lockfile / patch bump | 期限付き例外 | `via` lacks stable advisory id; require `source/title/url` fallback or fail-closed |
+      | `proxy-addr` | transitive via build tooling | `node_modules/proxy-addr` | `GHSA-jqcg-44mw-7w3h` | `>=1.1.0 <2.0.8` | Yes | lockfile / patch bump | 期限付き例外 | single advisory in dev dependency chain |
+      | `react-scripts` | direct dev dependency | `node_modules/react-scripts` | `unknown` | `>=0.1.0` | No | major update or upstream fix | 別 Issue | direct dependency but no stable advisory ID in current output; external fix is outside this issue |
+      | `rollup` | transitive via `workbox-build` | `node_modules/rollup > node_modules/workbox-build/node_modules/rollup` | `GHSA-gcx4-mw62-g8wm`, `GHSA-mw96-cpmx-2vgc` | `<=2.79.2` | No | major update or upstream fix | 期限付き例外 | fix available only via upstream update; keep exception until resolved |
+      | `rollup-plugin-terser` | transitive via `workbox-build` | `node_modules/rollup-plugin-terser > node_modules/workbox-build/node_modules/rollup-plugin-terser` | `unknown` | `3.0.0 || >=4.0.4` | Yes | major update or upstream patch | 期限付き例外 | `via` lacks stable advisory id; do not allow automatically |
+      | `serialize-javascript` | transitive via `workbox-build` / `rollup-plugin-terser` | `node_modules/rollup-plugin-terser/node_modules/serialize-javascript > ... > node_modules/workbox-build/node_modules/serialize-javascript` | `GHSA-5c6j-r48x-rmvq`, `GHSA-qj8w-gfj5-8c6v`, `GHSA-m5mm-p8h7-m29v` | `<=7.0.2` / `<=7.1.2` | Yes | major update or upstream patch | 期限付き例外 | nested package chain with multiple advisories |
+      | `shell-quote` | transitive via build tooling | `node_modules/shell-quote` | `GHSA-w7jw-789q-3m8p`, `GHSA-395f-4hp3-45gv` | `>=1.1.0 <=1.8.3` / `<=1.8.4` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories; fix available |
+      | `source-map-js` | transitive via build tooling | `node_modules/source-map-js` | `GHSA-68fv-2mgg-jv7q` | `>=1.0.0 <1.2.2` | Yes | lockfile / patch bump | 期限付き例外 | single advisory |
+      | `svgo` | transitive via `css-minimizer-webpack-plugin` | `node_modules/css-minimizer-webpack-plugin/node_modules/svgo > node_modules/svgo` | `GHSA-xpqw-6gx7-v673`, `GHSA-2p49-hgcm-8545`, `GHSA-w27v-7q3p-w38r`, `GHSA-4vpr-x523-8j87` | `>=2.1.0 <2.8.1` / `1.0.0 - 2.8.3` | Yes | major update or upstream patch | 期限付き例外 | many advisories in a nested SVGO install path |
+      | `underscore` | transitive via build tooling | `node_modules/underscore` | `GHSA-qpx9-hpmf-5gmw` | `<=1.13.7` | Yes | lockfile / patch bump | 期限付き例外 | single advisory; fix available |
+      | `webpack-dev-middleware` | transitive via build tooling | `node_modules/webpack-dev-middleware` | `GHSA-g84c-rxfj-3j2c` | `<7.4.5` | Yes | major update or upstream patch | 期限付き例外 | direct resolution is in upstream toolchain |
+      | `webpack-dev-server` | direct dev dependency | `node_modules/webpack-dev-server` | `GHSA-9jgg-88mc-972h`, `GHSA-4v9v-hfq4-rm2v`, `GHSA-79cf-xcqc-c78w`, `GHSA-mx8g-39q3-5c79`, `GHSA-f5vj-f2hx-8m93`, `GHSA-m28w-2pqf-7qgj` | `<=5.2.0` / `<=5.2.7` | Yes | major update or upstream patch | 期限付き例外 | large set of advisories, but upstream toolchain fix is outside React 19 code change |
+      | `websocket-driver` | transitive via build tooling | `node_modules/websocket-driver` | `GHSA-mp7j-qc5w-4988`, `GHSA-xv26-6w52-cph6` | `<0.7.5` / `<=0.7.4` | Yes | lockfile / patch bump | 期限付き例外 | multiple advisories; fix available |
+      | `workbox-build` | transitive via build tooling | `node_modules/workbox-build` | `unknown` | `5.0.0-alpha.0 - 7.0.0` | Yes | major update or upstream patch | 期限付き例外 | `via` lacks stable id; use source/title/url fallback or fail closed |
+      | `workbox-webpack-plugin` | transitive via build tooling | `node_modules/workbox-webpack-plugin` | `unknown` | `5.0.0-alpha.0 - 7.0.0` | Yes | major update or upstream patch | 期限付き例外 | `via` lacks stable id; use source/title/url fallback or fail closed |
+      | `ws` | transitive via `webpack-dev-server` | `node_modules/webpack-dev-server/node_modules/ws > node_modules/ws` | `GHSA-58qx-3vcg-4xpx`, `GHSA-96hv-2xvq-fx4p` | `>=8.0.0 <8.20.1` / `7.0.0 - 7.5.10 || 8.0.0 - 8.20.1` | Yes | lockfile / patch bump | 期限付き例外 | nested dependency with multiple advisories |
 
-      `namespace` の件数は実測時の package 集計と対応させ、各 package は `fixAvailable` + `requiredUpdate` を明示して `25 / 1 / 16` の内容と対応させる。React 19 の実測と React 18 の現行 lockfile 実測は別物であり、未測定の React 19 ジョブは `未実測` として保持する。
+      `directDependency` と `affectedRange` は `npm audit --json` の標準出力から完全には導出できないため、表中の値が確認できたものは `manifest` / lockfile / advisory `range` を併用して補完し、確認できないものは `unknown` を明示する。`advisoryIds` が `unknown` / `—` の項目は、自動許容の対象にしない。`identityKey` を生成できない場合は fail-closed とする。
+    - 例外レコード数対応関係: `42 package` と `例外レコード数` は 1:1 ではない。`npm audit --json` の `via` は 1 package に複数 advisory / via ノードを持ち得るため、例外キーは「package × advisoryID × severity × job」単位で管理する。`brace-expansion` は 1 package で 7 unique GHSA と 14 via entries のため、例外レコードは GHSA 単位で生成される。
+    - 例外ID不明項目と CI 成功条件の整合:
+      - `advisoryIds: unknown` または `—` を含む package は、`package + severity` で自動例外許可しない。
+      - `via[*].source` / `url` / `title` で安定識別子が得られない場合は fail-closed とし、承認済みの既存分だけで CI が失敗することを許容する。
+      - そのため正常系の fixture は「全件が安定識別子付き or 例外台帳に登録済みで期限内」になっており、識別不能項目が残る状態では 4章の正常系は成立しない。
+      - React 19 job は未実測として保持し、React 18 の現行 lockfile 実測と区別する。
+    - `25 / 1 / 16` 分類と実測一覧の対応:
+
+      | 区分 | 件数 | 代表例 | root cause | 運用分類 |
+      | --- | ---: | --- | --- | --- |
+      | 修正方法別: compatible bump / lockfile update | 25 | `body-parser`, `browserslist`, `lodash` | `fixAvailable` と依存範囲が明示される | 期限付き例外または修正内 |
+      | 修正方法別: major update required | 1 | `gh-pages` | メジャー更新が前提 | 別 Issue |
+      | 修正方法別: upstream fix unavailable | 16 | `react-scripts`, `microbundle-crl`, `webpack-dev-server` | 既存のパッケージ自体の修正版が未確定 | 別 Issue |
+
+      上表は「修正方法別分類」であり、`classification` 列（期限付き例外 / 別 Issue / 修正内）は別軸である。`gh-pages` は `25/1/16` の「1」であり、経営判断としての期限付き例外と同一視しない。`microbundle-crl` は `25/1/16` の「1」および「16」の両方に近い前提であり、識別のために `requiredUpdate` と `trackingIssue` を併記する。
     - 結論: 実測上、`npm audit --omit=dev --json` は 0 件のため、公開依存の影響なし。残る 42 件は dev/build tooling を中心に、1 package に複数 advisory / `via` が発生するため、例外レコード数は package 数と一致しない。設計上の例外キーは `id × package × severity × job` を主軸とし、`via` の複数 advisory は同一 package 内でまとめて判定する。`id` が取得不能な行は `package + severity` で自動例外許可しない; 代わりに `source` / `title` / `url` の補完を試み、補完できない場合は fail-closed で失敗する。実データに基づき、未実測の雛形は `TBD` としない。
 - 外部依存・Secrets の扱い:
   - audit 判定は Node.js 標準機能のみで実装し、追加 npm パッケージは導入しない。
