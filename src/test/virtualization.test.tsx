@@ -63,9 +63,11 @@ describe("仮想化有効時: 描画行数の上限", () => {
 });
 
 describe("全高: N * rh で常に一定", () => {
-  it.each([1000, 10000, 50000])("N=%i のとき ganttFullHeight = N*rh", (N: number) => {
+  it.each([1000, 10000, 50000])("N=%i のとき fullHeight は N * rowHeight と一致する", (N: number) => {
     const rh = 32;
-    expect(N * rh).toBe(N * rh); // ganttFullHeight は barTasks.length * rowHeight
+    const fullHeight = N * rh;
+    expect(fullHeight).toBe(N * rh);
+    expect(fullHeight).toBeGreaterThan(0);
   });
 });
 

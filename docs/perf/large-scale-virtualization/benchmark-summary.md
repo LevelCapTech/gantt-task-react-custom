@@ -3,7 +3,7 @@
 ## 実行環境
 
 | 項目 | 値 |
-|------|-----|
+| --- | --- |
 | ブラウザ | 未計測 |
 | OS | 未計測 |
 | CPU | 未計測 |
@@ -23,24 +23,24 @@
 > 計測していない数値を記載することは禁止（plan §4.2）。
 
 | サイズ | 辺数 | 区間 | median (ms) | p95 (ms) | DOM ノード | SVG ノード | 描画行数 |
-|--------|------|------|-------------|----------|------------|------------|---------|
-| 1k     | TBD  | 初期描画 | TBD | TBD | TBD | TBD | TBD |
-| 10k    | TBD  | 初期描画 | TBD | TBD | TBD | TBD | TBD |
-| 50k    | TBD  | 初期描画 | TBD | TBD | TBD | TBD | TBD |
-| 1k     | TBD  | スクロール | TBD | TBD | TBD | TBD | TBD |
-| 10k    | TBD  | スクロール | TBD | TBD | TBD | TBD | TBD |
-| 50k    | TBD  | スクロール | TBD | TBD | TBD | TBD | TBD |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1k | TBD | 初期描画 | TBD | TBD | TBD | TBD | TBD |
+| 10k | TBD | 初期描画 | TBD | TBD | TBD | TBD | TBD |
+| 50k | TBD | 初期描画 | TBD | TBD | TBD | TBD | TBD |
+| 1k | TBD | スクロール | TBD | TBD | TBD | TBD | TBD |
+| 10k | TBD | スクロール | TBD | TBD | TBD | TBD | TBD |
+| 50k | TBD | スクロール | TBD | TBD | TBD | TBD | TBD |
 
 ## 仮想化後（未計測）
 
 | サイズ | 辺数 | 区間 | median (ms) | p95 (ms) | DOM ノード | SVG ノード | 描画行数 | 改善率 |
-|--------|------|------|-------------|----------|------------|------------|---------|--------|
-| 1k     | TBD  | 初期描画 | TBD | TBD | TBD | TBD | TBD | TBD |
-| 10k    | TBD  | 初期描画 | TBD | TBD | TBD | TBD | TBD | TBD |
-| 50k    | TBD  | 初期描画 | TBD | TBD | TBD | TBD | TBD | TBD |
-| 1k     | TBD  | スクロール | TBD | TBD | TBD | TBD | TBD | TBD |
-| 10k    | TBD  | スクロール | TBD | TBD | TBD | TBD | TBD | TBD |
-| 50k    | TBD  | スクロール | TBD | TBD | TBD | TBD | TBD | TBD |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1k | TBD | 初期描画 | TBD | TBD | TBD | TBD | TBD | TBD |
+| 10k | TBD | 初期描画 | TBD | TBD | TBD | TBD | TBD | TBD |
+| 50k | TBD | 初期描画 | TBD | TBD | TBD | TBD | TBD | TBD |
+| 1k | TBD | スクロール | TBD | TBD | TBD | TBD | TBD | TBD |
+| 10k | TBD | スクロール | TBD | TBD | TBD | TBD | TBD | TBD |
+| 50k | TBD | スクロール | TBD | TBD | TBD | TBD | TBD | TBD |
 
 ## 性能目標（暫定、baseline 取得後に確定）
 
