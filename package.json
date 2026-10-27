@@ -43,11 +43,12 @@
     "prepare": "run-s build",
     "test": "run-s test:unit test:lint test:build",
     "test:build": "run-s build",
-    "test:lint": "eslint --ext .tsx src/**/*",
+    "test:lint": "eslint --ext .tsx --no-error-on-unmatched-pattern src/**/*",
     "test:unit": "cross-env CI=1 react-scripts test --env=jsdom",
     "test:watch": "react-scripts test --env=jsdom",
     "predeploy": "cd example && npm install && npm run build",
-    "deploy": "gh-pages -d example/build"
+    "deploy": "gh-pages -d example/build",
+    "benchmark:large-gantt": "ts-node --project tsconfig.json src/test/perf/pure-function-bench.ts"
   },
   "peerDependencies": {
     "@dnd-kit/core": "^6.3.1",

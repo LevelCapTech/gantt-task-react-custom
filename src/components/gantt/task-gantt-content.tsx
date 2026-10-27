@@ -3,6 +3,10 @@ import { EventOption } from "../../types/public-types";
 import { BarTask } from "../../types/bar-task";
 import { Arrow } from "../other/arrow";
 import { handleTaskBySVGMouseEvent } from "../../helpers/bar-helper";
+import {
+  DependencyMaps,
+  extractVisibleArrowsFromTasks,
+} from "../../helpers/bar-helper";
 import { isKeyboardEvent } from "../../helpers/other-helper";
 import { TaskItem } from "../task-item/task-item";
 import {
@@ -30,6 +34,14 @@ export type TaskGanttContentProps = {
   setGanttEvent: (value: GanttEvent) => void;
   setFailedTask: (value: BarTask | null) => void;
   setSelectedTask: (taskId: string) => void;
+  /** 仮想化が有効な場合の実viewport開始行インデックス（含む） */
+  viewStart?: number;
+  /** 仮想化が有効な場合の実viewport終了行インデックス（含まない） */
+  viewEnd?: number;
+  /** 仮想化が有効な場合の全barTasks（座標参照用） */
+  allBarTasks?: BarTask[];
+  /** 仮想化が有効な場合の依存Mapセット */
+  dependencyMaps?: DependencyMaps;
 } & EventOption;
 
 export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
@@ -55,6 +67,10 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   onDoubleClick,
   onClick,
   onDelete,
+  viewStart,
+  viewEnd,
+  allBarTasks,
+  dependencyMaps,
 }) => {
   const point =
     svg?.current && "createSVGPoint" in svg.current
@@ -275,27 +291,84 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
 
   const taskMap = new Map(tasks.map(task => [task.id, task]));
 
+  // 仮想化が有効な場合: 可視候補の矢印のみ描画（plan §3.3）
+  // viewStart/viewEnd/dependencyMaps が揃っている場合のみ仮想モードを使用
+  const isVirtualMode =
+    viewStart !== undefined &&
+    viewEnd !== undefined &&
+    dependencyMaps !== undefined &&
+    allBarTasks !== undefined;
+
+  // 全 barTasks マップ（仮想化時の座標参照用）
+  const allTaskMap = isVirtualMode
+    ? new Map(allBarTasks!.map(t => [t.id, t]))
+    : taskMap;
+
+  // Arrow を描画する
+  const arrowElements: React.ReactNode[] = [];
+  if (isVirtualMode) {
+    // 仮想化: viewport の行のみ走査し、可視候補を抽出
+    const visibleArrows = extractVisibleArrowsFromTasks(
+      viewStart!,
+      viewEnd!,
+      allBarTasks!,
+      dependencyMaps!
+    );
+    visibleArrows.forEach(arrow => {
+      const taskFrom = allTaskMap.get(arrow.sourceId);
+      const taskTo = allTaskMap.get(arrow.toId);
+      if (!taskFrom || !taskTo) {
+        return;
+      }
+      // ganttEvent で変更中のタスクがあれば live 座標を使う
+      const liveFrom =
+        ganttEvent.changedTask?.id === taskFrom.id
+          ? (ganttEvent.changedTask as BarTask)
+          : taskFrom;
+      const liveTo =
+        ganttEvent.changedTask?.id === taskTo.id
+          ? (ganttEvent.changedTask as BarTask)
+          : taskTo;
+      arrowElements.push(
+        <Arrow
+          key={`Arrow from ${arrow.sourceId} to ${arrow.toId} (${arrow.type}:${arrow.lagMinutes})`}
+          taskFrom={liveFrom}
+          taskTo={liveTo}
+          dependencyType={arrow.type}
+          lagPx={minuteToPx(arrow.lagMinutes)}
+          rowHeight={rowHeight}
+          taskHeight={taskHeight}
+          arrowIndent={arrowIndent}
+          rtl={rtl}
+        />
+      );
+    });
+  } else {
+    // 非仮想化: 既存の全件描画
+    tasks.forEach(task => {
+      task.barDependencyChildren.forEach(edge => {
+        const liveTaskTo = taskMap.get(edge.task.id) ?? edge.task;
+        arrowElements.push(
+          <Arrow
+            key={`Arrow from ${task.id} to ${edge.task.id} (${edge.type}:${edge.lagMinutes})`}
+            taskFrom={task}
+            taskTo={liveTaskTo}
+            dependencyType={edge.type}
+            lagPx={minuteToPx(edge.lagMinutes)}
+            rowHeight={rowHeight}
+            taskHeight={taskHeight}
+            arrowIndent={arrowIndent}
+            rtl={rtl}
+          />
+        );
+      });
+    });
+  }
+
   return (
     <g className="content">
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
-        {tasks.map(task => {
-          return task.barDependencyChildren.map(edge => {
-            const liveTaskTo = taskMap.get(edge.task.id) ?? edge.task;
-            return (
-              <Arrow
-                key={`Arrow from ${task.id} to ${edge.task.id} (${edge.type}:${edge.lagMinutes})`}
-                taskFrom={task}
-                taskTo={liveTaskTo}
-                dependencyType={edge.type}
-                lagPx={minuteToPx(edge.lagMinutes)}
-                rowHeight={rowHeight}
-                taskHeight={taskHeight}
-                arrowIndent={arrowIndent}
-                rtl={rtl}
-              />
-            );
-          });
-        })}
+        {arrowElements}
       </g>
       <g className="bar" fontFamily={fontFamily} fontSize={fontSize}>
         {tasks.map(task => {

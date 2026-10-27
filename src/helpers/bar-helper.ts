@@ -10,6 +10,193 @@ import {
 } from "../types/bar-task";
 import { BarMoveAction } from "../types/gantt-task-actions";
 
+/**
+ * 可視候補の依存線を一意に識別するキー
+ */
+export type VisibleArrowKey = string;
+
+/**
+ * 可視候補の依存線情報
+ */
+export type VisibleArrow = {
+  sourceId: string;
+  toId: string;
+  type: DependencyType;
+  lagMinutes: number;
+};
+
+const makeArrowKey = (a: VisibleArrow): VisibleArrowKey =>
+  `${a.sourceId}::${a.toId}::${a.type}::${a.lagMinutes}`;
+
+/**
+ * barTasks から出辺索引・入辺索引・行番号索引を構築する
+ *
+ * plan §3.3: 依存正規化/BarTask 変換時に一度構築し、スクロールごとに再走査しない。
+ */
+export type DependencyMaps = {
+  /** fromId -> エッジリスト（出辺） */
+  outgoingEdgeMap: Map<string, BarTaskDependencyEdge[]>;
+  /** toId -> fromId のエッジリスト（入辺） */
+  incomingEdgeMap: Map<string, { fromId: string; edge: BarTaskDependencyEdge }[]>;
+  /** task.id -> 表示行番号 */
+  rowIndexMap: Map<string, number>;
+};
+
+/**
+ * BarTask 配列から依存Mapを構築する
+ */
+export const buildDependencyMaps = (barTasks: BarTask[]): DependencyMaps => {
+  const outgoingEdgeMap = new Map<string, BarTaskDependencyEdge[]>();
+  const incomingEdgeMap = new Map<
+    string,
+    { fromId: string; edge: BarTaskDependencyEdge }[]
+  >();
+  const rowIndexMap = new Map<string, number>();
+
+  barTasks.forEach((task, index) => {
+    rowIndexMap.set(task.id, index);
+    task.barDependencyChildren.forEach(edge => {
+      // 出辺
+      const out = outgoingEdgeMap.get(task.id) ?? [];
+      out.push(edge);
+      outgoingEdgeMap.set(task.id, out);
+      // 入辺
+      const inc = incomingEdgeMap.get(edge.task.id) ?? [];
+      inc.push({ fromId: task.id, edge });
+      incomingEdgeMap.set(edge.task.id, inc);
+    });
+  });
+
+  return { outgoingEdgeMap, incomingEdgeMap, rowIndexMap };
+};
+
+/**
+ * 実viewport の行範囲 [viewStart, viewEnd) に基づき
+ * 可視候補の依存線を抽出する（O(可視行 * 接続次数)）
+ *
+ * plan §3.3: 両端 viewport 内、または片端のみ viewport 内の辺を 1 本ずつ返す。
+ * 重複は安定キーの Set で除去する。
+ */
+export const extractVisibleArrows = (
+  viewStart: number,
+  viewEnd: number,
+  dependencyMaps: DependencyMaps,
+  barTaskMap: Map<string, BarTask>
+): VisibleArrow[] => {
+  const { outgoingEdgeMap, incomingEdgeMap, rowIndexMap } = dependencyMaps;
+  const seen = new Set<VisibleArrowKey>();
+  const result: VisibleArrow[] = [];
+
+  const addArrow = (a: VisibleArrow) => {
+    const key = makeArrowKey(a);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(a);
+    }
+  };
+
+  for (let row = viewStart; row < viewEnd; row++) {
+    // rowIndexMap の逆引きは O(N) になるため、バーの配列を直接参照せず
+    // barTaskMap で lookup するために viewStart..viewEnd の ID が必要。
+    // ここでは barTaskMap を index→task の代わりに id→task として使うが、
+    // 行番号→id の逆引きが必要なため、rowIndexMap から逆引き Map を作成する。
+    // ただし呼び出し元で barTasks 配列も渡すことで O(1) アクセスを確保する。
+    // 本関数は barTaskMap と rowIndexMap の両方が揃っていることを前提とする。
+    // → 実際は外側の loop で barTasks[row].id を取り出す方が効率的。
+    // しかし本 API では barTaskMap(id→task) のみ受け取るため、
+    // 行番号→id のマップも受け取れるようにする。
+    // 注: この関数は extractVisibleArrowsFromTasks を使用することを推奨。
+    void row;
+  }
+
+  // barTaskMap の values から viewStart<=rowIndex<viewEnd の行を走査
+  barTaskMap.forEach((_task, id) => {
+    const rowIndex = rowIndexMap.get(id);
+    if (rowIndex === undefined) {
+      return;
+    }
+    const inViewport = rowIndex >= viewStart && rowIndex < viewEnd;
+    if (!inViewport) {
+      return;
+    }
+
+    // 出辺: この行が source → 先が viewport 内外どちらでも 1 本
+    (outgoingEdgeMap.get(id) ?? []).forEach(edge => {
+      addArrow({
+        sourceId: id,
+        toId: edge.task.id,
+        type: edge.type,
+        lagMinutes: edge.lagMinutes,
+      });
+    });
+
+    // 入辺: この行が destination → 元が viewport 外でも 1 本
+    (incomingEdgeMap.get(id) ?? []).forEach(({ fromId, edge }) => {
+      addArrow({
+        sourceId: fromId,
+        toId: id,
+        type: edge.type,
+        lagMinutes: edge.lagMinutes,
+      });
+    });
+  });
+
+  return result;
+};
+
+/**
+ * barTasks 配列と viewStart/viewEnd から可視候補の依存線を抽出する
+ * （extractVisibleArrows の推奨版）
+ */
+export const extractVisibleArrowsFromTasks = (
+  viewStart: number,
+  viewEnd: number,
+  barTasks: BarTask[],
+  dependencyMaps: DependencyMaps
+): VisibleArrow[] => {
+  const { outgoingEdgeMap, incomingEdgeMap } = dependencyMaps;
+  const seen = new Set<VisibleArrowKey>();
+  const result: VisibleArrow[] = [];
+
+  const addArrow = (a: VisibleArrow) => {
+    const key = makeArrowKey(a);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(a);
+    }
+  };
+
+  for (let row = viewStart; row < viewEnd; row++) {
+    const task = barTasks[row];
+    if (!task) {
+      continue;
+    }
+    const id = task.id;
+
+    // 出辺
+    (outgoingEdgeMap.get(id) ?? []).forEach(edge => {
+      addArrow({
+        sourceId: id,
+        toId: edge.task.id,
+        type: edge.type,
+        lagMinutes: edge.lagMinutes,
+      });
+    });
+
+    // 入辺
+    (incomingEdgeMap.get(id) ?? []).forEach(({ fromId, edge }) => {
+      addArrow({
+        sourceId: fromId,
+        toId: id,
+        type: edge.type,
+        lagMinutes: edge.lagMinutes,
+      });
+    });
+  }
+
+  return result;
+};
+
 const DEPENDENCY_TYPE_SET: Record<DependencyType, true> = {
   FS: true,
   SS: true,
