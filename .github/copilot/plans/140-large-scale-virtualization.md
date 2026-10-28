@@ -113,3 +113,4 @@ opt-inは既定false。異常時は`enableVirtualization=false`で既存描画�
 - 前回レビュー: 依存探索の現状はMapベースへ訂正済み。本改訂では折りたたみ側に残る`filter`/`indexOf`と描画/再計算の残作業を区別した（§冒頭、§2）。
 - 今回レビュー: 範囲を半開区間へ修正し空配列/境界を確定（§3.1）。出辺だけでは先のみ可視を拾えないため入辺索引を追加（§3.3）。端点座標をclampせずSVGでクリップ（§3.3）。pinned行と解除規則を定義（§3.4）。ベンチ生成・計測区間・暫定目標・CI/exampleを具体化（§4〜§5）。
 - PR本文の古い`findIndex`説明と`tasks.filter(...)`例は本文末尾の正誤追記で訂正する。既存本文は保持する。コード変更・実測は本PRに含まれない。
+- 追加レビュー対応: 未使用の `extractVisibleArrows` を削除し、利用実装と一致している `extractVisibleArrowsFromTasks` のみに整理した（`src/helpers/bar-helper.ts`）。恒真アサーションを除去し、`fullHeight = N * rowHeight` を実際に検証する形に変更した（`src/test/virtualization.test.tsx`）。Markdown table の列整形を修正して reviewdog MD060 を解消した（`docs/perf/large-scale-virtualization/benchmark-summary.md`）。

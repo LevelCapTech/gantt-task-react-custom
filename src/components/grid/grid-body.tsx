@@ -16,6 +16,10 @@ export type GridBodyProps = {
   todayColor: string;
   rtl: boolean;
   calendarConfig?: NormalizedCalendarConfig;
+  /** 仮想化が有効な場合の描画開始行インデックス（含む）。省略時は 0 */
+  virtualStart?: number;
+  /** 全行数（仮想化有効時の全高計算に使用）。省略時は tasks.length */
+  totalRowCount?: number;
 };
 export const GridBody: React.FC<GridBodyProps> = ({
   tasks,
@@ -26,8 +30,10 @@ export const GridBody: React.FC<GridBodyProps> = ({
   todayColor,
   rtl,
   calendarConfig,
+  virtualStart = 0,
+  totalRowCount,
 }) => {
-  let y = 0;
+  // 行背景と行区切りを描画する（仮想化時は tasks が部分配列になる）
   const gridRows: ReactNode[] = [];
   const rowLines: ReactNode[] = [
     <line
@@ -39,7 +45,9 @@ export const GridBody: React.FC<GridBodyProps> = ({
       className={styles.gridRowLine}
     />,
   ];
-  for (const task of tasks) {
+
+  tasks.forEach((task, localIndex) => {
+    const y = (virtualStart + localIndex) * rowHeight;
     gridRows.push(
       <rect
         key={"Row" + task.id}
@@ -60,8 +68,11 @@ export const GridBody: React.FC<GridBodyProps> = ({
         className={styles.gridRowLine}
       />
     );
-    y += rowHeight;
-  }
+  });
+
+  // 日付列ごとの縦線・非稼働日 rect は全高で描画（plan §3.2 / §7）
+  const totalRows = totalRowCount ?? tasks.length;
+  const fullHeight = totalRows * rowHeight;
 
   const now = new Date();
   let tickX = 0;
@@ -76,12 +87,12 @@ export const GridBody: React.FC<GridBodyProps> = ({
         x1={tickX}
         y1={0}
         x2={tickX}
-        y2={y}
+        y2={fullHeight}
         className={styles.gridTick}
       />
     );
 
-    // Highlight non-working days
+    // 非稼働日ハイライト
     if (
       calendarConfig &&
       calendarConfig.highlightNonWorkingDays &&
@@ -93,7 +104,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
           x={tickX}
           y={0}
           width={columnWidth}
-          height={y}
+          height={fullHeight}
           fill="rgba(0, 0, 0, 0.05)"
         />
       );
@@ -118,7 +129,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
           x={tickX}
           y={0}
           width={columnWidth}
-          height={y}
+          height={fullHeight}
           fill={todayColor}
         />
       );
@@ -135,7 +146,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
           x={tickX + columnWidth}
           y={0}
           width={columnWidth}
-          height={y}
+          height={fullHeight}
           fill={todayColor}
         />
       );

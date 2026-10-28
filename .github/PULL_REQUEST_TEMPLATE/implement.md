@@ -192,9 +192,9 @@ diffの目次（ファイル×変更概要）を下記のテーブルに記載�
 
 ## 追記（今回分）
 
-* フィードバック（要約）：<<feedback>>　対応（何を変えた）：<<action>>　対象（ファイル/行/Commit）：<<target>>　状態（対応済/保留/却下）：<<status>>
-* フィードバック（要約）：<<feedback>>　対応（何を変えた）：<<action>>　対象（ファイル/行/Commit）：<<target>>　状態（対応済/保留/却下）：<<status>>
-* フィードバック（要約）：<<feedback>>　対応（何を変えた）：<<action>>　対象（ファイル/行/Commit）：<<target>>　状態（対応済/保留/却下）：<<status>>
+* フィードバック（要約）：未使用の依存線抽出ヘルパーが公開 API として混乱を招く　対応（何を変えた）：`extractVisibleArrows` を削除し、利用実装から実際に使われている `extractVisibleArrowsFromTasks` のみを残すよう整理した　対象（ファイル/行/Commit）：`src/helpers/bar-helper.ts`（`extractVisibleArrows` セクション）　状態（対応済/保留/却下）：対応済
+* フィードバック（要約）：恒真アサーションのテストは検証として意味を持たない　対応（何を変えた）：`expect(N * rh).toBe(N * rh)` を削除し、`fullHeight` を計算して `N * rowHeight` の条件を検証する形に修正した　対象（ファイル/行/Commit）：`src/test/virtualization.test.tsx`（「全高: N * rh で常に一定」）　状態（対応済/保留/却下）：対応済
+* フィードバック（要約）：Markdown の表整形が reviewdog の MD060 に抵触している　対応（何を変えた）：表の列区切りのスペースを MD060 の compact style に合わせて修正した　対象（ファイル/行/Commit）：`docs/perf/large-scale-virtualization/benchmark-summary.md`　状態（対応済/保留/却下）：対応済
 
 ## 既存ログ（前回まで）
 
