@@ -10,13 +10,21 @@
 - npm パッケージの公開権限（public/private）が確定していること。
 - GitHub Actions が有効で、タグの push を許可していること。
 - ルートの `package.json` に `build` スクリプトが存在し、`npm run build` が成功すること。
+- Trusted Publishing には npm 11.5.1 以上が必要です。Node 20.x 同梱の npm 10.x では動作しないため、ワークフローで `npm install -g npm@11` を実行します。
 
 ## npm 側設定手順
 - npm にログインし、対象パッケージの Settings を開きます。
 - Settings の「Trusted Publishing」で「Add a provider」を選び、GitHub を指定します。
 - Owner は `LevelCapTech`、Repository は `gantt-task-react-custom`、Workflow は `npm-publish.yml`、Environment は空欄で登録します。
+- Owner と Repository は **大文字小文字を含めて GitHub の表記と完全一致**させます（例: `levelCapTech` では一致せず publish が 404 になります）。
+- Permissions は `npm publish` を許可します。
 - 登録後は「このリポジトリのこのワークフローからの OIDC トークンのみ publish 許可」という設定になります。
 - npm の設定にトークンを保存しません（`.npmrc` にトークンは書かない）。
+
+### 有効期限と検証
+- 登録直後の状態は `Pending validation` で、表示された期限（UTC）までに 1 回 publish が成功すると検証されます。
+- 期限を過ぎると `Expired` になり、publish は E404 で失敗します。この場合は設定を Delete して作り直し、失敗した実行を `gh run rerun <run-id> --failed` で再実行します（タグとバージョンはそのまま使えます）。
+- 長期間リリースしない場合も、次回リリース前に npm の Trusted Publisher の状態（Expired でないこと）を確認します。
 
 ## GitHub 側設定手順（OIDC）
 - ワークフローは `.github/workflows/npm-publish.yml` を使用します。
@@ -35,13 +43,14 @@
 
 ### 人間が行う操作
 ```bash
-npm version 1.2.3
-git push
+npm version 1.2.3 --no-git-tag-version
+# package.json / package-lock.json の version 更新を PR で main にマージする
+git checkout main && git pull
 git tag v1.2.3
 git push origin v1.2.3
 ```
 
-※ `npm version` がタグを自動生成する設定の場合は、`git tag` 手順を省略するか `--no-git-tag-version` を利用してください。
+※ `npm version` は既定でコミットとタグ `v1.2.3` を自動生成するため、手順では `--no-git-tag-version` を付けて version 更新のみを行い、タグは PR マージ後の main に付けます。既定のまま実行した場合は `git tag` が重複エラーになります。
 
 #### 緊急時の差し戻し操作
 
@@ -63,8 +72,13 @@ npm view @levelcaptech/gantt-task-react-custom versions
 
 ### 自動で発生する処理
 - タグと `package.json` の version 整合性チェック
-- `npm publish --provenance`
-- GitHub Release 作成
+- npm を 11.x に更新（Trusted Publishing 用）
+- `npm publish --access public --provenance`（OIDC。`NPM_TOKEN` は使用しない）
+- GitHub Release 作成（リリースノート自動生成）
+
+### 失敗時の確認
+- `npm error code E404`（PUT が 404）: npm 側の Trusted Publisher が Expired、または Owner / Repository / Workflow の不一致（大文字小文字含む）です。設定を確認し、必要なら作り直して失敗した実行を再実行します。
+- バージョン不一致: タグの `vX.Y.Z` と `package.json` の version を揃えます。
 
 ### 禁止事項
 - `package.json` の version を手動編集する
