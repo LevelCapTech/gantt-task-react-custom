@@ -72,6 +72,12 @@ export type TaskListProps = {
   onHorizontalScroll?: (event: SyntheticEvent<HTMLDivElement>) => void;
   onUpdateTask?: (taskId: string, updatedFields: Partial<Task>) => void;
   onCellCommit?: (payload: CellCommitPayload) => Promise<void>;
+  /** 仮想化: 描画開始行インデックス（含む）*/
+  virtualStart?: number;
+  /** 仮想化: 描画終了行インデックス（含まない）*/
+  virtualEnd?: number;
+  /** 仮想化: 全行数（全高計算用）*/
+  totalRowCount?: number;
   TaskListHeader: React.FC<{
     headerHeight: number;
     rowWidth: string;
@@ -159,7 +165,28 @@ export const TaskList: React.FC<TaskListProps> = ({
   actualsOptions,
   enableColumnDrag = true,
   onHorizontalScroll,
+  virtualStart,
+  virtualEnd,
+  totalRowCount,
 }) => {
+  // 仮想化が有効かどうか
+  const isVirtual =
+    virtualStart !== undefined &&
+    virtualEnd !== undefined &&
+    totalRowCount !== undefined;
+
+  // 仮想化時: TaskListTable に渡すタスクのスライス
+  const visibleTasks = useMemo(
+    () => (isVirtual ? tasks.slice(virtualStart, virtualEnd) : tasks),
+    [isVirtual, tasks, virtualStart, virtualEnd]
+  );
+
+  // 仮想化時: 上下スペーサーの高さ
+  const topSpacerHeight = isVirtual ? (virtualStart ?? 0) * rowHeight : 0;
+  const bottomSpacerHeight = isVirtual
+    ? ((totalRowCount ?? tasks.length) - (virtualEnd ?? tasks.length)) *
+      rowHeight
+    : 0;
   const internalHorizontalRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const internalHeaderRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
   const horizontalContainerRef = bodyContainerRef ?? internalHorizontalRef;
@@ -235,7 +262,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     rowWidth,
     fontFamily,
     fontSize,
-    tasks,
+    tasks: visibleTasks,
     selectedTaskId: selectedTaskId,
     setSelectedTask,
     onExpanderClick,
@@ -555,7 +582,21 @@ export const TaskList: React.FC<TaskListProps> = ({
         onScroll={onHorizontalScroll}
       >
         <TaskListEditingStateContext.Provider value={editingContextValue}>
+          {/* 仮想化: 上部スペーサー */}
+          {isVirtual && topSpacerHeight > 0 && (
+            <div
+              aria-hidden="true"
+              style={{ height: topSpacerHeight, flexShrink: 0 }}
+            />
+          )}
           <TaskListTable {...tableProps} />
+          {/* 仮想化: 下部スペーサー */}
+          {isVirtual && bottomSpacerHeight > 0 && (
+            <div
+              aria-hidden="true"
+              style={{ height: bottomSpacerHeight, flexShrink: 0 }}
+            />
+          )}
         </TaskListEditingStateContext.Provider>
       </div>
     </div>

@@ -17,7 +17,10 @@ import { VerticalScroll } from "../other/vertical-scroll";
 import { TaskListProps, TaskList } from "../task-list/task-list";
 import { TaskGantt } from "./task-gantt";
 import { BarTask } from "../../types/bar-task";
-import { convertToBarTasks } from "../../helpers/bar-helper";
+import {
+  buildDependencyMaps,
+  convertToBarTasks,
+} from "../../helpers/bar-helper";
 import { GanttEvent } from "../../types/gantt-task-actions";
 import { DateSetup } from "../../types/date-setup";
 import { HorizontalScroll } from "../other/horizontal-scroll";
@@ -25,6 +28,10 @@ import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
 import { DEFAULT_VISIBLE_FIELDS } from "../../helpers/task-helper";
 import { normalizeCalendarConfig } from "../../helpers/calendar-helper";
 import { normalizeActuals } from "../../helpers/actuals-helper";
+import {
+  computeVisibleRange,
+  isVirtualizationEnabled,
+} from "../../helpers/virtualization-helper";
 import styles from "./gantt.module.css";
 
 const DEFAULT_TASK_LIST_WIDTH = 450;
@@ -80,6 +87,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   visibleFields = DEFAULT_VISIBLE_FIELDS,
   effortDisplayUnit = "MH",
   enableColumnDrag,
+  enableVirtualization,
   onDateChange,
   onProgressChange,
   onDoubleClick,
@@ -158,6 +166,43 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [leftScrollerWidth, setLeftScrollerWidth] = useState(1430);
   const ignoreScrollLeftRef = useRef(false);
   const ignoreScrollRightRef = useRef(false);
+
+  // 仮想化が有効かどうか（plan §1）
+  const virtEnabled = useMemo(
+    () => isVirtualizationEnabled(enableVirtualization, ganttHeight, rowHeight),
+    [enableVirtualization, ganttHeight, rowHeight]
+  );
+
+  // 仮想化: 表示行の範囲計算（plan §3.1）
+  const visibleRange = useMemo(
+    () =>
+      computeVisibleRange(barTasks.length, scrollY, ganttHeight, rowHeight, virtEnabled),
+    [barTasks.length, scrollY, ganttHeight, rowHeight, virtEnabled]
+  );
+
+  // 仮想化: 依存Mapを barTasks から構築（plan §3.3）
+  const dependencyMaps = useMemo(
+    () => (virtEnabled ? buildDependencyMaps(barTasks) : undefined),
+    [virtEnabled, barTasks]
+  );
+
+  // 仮想化: 描画対象の barTasks スライス
+  const visibleBarTasks = useMemo(
+    () =>
+      virtEnabled
+        ? barTasks.slice(visibleRange.start, visibleRange.end)
+        : barTasks,
+    [virtEnabled, barTasks, visibleRange.start, visibleRange.end]
+  );
+
+  // 仮想化: タスクリストに渡す Task スライス（座標計算不要）
+  const visibleTasks = useMemo(
+    () =>
+      virtEnabled
+        ? (barTasks.slice(visibleRange.start, visibleRange.end) as Task[])
+        : (barTasks as Task[]),
+    [virtEnabled, barTasks, visibleRange.start, visibleRange.end]
+  );
 
   // task change events
   useEffect(() => {
@@ -611,12 +656,15 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const gridProps: GridProps = {
     columnWidth,
     svgWidth,
-    tasks: normalizedTasks,
+    tasks: virtEnabled ? visibleTasks : normalizedTasks,
     rowHeight,
     dates: dateSetup.dates,
     todayColor,
     rtl,
     calendarConfig,
+    // 仮想化時: 描画開始行の絶対インデックスと全行数を渡す
+    virtualStart: virtEnabled ? visibleRange.start : undefined,
+    totalRowCount: virtEnabled ? barTasks.length : undefined,
   };
   const calendarProps: CalendarProps = {
     dateSetup,
@@ -630,7 +678,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     calendarConfig,
   };
   const barProps: TaskGanttContentProps = {
-    tasks: barTasks,
+    tasks: visibleBarTasks,
     dates: dateSetup.dates,
     ganttEvent,
     selectedTask,
@@ -652,6 +700,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     onDoubleClick,
     onClick,
     onDelete,
+    // 仮想化: viewport 範囲と依存Mapを渡す
+    viewStart: virtEnabled ? visibleRange.viewStart : undefined,
+    viewEnd: virtEnabled ? visibleRange.viewEnd : undefined,
+    allBarTasks: virtEnabled ? barTasks : undefined,
+    dependencyMaps: virtEnabled ? dependencyMaps : undefined,
   };
 
   const tableProps: TaskListProps = {
@@ -680,6 +733,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     effortDisplayUnit,
     enableColumnDrag,
     actualsOptions,
+    // 仮想化: 描画範囲と全行数を渡す
+    virtualStart: virtEnabled ? visibleRange.start : undefined,
+    virtualEnd: virtEnabled ? visibleRange.end : undefined,
+    totalRowCount: virtEnabled ? barTasks.length : undefined,
   };
   return (
     <div>
@@ -727,6 +784,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             scrollY={scrollY}
             scrollX={scrollXRight}
             verticalGanttContainerRef={ganttContainerRef}
+            svgFullHeight={virtEnabled ? ganttFullHeight : undefined}
           />
         </div>
         {ganttEvent.changedTask && (

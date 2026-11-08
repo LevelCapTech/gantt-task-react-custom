@@ -12,6 +12,8 @@ export type TaskGanttProps = {
   scrollY: number;
   scrollX: number;
   verticalGanttContainerRef?: React.RefObject<HTMLDivElement>;
+  /** 仮想化が有効な場合の SVG 全高（totalRowCount * rowHeight）。省略時は tasks.length * rowHeight */
+  svgFullHeight?: number;
 };
 export const TaskGantt: React.FC<TaskGanttProps> = ({
   gridProps,
@@ -21,6 +23,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   scrollY,
   scrollX,
   verticalGanttContainerRef,
+  svgFullHeight,
 }) => {
   const ganttSVGRef = useRef<SVGSVGElement>(null) as React.RefObject<SVGSVGElement>;
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
@@ -39,6 +42,12 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
       ganttContainerRef.current.scrollLeft = scrollX;
     }
   }, [scrollX, ganttContainerRef]);
+
+  // SVG の高さ: 仮想化有効時は svgFullHeight、それ以外は tasks.length * rowHeight
+  const svgHeight =
+    svgFullHeight !== undefined
+      ? svgFullHeight
+      : barProps.rowHeight * barProps.tasks.length;
 
   return (
     <div
@@ -66,7 +75,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={gridProps.svgWidth}
-          height={barProps.rowHeight * barProps.tasks.length}
+          height={svgHeight}
           fontFamily={barProps.fontFamily}
           ref={ganttSVGRef}
         >

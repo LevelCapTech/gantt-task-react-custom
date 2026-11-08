@@ -21,6 +21,51 @@ import { ViewSwitcher } from "./components/view-switcher";
 import { getStartEndDateForProject, initTasks } from "./helper";
 import "@levelcaptech/gantt-task-react-custom/dist/index.css";
 
+/** 10k 件の合成タスクを生成する（seed=42、plan §4.2 準拠） */
+function initLargeTasks(size = 10000): Task[] {
+  let state = 42;
+  const rand = () => {
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 0x100000000;
+  };
+
+  const base = new Date("2024-01-01");
+  const tasks: Task[] = [];
+
+  for (let i = 0; i < size; i++) {
+    const startOffset = Math.floor(rand() * 365);
+    const duration = Math.floor(rand() * 30) + 1;
+    const start = new Date(base);
+    start.setDate(start.getDate() + startOffset);
+    const end = new Date(start);
+    end.setDate(end.getDate() + duration);
+
+    const isProject = rand() < 0.1;
+    const task: Task = {
+      id: `lt-${i}`,
+      name: isProject ? `プロジェクト ${i}` : `タスク ${i}`,
+      start,
+      end,
+      type: isProject ? "project" : "task",
+      progress: Math.floor(rand() * 100),
+      styles: undefined,
+      dependencies: [],
+    };
+
+    if (!isProject && i > 0) {
+      const prevIndex = Math.max(0, i - 1 - Math.floor(rand() * 50));
+      if (rand() < 0.5) {
+        task.dependencies = [`lt-${prevIndex}`];
+      }
+    }
+
+    tasks.push(task);
+  }
+  return tasks;
+}
+
 const tooltipStyles = {
   tooltipDefaultContainer: "TooltipContainer",
   tooltipDefaultContainerParagraph: "TooltipParagraph",
@@ -139,6 +184,8 @@ const App = () => {
   const [tasks, setTasks] = React.useState<Task[]>(initTasks());
   const [isChecked, setIsChecked] = React.useState(true);
   const [effortUnit, setEffortUnit] = React.useState<EffortUnit>("MH");
+  const [largeTasks] = React.useState<Task[]>(() => initLargeTasks(10000));
+  const [enableVirtualization, setEnableVirtualization] = React.useState(false);
 
   // 日本カレンダー設定
   const calendarConfig: CalendarConfig = {
@@ -301,6 +348,27 @@ const App = () => {
         onTaskUpdate={handleTaskUpdate}
         onCellCommit={handleCellCommit}
         effortDisplayUnit={effortUnit}
+      />
+      <h3>大規模タスクデモ（10k 件）— 仮想化 opt-in</h3>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            checked={enableVirtualization}
+            onChange={e => setEnableVirtualization(e.target.checked)}
+          />
+          {" enableVirtualization（仮想化有効/無効を切り替え）"}
+        </label>
+      </div>
+      <Gantt
+        tasks={largeTasks}
+        viewMode={ViewMode.Day}
+        ganttHeight={600}
+        columnWidth={60}
+        rowHeight={32}
+        enableVirtualization={enableVirtualization}
+        listCellWidth="130px"
+        locale="ja-JP"
       />
     </div>
   );

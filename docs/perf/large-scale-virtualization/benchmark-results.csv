@@ -1,0 +1,7 @@
+phase,size,seed,edge_count,metric,median_ms,p95_ms,dom_nodes,svg_nodes,render_rows,arrows,memory_mb,sha,browser,os,cpu,notes
+baseline,1000,42,TBD,initial_render,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,未計測（実ブラウザで npm run benchmark:large-gantt を実行すること）
+baseline,10000,42,TBD,initial_render,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,未計測（実ブラウザで npm run benchmark:large-gantt を実行すること）
+baseline,50000,42,TBD,initial_render,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,未計測（実ブラウザで npm run benchmark:large-gantt を実行すること）
+baseline,1000,42,TBD,scroll,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,未計測
+baseline,10000,42,TBD,scroll,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,未計測
+baseline,50000,42,TBD,scroll,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,TBD,未計測

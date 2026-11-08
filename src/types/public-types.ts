@@ -271,4 +271,10 @@ export interface StylingOption {
 
 export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   tasks: Task[];
+  /**
+   * 行の描画仮想化を有効にする（opt-in、既定 false）。
+   * `enableVirtualization === true` かつ `ganttHeight > 0` かつ `rowHeight > 0`
+   * のときのみ仮想化が有効になる。それ以外は既存の全行描画を維持する。
+   */
+  enableVirtualization?: boolean;
 }
