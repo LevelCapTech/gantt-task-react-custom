@@ -44,10 +44,11 @@ jobs:
             echo "Version mismatch: tag=${EXPECTED_VERSION}, package.json=${ACTUAL_VERSION}"
             exit 1
           fi
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Trusted Publishing (OIDC) は npm 11.5.1 以上が必要。Node 20.x 同梱の npm 10.x では動作しない
+      - name: Upgrade npm for Trusted Publishing
+        run: npm install -g npm@11
+      - name: Publish to npm (Trusted Publishing)
+        run: npm publish --access public --provenance
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.0.6
         with:
